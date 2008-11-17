@@ -47,6 +47,8 @@
 #include "voreen/qt/widgets/volumesetwidget.h"
 #include "voreen/qt/widgets/transfunc/transfuncplugin.h"
 
+#include "voreen/version.h"
+
 #ifdef VRN_MODULE_GLYPHS
 #include "voreen/modules/glyphs/datasource.h"
 #include "voreen/modules/glyphs/glyphsplugin.h"
@@ -55,10 +57,6 @@
 #ifdef VRN_WITH_DCMTK
 #include "voreen/core/io/dicomvolumereader.h"
 #include "voreen/qt/dicomdialog.h"
-#endif
-
-#ifdef VRN_WITH_SVNVERSION
-#include "voreen/svnversion.h"
 #endif
 
 namespace voreen {

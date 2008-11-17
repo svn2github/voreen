@@ -29,15 +29,14 @@
 
 #include "voreen/core/vis/transfunc/transfuncintensity.h"
 
+#include "voreen/core/vis/transfunc/transfuncmappingkey.h"
 
 #include <tinyxml/tinyxml.h>
-
-#include "voreen/core/vis/transfunc/transfuncmappingkey.h"
+#include <fstream>
 
 using tgt::col4;
 using tgt::ivec3;
 using tgt::ivec4;
-
 
 namespace voreen {
 

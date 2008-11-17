@@ -59,12 +59,8 @@
 #include "voreen/qt/widgets/lightmaterialplugin.h"
 #include "voreen/qt/widgets/stereoplugin.h"
 #include "voreen/qt/widgets/transfunc/transfuncintensityplugin.h"
-
 #include "voreen/core/geometry/geometrycontainer.h"
-
-#ifdef VRN_WITH_SVNVERSION
-#include "voreen/svnversion.h"
-#endif
+#include "voreen/version.h"
 
 #include <QMessageBox>
 

@@ -27,66 +27,17 @@
  *                                                                    *
  **********************************************************************/
 
-#ifndef VRN_PROCESSORFACTORY_H
-#define VRN_PROCESSORFACTORY_H
+#ifndef VRN_VERSION_H
+#define VRN_VERSION_H
 
-#include <vector>
-#include <map>
+#ifdef VRN_SNAPSHOT
+  // update version for each snapshot release
+  #define VRN_SVN_REVISON "snapshot-4"
+#endif
 
-namespace voreen {
+#ifdef VRN_WITH_SVNVERSION
+  #include "voreen/svnversion.h"
+#endif
 
-class Processor;
-class Identifier;
-class TextureContainer;
 
-class ProcessorFactory {
-public:
-
-    Processor* create(Identifier name);
-
-    const std::vector<Identifier>& getKnownClasses();
-
-    static ProcessorFactory* getInstance(); 
-
-	// Returns processor information
-	std::string getProcessorInfo(Identifier);
-
-    /**
-     * Destroys the instance of this Singleton.
-     */
-    static void destroy();
-
-    /**
-     * Returns the Texture Container
-     */
-    voreen::TextureContainer* getTextureContainer();
-
-    /**
-     * sets the TextureContainer
-     * 
-     */
-    void setTextureContainer(voreen::TextureContainer* tc);
-
-    /**
-     * intializes the ClassList by registering processors
-     * adding new processors will happen here
-     */
-    void initializeClassList();
-
-private:
-    static ProcessorFactory* instance_;
-
-    ProcessorFactory();   
-    ~ProcessorFactory();
-
-    void registerClass(Processor* newClass);
-
-    std::map<Identifier, Processor*> classList_;
-    std::vector<Identifier> knownClasses_;
-
-    TextureContainer* tc_;
-};
-
-} // namespace voreen
-
-#endif //VRN_PROCESSORFACTORY_H
+#endif

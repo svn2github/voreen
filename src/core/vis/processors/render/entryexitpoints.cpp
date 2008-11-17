@@ -571,11 +571,14 @@ void CubeEntryExitPoints::process(LocalPortMapping*  portMapping) {
             "",
             "volumeParameters_")            // ... but its parameters
         );
-    
         
         tc_->setActiveTarget(exitSource, "exit");
         
         glViewport(0, 0, getSize().x, getSize().y);
+
+        // sometimes set to GL_CW. We don't know where and why...
+        // as workaround we overwrite it here. (jms)
+        glFrontFace(GL_CCW);
 
         // set modelview and projection matrices
         glMatrixMode(GL_PROJECTION);

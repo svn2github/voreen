@@ -33,6 +33,7 @@
 #include "tgt/gpucapabilities.h"
 #include "voreen/core/vis/identifier.h"
 
+#include "tgt/types.h"
 
 namespace voreen {
 

@@ -7,12 +7,6 @@ CONFIG += stl thread
 # we don't use tgt's build system
 DEFINES += TGT_WITHOUT_DEFINES
 
-contains(DEFINES, VRN_SNAPSHOT) {
-  # update version for each snapshot release
-  # TODO: not sure if this works with MSVC
-  DEFINES += VRN_SVN_REVISON=\\\"snapshot-3\\\"
-}
-
 # This just changes the default params for tgt::init() to include
 # NO_SHADER_CACHING and to remove LOG_TO_CONSOLE. Should be done
 # differently.

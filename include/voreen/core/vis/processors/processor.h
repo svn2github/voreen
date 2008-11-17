@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "tgt/camera.h"
+#include "tgt/shadermanager.h"
 
 #include "voreen/core/opengl/texunitmapper.h"
 #include "voreen/core/opengl/texturecontainer.h"

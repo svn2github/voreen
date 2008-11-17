@@ -38,6 +38,7 @@
 #include "tgt/singleton.h"
 
 #include "voreen/core/vis/messagedistributor.h"
+#include "voreen/version.h"
 
 #ifndef VRN_SNAPSHOT
 #include "voreen/core/vis/pyvoreen.h"
@@ -46,10 +47,6 @@
 #include "voreen/core/vis/pyvoreen.h"
 #include "voreen/qt/pyvoreenqt.h"
 #endif
-#endif
-
-#ifdef VRN_WITH_SVNVERSION
-#include "voreen/svnversion.h"
 #endif
 
 #ifdef WIN32

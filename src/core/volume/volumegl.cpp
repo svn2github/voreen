@@ -316,7 +316,7 @@ size_t VolumeGL::getNumTextures() const {
 }
 
 const VolumeTexture* VolumeGL::getTexture(size_t i /*= 0*/) const {
-    tgtAssert(((i>=0) && (i<getNumTextures())), "Index out of bounds!");
+    tgtAssert(i<getNumTextures(), "Index out of bounds!");
     return textures_[i];
 }
 

@@ -32,6 +32,7 @@
 
 
 #include <map>
+#include <list>
 
 #include "voreen/core/vis/message.h"
 #include "voreen/core/vis/exception.h"

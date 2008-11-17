@@ -32,6 +32,7 @@
 
 #include "tgt/glmath.h"
 #include "tgt/camera.h"
+#include "tgt/shadermanager.h"
 
 #include "voreen/core/opengl/texturecontainer.h"
 #include "voreen/core/vis/messagedistributor.h"

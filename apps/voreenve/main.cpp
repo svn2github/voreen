@@ -36,6 +36,8 @@
 #include "voreen/core/vis/messagedistributor.h"
 #include "voreen/core/vis/processors/networkevaluator.h" // FIXME: remove after global pointer is gone
 
+#include "voreen/version.h"
+
 #ifdef VRN_SPLASHSCREEN
 #include <QSplashScreen>
 #endif
@@ -43,10 +45,6 @@
 #include "tgt/gpucapabilities.h"
 #ifdef WIN32
     #include "tgt/gpucapabilitieswindows.h"
-#endif
-
-#ifdef VRN_WITH_SVNVERSION
-#include "voreen/svnversion.h"
 #endif
 
 using namespace voreen;

@@ -34,6 +34,7 @@
 #include "voreen/core/opengl/texturecontainer.h"
 #include "voreen/core/vis/processors/portmapping.h"
 
+#include "tgt/shadermanager.h"
 
 namespace voreen {
 

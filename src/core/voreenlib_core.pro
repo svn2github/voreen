@@ -130,7 +130,6 @@ SOURCES += \
 SOURCES += \
     volume/modality.cpp \
     volume/volume.cpp \
-#volume/volumecontainer.cpp \
     volume/volumegl.cpp \
     volume/volumehandle.cpp \
     volume/volumemetadata.cpp \
@@ -141,6 +140,7 @@ SOURCES += \
     volume/gradient.cpp \
     volume/histogram.cpp \
     volume/observer.cpp
+
 SOURCES += \
     xml/serializable.cpp
 SOURCES += \
@@ -198,6 +198,7 @@ win32 {
 }
 
 HEADERS += \
+    ../../include/voreen/version.h \
     ../../include/voreen/core/geometry/geometry.h \
     ../../include/voreen/core/geometry/geometrycontainer.h \
     ../../include/voreen/core/geometry/pointlistgeometry.h \
@@ -292,7 +293,6 @@ HEADERS += \
     ../../include/voreen/core/volume/modality.h \
     ../../include/voreen/core/volume/volume.h \
     ../../include/voreen/core/volume/volumeatomic.h \
-#../../include/voreen/core/volume/volumecontainer.h \
     ../../include/voreen/core/volume/volumeelement.h \
     ../../include/voreen/core/volume/volumefusion.h \
     ../../include/voreen/core/volume/volumegl.h \

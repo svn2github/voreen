@@ -37,6 +37,7 @@
 #include "tgt/tgt_gl.h"
 #include "tgt/glmath.h"
 #include "tgt/gpucapabilities.h"
+#include "tgt/texturemanager.h"
 
 #ifdef VRN_WITH_DEVIL
     #include <IL/il.h>

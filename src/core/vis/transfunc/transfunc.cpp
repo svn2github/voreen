@@ -37,6 +37,8 @@
 #include "voreen/core/vis/voreenpainter.h"
 #include "voreen/core/vis/transfunc/transfuncintensity.h"
 
+#include "tgt/texturemanager.h"
+
 using tgt::vec2;
 using tgt::ivec2;
 using tgt::ivec3;
