@@ -552,19 +552,17 @@ bool Shader::loadSeparate(const string& vert_filename, const string& frag_filena
             detachObject(vert);
             delete vert;
         }
-        //FIXME: why is this commented out? joerg
-		/*
-		if (geom) {
+        if (geom) {
             LERROR(geom->filename_ << " Geometry shader compiler log: \n" << geom->getCompilerLog());
             detachObject(geom);
             delete geom;
         }
-		if (frag) {
+        if (frag) {
             LERROR(frag->filename_ << " Fragment shader compiler log: \n" << frag->getCompilerLog());
             detachObject(frag);
             delete frag;
         }
-		*/
+
         LERROR("Linker Log: \n" << getLinkerLog());
         return false;
     }
