@@ -199,7 +199,7 @@ void VolumeSetWidget::VolumeSetTreeWidget::moveItem(VolumeHandleItem* child, Vol
 //
 
 VolumeSetWidget::VolumeSetWidget(VolumeSetContainer* const volumeSetContainer,
-                                 QWidget* parent, int levels, Qt::WFlags flags)
+                                 QWidget* parent, int levels, bool allowClose, Qt::WFlags flags)
     : QDialog(parent, flags)
     , volumeSetContainer_(volumeSetContainer)
     , availableLevelsMask_(levels)
@@ -208,6 +208,7 @@ VolumeSetWidget::VolumeSetWidget(VolumeSetContainer* const volumeSetContainer,
     , currentDir_(QDir::currentPath().toStdString())
     , allowAddingMultipleFiles_(true)
     , ioObserver_(new IOObserver(this))
+    , allowClose_(allowClose)
 {
 #ifdef VRN_WITH_DCMTK
     dicomDirDialog_ = 0;
@@ -853,16 +854,24 @@ void VolumeSetWidget::createWidgets() {
         modalityIndices_.insert(std::pair<std::string, int>(modNames[i], static_cast<int>(i)));
         comboModality_->addItem(QString(modNames[i].c_str()));
     }
-
+    
+    
     groupLayout->addWidget(comboModality_);
     groupModality_->setLayout(groupLayout);
     groupModality_->adjustSize();
 
 	layout_ = new QGridLayout(this);
-    layout_->addWidget(treeVolumeSets_, 0, 0, 3, 1);
-	layout_->addWidget(groupAdd_, 0, 1, 1, 1);
-	layout_->addWidget(groupRemove_, 1, 1, 1, 1);
-    layout_->addWidget(groupModality_, 2, 1, 1, 1);
+    layout_->addWidget(treeVolumeSets_, 0, 0, allowClose_ ? 4 : 3, 1);
+	layout_->addWidget(groupAdd_, 0, 1);
+	layout_->addWidget(groupRemove_, 1, 1);
+    layout_->addWidget(groupModality_, 2, 1);
+
+    if (allowClose_) {
+        QPushButton* closeBtn = new QPushButton(tr("Close"));
+        connect(closeBtn, SIGNAL(clicked()), this,  SLOT(accept()));
+        layout_->addWidget(closeBtn, 3, 1);
+    }
+    
     setLayout(layout_);
     adjustSize();
 }

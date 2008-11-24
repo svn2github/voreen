@@ -121,8 +121,8 @@ RptMainWindow::RptMainWindow()
     // BEFORE loading the first dataset on startup.
     //
     volsetContainer_ = new VolumeSetContainer();
-    volumeSetWidget_ = new VolumeSetWidget(volsetContainer_, 0, VolumeSetWidget::LEVEL_ALL, Qt::Dialog);
-    volumeSetWidget_->hide();
+    volumeSetWidget_ = new VolumeSetWidget(volsetContainer_, 0, VolumeSetWidget::LEVEL_ALL);
+    volumeSetWidget_->hide(); //FIXME: why hide? is it shown by default? joerg
 
     createMenuAndToolBar();
 
@@ -2099,6 +2099,7 @@ void RptMainWindow::helpAbout() {
 #ifdef VRN_SVN_REVISON
     ui.labelVersion->setText("svn version " + QString(VRN_SVN_REVISON) + "\n\nhttp://www.voreen.org"); 
 #endif
+    window->adjustSize();
 #ifndef WIN32
     // On Unix the windows manager should take care of this
     int posX = pos().x() + (width() - window->width()) / 2;

@@ -81,7 +81,7 @@ public:
      * @param   flags   QWindow flags for the window appearance
      */
 	VolumeSetWidget(VolumeSetContainer* const volumeSetContainer, QWidget* parent = 0, 
-                    int levels = LEVEL_ALL, Qt::WFlags flags = 0);
+                    int levels = LEVEL_ALL, bool allowClose = false, Qt::WFlags flags = 0);
 
     /**
      * Dtor. Does not delete the VolumeSetContainer.
@@ -371,6 +371,8 @@ private:
 
     typedef std::map<std::string, int> ModalityIndexMap;
     ModalityIndexMap modalityIndices_;
+
+    bool allowClose_;
 
     void appendVolumeSets(VolumeRootItem* node);
     void appendVolumeSeries(QTreeWidgetItem* node, VolumeSet* const volumeSet);

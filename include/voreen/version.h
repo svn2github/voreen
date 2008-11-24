@@ -32,7 +32,7 @@
 
 #ifdef VRN_SNAPSHOT
   // update version for each snapshot release
-  #define VRN_SVN_REVISON "snapshot-8"
+  #define VRN_SVN_REVISON "snapshot-9"
 #endif
 
 #ifdef VRN_WITH_SVNVERSION
