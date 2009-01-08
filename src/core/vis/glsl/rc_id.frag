@@ -42,10 +42,6 @@ uniform VOLUME_PARAMETERS segmentationParameters_;
 uniform float volumeScaleFactor_;                   // the main volume's intensities are scaled by this factor
                                                     // (necessary for 12-bit datasets)
 
-uniform sampler1D transferFunc_; // transfer function
-uniform float lowerThreshold_;
-uniform float upperThreshold_;
-
 uniform float penetrationDepth_;
 uniform float visibilityThreshold_;
 
@@ -82,7 +78,7 @@ vec4 fillIDBuffer(inout vec4 first, in vec4 last) {
             if ( intensity >= lowerThreshold_ && intensity <= upperThreshold_ && texture1D(transferFunc_, intensity).a > 0.0 ) {
                   
                 // interpolate and write depth value
-                gl_FragDepth = calculateDepthValue(t/tend);
+                gl_FragDepth = calculateDepthValue(t/tend, entryPointsDepth_, exitPointsDepth_);
                 
                 // write first hit position to rgb channels
                 result.rgb = p.rgb;
