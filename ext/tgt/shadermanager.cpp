@@ -99,10 +99,13 @@ string ShaderObject::replaceIncludes(const string& completeSource) {
             content = file->getAsString();
             file->close();
 
-            content = "// BEGIN INCLUDE " + fileName + "\n#line 1\n" + content;
+            content = "// BEGIN INCLUDE " + fileName + "\n" + content;
             if (content[content.size() - 1] != '\n')
                 content += "\n";
-            content += "// END INCLUDE " + fileName + "\n#line 1\n";
+            content += "// END INCLUDE " + fileName + "\n";
+        }
+        else {
+            LERROR("Unable to open include file " << fileName);
         }
         delete file;
         sourceStr.replace(replaceStart, replaceEnd - replaceStart + 1, content);
@@ -218,7 +221,7 @@ bool ShaderObject::compileShader() {
     glCompileShader(id_);
     GLint check = 0;
     glGetShaderiv(id_, GL_COMPILE_STATUS, &check);
-    isCompiled_ = check;
+    isCompiled_ = (check == GL_TRUE);
     return true; //TODO: always true? joerg
 }
 
@@ -262,7 +265,7 @@ void ShaderObject::generateHeader(const string& defines) {
     if (!add.empty())
         out += "\n#define " + add;
 
-    out += "\n// END OF PROGRAM GENERATED DEFINES\n#line 1\n";
+    out += "\n// END OF PROGRAM GENERATED DEFINES\n";
     setHeader(out);
 }
 
@@ -557,7 +560,7 @@ bool Shader::loadSeparate(const string& vert_filename, const string& frag_filena
             detachObject(geom);
             delete geom;
         }
-        if (frag) {
+		if (frag) {
             LERROR(frag->filename_ << " Fragment shader compiler log: \n" << frag->getCompilerLog());
             detachObject(frag);
             delete frag;
@@ -693,10 +696,11 @@ bool Shader::setUniform(const string& name, GLint* v, int count) {
 }
 
 
-#ifdef __APPLE__
-
+/*
+ #ifdef __APPLE__
 // Glew (1.4.0) defines 'GLint' as 'long' on Apple, so these wrappers are necessary.
 // On all other platforms 'GLint' is defined as 'int' instead.
+// Glew (1.5.1) defines 'GLint' as 'int' just as normal
 
 bool Shader::setUniform(const string& name, int value) {
     GLint l = getUniformLocation(name);
@@ -743,6 +747,7 @@ bool Shader::setUniform(const string& name, int* v, int count) {
 }
 
 #endif // __APPLE__
+*/
 
 bool Shader::setUniform(const string& name, bool value) {
     GLint l = getUniformLocation(name);

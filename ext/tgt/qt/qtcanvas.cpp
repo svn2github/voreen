@@ -116,7 +116,7 @@ void QtCanvas::getGLFocus() {
 }
 
 void QtCanvas::toggleFullScreen() {
-    if(fullscreen_) {
+    if (fullscreen_) {
         fullscreen_ = false;
         showNormal();
     }

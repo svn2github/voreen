@@ -200,9 +200,6 @@ public:
 
     void setHeaders(const std::string& customHeader, bool processHeader = true);
 
-    //TODO: this should be protected. joerg
-	void replaceIncludes();
-
     /**
      * Activates the shader
      */
@@ -249,16 +246,19 @@ public:
     bool setUniform(const std::string& name, GLint v1, GLint v2, GLint v3, GLint v4);
     bool setUniform(const std::string& name, GLint* v, int count);
 
+/*
 #ifdef __APPLE__
 	// Glew (1.4.0) defines 'GLint' as 'long' on Apple, so these wrappers are necessary.
 	// On all other platforms 'GLint' is defined as 'int' instead.
+    // Glew (1.5.1) defines 'GLint' as 'int' just as normal
 	bool setUniform(const std::string& name, int value);
     bool setUniform(const std::string& name, int v1, int v2);
     bool setUniform(const std::string& name, int v1, int v2, int v3);
     bool setUniform(const std::string& name, int v1, int v2, int v3, int v4);
     bool setUniform(const std::string& name, int* v, int count);
 #endif
-
+*/
+    
     // Booleans
     bool setUniform(const std::string& name, bool value);
     bool setUniform(const std::string& name, bool v1, bool v2);
