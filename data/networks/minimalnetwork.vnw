@@ -86,4 +86,13 @@
             <Processor id="2" port="image.exitpoints" />
         </Outport>
     </Processor>
+    <VolumeSetContainer>
+        <VolumeSet name="D:/voreen/voreen/data/nucleon.raw">
+            <VolumeSeries name="unknown" modality="unknown">
+                <VolumeHandle timestep="0.000000">
+                    <Origin filename="D:/voreen/voreen/data/nucleon.dat" seriesname="unknown" timestep="0.000000" />
+                </VolumeHandle>
+            </VolumeSeries>
+        </VolumeSet>
+    </VolumeSetContainer>
 </ProcessorNetwork>

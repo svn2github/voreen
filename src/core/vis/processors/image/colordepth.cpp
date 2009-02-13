@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -50,7 +50,7 @@ ColorDepth::ColorDepth()
 	addProperty(colorMode_);
 
     addProperty(&factor_);
-    chromaDepthTex_ = TexMgr.load("../../data/transferfuncs/chromadepthspectrum.bmp");
+    chromaDepthTex_ = 0;
 
 	createInport("image.inport");
 	createOutport("image.outport");
@@ -68,6 +68,10 @@ const std::string ColorDepth::getProcessorInfo() const {
 void ColorDepth::process(LocalPortMapping* portMapping) {
 	int source = portMapping->getTarget("image.inport");
     int dest = portMapping->getTarget("image.outport");
+
+    if (chromaDepthTex_ == 0)
+        chromaDepthTex_ = TexMgr.load("../../data/transferfuncs/chromadepthspectrum.bmp");
+
 
     analyzeDepthBuffer(source);
 

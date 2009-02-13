@@ -32,8 +32,8 @@ namespace tgt {
 
 BSpline::BSpline(const std::vector<vec3>& ctrlPoints, int degree, GLuint stepCount) :
     Curve(stepCount, Bounds(), true, true),
-    ctrlPoints_(ctrlPoints),
-    degree_(degree) 
+    degree_(degree),
+    ctrlPoints_(ctrlPoints)
 {
     tgtAssert(degree_ > 0, "Degree of a B-Spline must be greater zero.");
     tgtAssert(static_cast<int>(ctrlPoints_.size()) > degree_, 
@@ -46,8 +46,8 @@ BSpline::BSpline(const std::vector<vec3>& ctrlPoints, int degree, GLuint stepCou
 BSpline::BSpline(const std::vector<vec3>& ctrlPoints, const std::vector<float>& knotValues, 
                  int degree, GLuint stepCount) :
     Curve(stepCount, Bounds(), true, true),
-    ctrlPoints_(ctrlPoints),
-    degree_(degree) 
+    degree_(degree),
+    ctrlPoints_(ctrlPoints)
 {
 
     tgtAssert(degree_ > 0, "Degree of a B-Spline must be greater zero.");

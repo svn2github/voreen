@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -47,14 +47,14 @@ using tgt::BSpline;
 
 AnimationPlugin::AnimationPlugin(QWidget* parent, tgt::Camera* camera, tgt::QtCanvas* canvas)
     : WidgetPlugin(parent),
-      canvas_(canvas),
       camera_(camera),
+      canvas_(canvas),
       currentKeyframe_(0),
-      animationState_(Stopped),
-      timeOffset_(0.5f),
       camPositionSpline_(0),
       camFocusSpline_(0),
-      camUpSpline_(0)
+      camUpSpline_(0),
+      animationState_(Stopped),
+      timeOffset_(0.5f)
 {
 
     tgtAssert(camera_, "No camera");

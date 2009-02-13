@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -400,8 +400,8 @@ void VoreenPainter::switchCanvas() {
 }
 
 
-void VoreenPainter::renderToSnapshot(tgt::ivec2 size, std::string fileName) {
 #ifdef VRN_WITH_DEVIL
+void VoreenPainter::renderToSnapshot(tgt::ivec2 size, std::string fileName) {
     ILuint img = renderToILImage(size, NULL, 2);
     ilEnable(IL_FILE_OVERWRITE);
     //FIXME: this should only be done for bmp-files (jms)
@@ -410,8 +410,11 @@ void VoreenPainter::renderToSnapshot(tgt::ivec2 size, std::string fileName) {
         LERROR("renderToSnapshot() failed for " << fileName);
 
     ilDeleteImages(1, &img);
-#endif
 }
+#else
+void VoreenPainter::renderToSnapshot(tgt::ivec2 /*size*/, std::string /*fileName*/) {
+}
+#endif
 
 
 #ifdef VRN_WITH_DEVIL

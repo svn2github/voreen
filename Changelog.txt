@@ -8,7 +8,7 @@ Voreen Changelog
       widgets, work in progress
  
     * Added network for labeling processor, use with NCAT example data set from
-	  the voreen.org website (requires FreeType activated in config.txt):
+      the voreen.org website (requires FreeType activated in config.txt):
       o load network 'labeling.vnw'
       o load data sets 'ncat_phantom_medium.dat' and 'ncat_phantom_segmentation.dat'
       o attach 'ncat_phantom_medium.dat' to left VolumeSetSource processor
