@@ -518,6 +518,9 @@ void ClippingPlaneWidget::mouseMoveEvent(tgt::MouseEvent *e) {
 }
 
 void ClippingPlaneWidget::updateClippingValues(GLdouble clipPoint[3]) {
+    clipPoint[0] = clipPoint[0] / (2.f * volumeSize_.x) + 0.5f;
+    clipPoint[1] = clipPoint[1] / (2.f * volumeSize_.y) + 0.5f;
+    clipPoint[2] = clipPoint[2] / (2.f * volumeSize_.z) + 0.5f;
     //calculate values
     switch (isClicked_) {
         case 1:
@@ -589,7 +592,7 @@ void ClippingPlaneWidget::calculateClippingValues(GLdouble newClipValue, float& 
                              bool lock, bool switched)
 {
     float temp = clip1;
-    clip1 = static_cast<float>(newClipValue) / (2.0f*volumeSize_.z) + 0.5f;
+    clip1 = static_cast<float>(newClipValue);
     if (clip1 > 1.0)
         clip1 = 1.0f;
     if (clip1 < 0.0)
