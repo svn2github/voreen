@@ -33,9 +33,9 @@
     #include <freetype/fttrigon.h>
 #endif
 
+#include <vector>
+#include <string>
 #include <stdexcept>
-// include gl
-#include "tgt/tgt_gl.h"
 
 namespace tgt {
 

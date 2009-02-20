@@ -29,6 +29,8 @@
 
 #include "voreen/core/cmdparser/command.h"
 
+#include <sstream>
+
 namespace voreen {
 
 Command::Command() : loggerCat_("voreen.Command") {
@@ -77,7 +79,7 @@ int Command::castInt(const std::string& s) throw (SyntaxException) {
     else
         return t;
 }
-    
+
 bool Command::isInt(const std::string& s) {
     std::istringstream iss(s);
     int t;
