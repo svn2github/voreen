@@ -31,7 +31,6 @@
 #define VRN_COMMAND_LOGLEVEL_H
 
 #include "voreen/core/cmdparser/command.h"
-#include "tgt/logmanager.h"
 
 namespace voreen {
 

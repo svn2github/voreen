@@ -25,28 +25,35 @@
 #ifndef TGT_FREETYPE_H
 #define TGT_FREETYPE_H
 
-#include "tgt/tgt_gl.h"
+//Some STL headers
+#include <vector>
+#include <string>
+
+//Using the STL exception library increases the
+//chances that someone else using our code will corretly
+//catch any exceptions that we throw.
+#include <stdexcept>
 
 namespace tgt {
 
-// This holds all of the information related to any
-// freetype font that we want to create.
+//This holds all of the information related to any
+//freetype font that we want to create.  
 struct font_data {
-    float h;                ///< Holds the height of the font.
-    GLuint * textures;      ///< Holds the texture id's
-    GLuint list_base;       ///< Holds the first display list id
+	float h;			///< Holds the height of the font.
+	GLuint * textures;	///< Holds the texture id's 
+	GLuint list_base;	///< Holds the first display list id
 
-    // The init function will create a font of
-    // of the height h from the file fname.
-    void init(const char* fname, unsigned int h);
+	//The init function will create a font of
+	//of the height h from the file fname.
+	void init(const char* fname, unsigned int h);
 
-    // Free all the resources assosiated with the font.
-    void clean();
+	//Free all the resources assosiated with the font.
+	void clean();
 };
 
-// The flagship function of the library - this thing will print
-// out text at window coordinates x,y, using the font ft_font.
-// The current modelview matrix will also be applied to the text.
+//The flagship function of the library - this thing will print
+//out text at window coordinates x,y, using the font ft_font.
+//The current modelview matrix will also be applied to the text. 
 void print(const font_data &ft_font, float x, float y, const char *fmt, ...) ;
 
 } // namespace

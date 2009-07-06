@@ -1579,10 +1579,7 @@ void RptMainWindow::createToolWindows() {
                     toolWindows_[i]->setVisible(true);
 #if defined(WIN32) || defined(__APPLE__)
                     // move to the right
-					int newXPos = x() + frameGeometry().width() + 2;
-					if (qApp->desktop()->width() > newXPos+10)
-						toolWindows_[i]->move(newXPos, y());
-                    
+                    toolWindows_[i]->move(x() + frameGeometry().width() + 2, y());
 #endif
                 }
                 settings_.endGroup();    
@@ -1596,9 +1593,7 @@ void RptMainWindow::createToolWindows() {
                 toolWindows_[i]->setVisible(true);
 #if defined(WIN32) || defined(__APPLE__)
                 // move to the right
-				int newXPos = x() + frameGeometry().width() + 2;
-				if (qApp->desktop()->width() > newXPos+10)
-					toolWindows_[i]->move(newXPos, y());
+                toolWindows_[i]->move(x()+ frameGeometry().width() + 2, y());
 #endif
             }
         }
@@ -1641,7 +1636,7 @@ void RptMainWindow::createToolWindows() {
     measuringLayout_->addWidget(measuringProcessorListWidget_);
 	measuringLayout_->addWidget(measuringProcessorPropertyListWidget_);
 
-	//contentTab_->insertTab(3, measuringLayout_, "Measuring Actions");
+	contentTab_->insertTab(3, measuringLayout_, "Measuring Actions");
 #endif
 }
 
