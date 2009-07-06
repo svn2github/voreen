@@ -39,34 +39,34 @@ class QToolButton;
 namespace voreen {
 
 class ClipperWidget : public QWidget {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ClipperWidget(QWidget *parent = 0) : QWidget(parent) {}
-	ClipperWidget(const char *text, QWidget *parent = 0);
-	int get1stSliderValue();
-	int get2ndSliderValue();
+    ClipperWidget(QWidget *parent = 0) : QWidget(parent) {}
+    ClipperWidget(const char *text, QWidget *parent = 0);
+    int get1stSliderValue();
+    int get2ndSliderValue();
 
 public slots:
-	void sliderPressedChanged(bool pressed);
-	void setLCDDisplay();
-	void lockSliders(bool lock);
+    void sliderPressedChanged(bool pressed);
+    void setLCDDisplay();
+    void lockSliders(bool lock);
 
 signals:
-	void sliderPressed(bool pressed);
-	void sliderValueChanged();
+    void sliderPressed(bool pressed);
+    void sliderValueChanged();
 
 private:
-	SliderSpinBoxWidget* slider1_;
-	SliderSpinBoxWidget* slider2_;
-	QToolButton* lockButton_;
+    SliderSpinBoxWidget* slider1_;
+    SliderSpinBoxWidget* slider2_;
+    QToolButton* lockButton_;
 
-	int sliderMax_;
-	int oldSlider1Val_;
-	int oldSlider2Val_;
-	bool slider1Down_;
-	bool slider2Down_;
-	bool slidersLocked_;
+    int sliderMax_;
+    int oldSlider1Val_;
+    int oldSlider2Val_;
+    bool slider1Down_;
+    bool slider2Down_;
+    bool slidersLocked_;
 };
 
 } // namespace voreen

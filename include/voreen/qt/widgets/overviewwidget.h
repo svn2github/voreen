@@ -64,7 +64,7 @@ private:
     */
     OverviewRenderer* or_;
     bool leftPressed_;
-    bool rightPressed_;   
+    bool rightPressed_;
     float oldMouseX_;
     float oldMouseY_;
     tgt::vec3 translation_;

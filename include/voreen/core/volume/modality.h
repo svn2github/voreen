@@ -50,7 +50,7 @@ public:
 
     static const std::vector<std::string>& getModalities();
 
-    // all known modalities    
+    // all known modalities
     static const Modality MODALITY_UNKNOWN;
     static const Modality MODALITY_ANY;
     static const Modality MODALITY_CT;

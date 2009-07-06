@@ -46,10 +46,10 @@ void main() {
     vec4 intensityPET = texture3D(volumePET_, gl_TexCoord[0].xyz);
 
     vec4 mat = applyTFCT(intensityCT.a);
-    
+
     // FIXME: hack until transfer function is accessible
     if (intensityPET.a > 0.57)
-		mat.r += intensityPET.a;
-		
+        mat.r += intensityPET.a;
+
     gl_FragColor = mat;
 }

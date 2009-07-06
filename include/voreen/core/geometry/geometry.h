@@ -52,7 +52,7 @@ class Geometry {
         Identifier name_;
         int id_;
 
-        /** 
+        /**
          * Indicates whether a Geometry has changed
          */
         bool changed_;

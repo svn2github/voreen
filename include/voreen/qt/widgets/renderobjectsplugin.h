@@ -56,4 +56,4 @@ private:
 
 } // namespace voreen
 
-#endif // VECTORFIELDPLUGIN_H
+#endif // RENDEROBJECTSPLUGIN_H

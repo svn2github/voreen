@@ -41,7 +41,7 @@ class IOProgress;
  */
 class TiffVolumeReader : public VolumeReader {
 public:
-    TiffVolumeReader(IOProgress* progress = 0);    
+    TiffVolumeReader(IOProgress* progress = 0);
     ~TiffVolumeReader() {}
 
     virtual VolumeSet* read(const std::string& fileName)

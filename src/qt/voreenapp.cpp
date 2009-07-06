@@ -27,6 +27,8 @@
  *                                                                    *
  **********************************************************************/
 
+// WARNING: THIS FILE IS DEPRECATED!
+
 #include "voreen/qt/voreenapp.h"
 
 #include "tgt/init.h"

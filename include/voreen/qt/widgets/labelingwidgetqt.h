@@ -42,11 +42,11 @@ namespace voreen {
 
 class LabelingWidgetQt : public WidgetPlugin, LabelingWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
     LabelingWidgetQt(QWidget* parent=0, MessageReceiver* msgReceiver=0);
-    std::string showInputDialog(const std::string &title, 
+    std::string showInputDialog(const std::string &title,
         const std::string &label,
         const std::string &text);
 

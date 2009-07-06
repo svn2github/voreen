@@ -104,7 +104,7 @@ public:
     ~VevoFrame() {}
 
     VevoFrame& operator=(const VevoFrame& v);
-    
+
     friend std::ostream& operator<<(std::ostream& os, const VevoFrame& v) {
         return os
         << "++++++++++++++++++++\n"

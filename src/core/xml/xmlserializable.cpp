@@ -32,13 +32,13 @@
 namespace voreen{
 int XmlSerializable::idCounter_ = 0;
 
-XmlSerializable::XmlSerializable(bool init) 
+XmlSerializable::XmlSerializable(bool init)
 {
     if (init)
         serialId_ = idCounter_++;
     else
         serialId_ = -1;
-    
+
     getAllObjects()->push_front(this);
 }
 
@@ -72,10 +72,10 @@ void XmlSerializable::deserialize(const TiXmlElement* xml) throw (XmlSerializabl
 XmlSerializable* XmlSerializable::getPointer(int serialId) {
     if (serialId < 0)
         return 0;
-    
+
     XmlSerializable* tmp;
     std::list<XmlSerializable*>::iterator it;
-	std::list<XmlSerializable*>* allObjects = getAllObjects();
+    std::list<XmlSerializable*>* allObjects = getAllObjects();
     for (it = allObjects->begin(); it != allObjects->end(); ++it) {
         tmp = static_cast<XmlSerializable*>(*it);
         if(serialId == tmp->getSerialId())
@@ -84,20 +84,20 @@ XmlSerializable* XmlSerializable::getPointer(int serialId) {
     return 0;
 }
 
-// FIXME: replace std::list for XmlSerializableRegister by using std::set in 
+// FIXME: replace std::list for XmlSerializableRegister by using std::set in
 // order to achieve runtime of O(log(n)) instead of O(n).
 //
 /*
 void XmlSerializable::registerNewClass(XmlSerializableRegister* newClass) {
     const Identifier& newClassIdentifier = newClass->getClassIdentifier();
     std::list<XmlSerializableRegister*>::iterator it;
-	std::list<XmlSerializableRegister*>* allClasses = getAllClasses();
-	for(it = allClasses->begin(); it != allClasses->end(); ++it) {
+    std::list<XmlSerializableRegister*>* allClasses = getAllClasses();
+    for(it = allClasses->begin(); it != allClasses->end(); ++it) {
         XmlSerializableRegister* tmp = static_cast<XmlSerializableRegister*>(*it);
-		const Identifier& oldClassIdentifier = tmp->getClassIdentifier();
+        const Identifier& oldClassIdentifier = tmp->getClassIdentifier();
         if (newClassIdentifier == oldClassIdentifier)
             return;
-	}
+    }
     allClasses->push_front(newClass);
 }
 */
@@ -182,14 +182,14 @@ void XmlSerializable::writeBoolAttribute(std::string attributeName, bool value,
     xml->SetAttribute(attributeName,textValue);
 }
 
-bool XmlSerializable::readBoolAttribute(std::string attributeName, 
+bool XmlSerializable::readBoolAttribute(std::string attributeName,
                                         const TiXmlElement* xml)
     throw (XmlSerializable::Exceptions)
 {
     const char* value = xml->Attribute(attributeName);
     if (value == 0)
         throw XmlSerializable::ATTRIBUT_ERROR;
-    
+
     if (strcmp(value, "true") == 0)
         return true;
     else if (strcmp(value, "false") == 0)
@@ -208,7 +208,7 @@ XmlSerializable::ClassMap& XmlSerializable::getAllClasses() {
     return *allClasses;
 }
 
-// FIXME: replace std::list for XmlSerializableRegister by using std::set in 
+// FIXME: replace std::list for XmlSerializableRegister by using std::set in
 // order to achieve runtime of O(log(n)) instead of O(n).
 //
 /*
@@ -220,7 +220,7 @@ std::list<XmlSerializableRegister*>* XmlSerializable::getAllClasses() {
 
 //----------------------------------------------------------------------------
 
-XmlSerializableRegister::XmlSerializableRegister(const Identifier& identifier, 
+XmlSerializableRegister::XmlSerializableRegister(const Identifier& identifier,
     XmlSerializable* (*creatorMethod)(void))
     : identifier_(identifier)
 {

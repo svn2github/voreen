@@ -35,22 +35,22 @@
 
 namespace voreen {
 
-	class VisibleHumanReader {
-	public:
-		VisibleHumanReader();
+    class VisibleHumanReader {
+    public:
+        VisibleHumanReader();
 
-		void createDataset(std::vector<std::string> filenames,std::string outputFile, int byteSkip, bool color);
+        void createDataset(std::vector<std::string> filenames,std::string outputFile, int byteSkip, bool color);
 
-		void readSlice(std::fstream inputStream, std::fstream outputStream);
+        void readSlice(std::fstream inputStream, std::fstream outputStream);
 
-	protected:
-		
-		void readSliceInformation();
-		bool colorDataset_;
+    protected:
 
-	private:
+        void readSliceInformation();
+        bool colorDataset_;
 
-	}; //class VisibleHumanReader
+    private:
+
+    }; //class VisibleHumanReader
 
 
 } //namespace voreen

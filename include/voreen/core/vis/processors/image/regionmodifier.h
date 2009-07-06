@@ -35,29 +35,22 @@
 #include <string>
 #include <map>
 
-#include "voreen/core/vis/property.h"
+#include "voreen/core/vis/properties/property.h"
 #include "voreen/core/vis/processors/processor.h"
-#include "voreen/core/vis/processors/image/genericfragment.h"
+#include "voreen/core/vis/processors/image/imageprocessor.h"
 #include "voreen/core/vis/processors/portmapping.h"
 
 namespace voreen {
 
-class RegionModifier : public GenericFragment {
+class RegionModifier : public ImageProcessor {
 public:
     RegionModifier();
 
-    virtual const Identifier getClassName() const {return "PostProcessor.RegionModifier";}
-	virtual const std::string getProcessorInfo() const;
-    virtual Processor* create() {return new RegionModifier();}
+    virtual const Identifier getClassName() const {return "ImageProcessor.RegionModifier";}
+    virtual const std::string getProcessorInfo() const;
+    virtual Processor* create() const {return new RegionModifier();}
 
     void process(LocalPortMapping* portMapping);
-
-    /**
-     *  
-     *   @param msg The incoming message.
-     *   @param dest The destination of the message.
-     */
-    virtual void processMessage(Message* msg, const Identifier& dest=Message::all_);
 
     enum RegionModifierModes {
         MODE_REPLACE,
@@ -67,6 +60,7 @@ public:
 protected:
     virtual std::string generateHeader();
     virtual void compile();
+    void setRegionModifierModeEvt();
 
     RegionModifierModes mode_;
     std::map<RegionModifierModes, std::string> modeDefinesMap_;

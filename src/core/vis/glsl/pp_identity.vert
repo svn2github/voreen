@@ -27,7 +27,7 @@
  *                                                                    *
  **********************************************************************/
 
-/** 
+/**
  * Simply pass through the provided vertex position.
  */
 void main() {

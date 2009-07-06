@@ -39,40 +39,40 @@ public:
     VoreenButton(const QString& text, QWidget* parent = 0);
     VoreenButton(const QIcon& icon, const QString& text = 0, QWidget* parent = 0);
 
-	void setColor(QColor & color)         { color_ = color; }
-	void setHighlight(QColor & highlight) { highlightColor_ = highlight; }
-	void setShadow(QColor & shadow)       { shadowColor_ = shadow; }
+    void setColor(QColor & color)         { color_ = color; }
+    void setHighlight(QColor & highlight) { highlightColor_ = highlight; }
+    void setShadow(QColor & shadow)       { shadowColor_ = shadow; }
 
-	//Range: 0.0 [invisible] - 1.0 [opaque]
-	void setOpacity(qreal opacity)        { opacity_ = opacity; }
+    //Range: 0.0 [invisible] - 1.0 [opaque]
+    void setOpacity(qreal opacity)        { opacity_ = opacity; }
 
-	//Range: 0 [rectangle] - 99 [oval]
-	void setRoundness(int roundness)      { roundness_ = roundness; }
+    //Range: 0 [rectangle] - 99 [oval]
+    void setRoundness(int roundness)      { roundness_ = roundness; }
 
 protected:
     static const int BUTTON_SIZE;
-    
-	void paintEvent(QPaintEvent* pe);
 
-	void enterEvent(QEvent* e);
-	void leaveEvent(QEvent* e);
+    void paintEvent(QPaintEvent* pe);
 
-	void mousePressEvent(QMouseEvent* e);
-	void mouseReleaseEvent(QMouseEvent* e);
+    void enterEvent(QEvent* e);
+    void leaveEvent(QEvent* e);
+
+    void mousePressEvent(QMouseEvent* e);
+    void mouseReleaseEvent(QMouseEvent* e);
 
 private:
-	QRect calculateIconPosition(QRect button_rect, QSize icon_size);
+    QRect calculateIconPosition(QRect button_rect, QSize icon_size);
 
-	bool hovered_;
-	bool pressed_;
+    bool hovered_;
+    bool pressed_;
 
-	QColor color_;
-	QColor highlightColor_;
-	QColor shadowColor_;
+    QColor color_;
+    QColor highlightColor_;
+    QColor shadowColor_;
 
-	qreal opacity_;
+    qreal opacity_;
 
-	int roundness_;
+    int roundness_;
 };
 
 #endif // VRN_VOREENBUTTON_H

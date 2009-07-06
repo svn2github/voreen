@@ -56,8 +56,8 @@ public:
     virtual ~IDRaycaster();
 
     virtual const Identifier getClassName() const {return "Raycaster.IDRaycaster";}
-	virtual const std::string getProcessorInfo() const;
-    virtual Processor* create() {return new IDRaycaster();}
+    virtual const std::string getProcessorInfo() const;
+    virtual Processor* create() const {return new IDRaycaster();}
 
     /**
      * Reacts to the following messages:
@@ -68,8 +68,6 @@ public:
      * - "set.blurDelta", Type: \c float. Blur filter size.
      */
     virtual void processMessage(Message* msg, const Identifier& dest=Message::all_);
-
-    virtual void setPropertyDestination(Identifier dest);
 
     virtual int initializeGL();
 
@@ -97,7 +95,7 @@ protected:
     /// Indicates how deep a ray penetrates the volume, if no segment is hit.
     FloatProp penetrationDepth_;
 
-    static const Identifier firstHitPointsTexUnit_;     
+    static const Identifier firstHitPointsTexUnit_;
     static const Identifier firstHitPointsDepthTexUnit_;
 
 };

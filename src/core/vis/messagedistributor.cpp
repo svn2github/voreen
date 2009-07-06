@@ -98,13 +98,10 @@ void MessageDistributor::processMessage(Message* msg, const Identifier& dest/*=M
 }
 
 MessageDistributor::iterator MessageDistributor::insert(MessageReceiver* mr) {
-    tgtAssert(!contains(mr), "Message receiver already inserted");
-
     return ReceiverMap::insert(std::make_pair(mr->getTag(), mr));
 }
 
 void MessageDistributor::remove(MessageReceiver* mr) {
-    // TODO use equal_range here for performance
     iterator iter = begin();
     while ((iter != end()) && (iter->second != mr) )
         ++iter;

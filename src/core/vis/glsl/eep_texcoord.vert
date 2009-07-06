@@ -27,7 +27,7 @@
  *                                                                    *
  **********************************************************************/
 
-#include "modules/mod_sampler3d.frag"           // contains struct VOLUME_PARAMETERS 
+#include "modules/mod_sampler3d.frag"           // contains struct VOLUME_PARAMETERS
 
 uniform VOLUME_PARAMETERS volumeParameters_;    // additional information about the volume the eep are generated for
 
@@ -44,7 +44,7 @@ void main() {
 
     // Brackets are important! Without them the compiler may do costly matrix multiplications
     // instead of a cheap matrix-vector multiplication.
-    // 
+    //
     // On NVIDIA 97.55 (Linux) it also triggers a compiler(?) bug, resulting in black rendering
     // of the entry params in TexCoordEntryExitPoints.
     gl_Position = gl_ProjectionMatrix * (gl_ModelViewMatrix * gl_Vertex);

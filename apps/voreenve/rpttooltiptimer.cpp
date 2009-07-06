@@ -46,7 +46,7 @@ void RptTooltipTimer::setPoint(QPoint p) {
     p_ = p;
 }
 
-bool RptTooltipTimer::isDistant(const QPoint & p) {
+bool RptTooltipTimer::isDistant(const QPoint& p) {
     if (distance(p)>radius_) {
         stop();
         return true;
@@ -56,14 +56,14 @@ bool RptTooltipTimer::isDistant(const QPoint & p) {
     }
 }
 
-void RptTooltipTimer::resetIfDistant(const QPoint & p, int msec) {
+void RptTooltipTimer::resetIfDistant(const QPoint& p, int msec) {
     if (isDistant(p)) {
         p_ = p;
         start(msec);
     }
 }
 
-qreal RptTooltipTimer::distance(const QPoint & p) const {
+qreal RptTooltipTimer::distance(const QPoint& p) const {
     return std::sqrt(pow(p_.x()-p.x(),2.)+pow(p_.y()-p.y(),2.)); // Should I use tgt?
 }
 

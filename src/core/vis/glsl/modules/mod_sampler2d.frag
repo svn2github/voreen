@@ -41,11 +41,11 @@ uniform vec2 screenDimRCP_;
         vec2 texCoordsNormalized = texCoords * screenDimRCP_;
         return texture2D(texture, texCoordsNormalized);
     }
-    
+
 // definitions for textures of type GL_TEXTURE_RECTANGLE_ARB
 #elif defined(VRN_TEXTURE_RECTANGLE)
 
-    #extension GL_ARB_texture_rectangle : enable    
+    #extension GL_ARB_texture_rectangle : enable
 
     #define SAMPLER2D_TYPE sampler2DRect
 

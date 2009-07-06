@@ -36,7 +36,7 @@ namespace voreen {
 
 class VoreenException : public tgt::Exception {
 public:
-    VoreenException(std::string what = "") : tgt::Exception(what) {}
+    VoreenException(const std::string& what = "") : tgt::Exception(what) {}
     virtual ~VoreenException() throw() {}
 };
 

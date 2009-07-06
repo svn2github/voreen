@@ -66,7 +66,7 @@ public:
     };
 
     /**
-     * Default constructor.  
+     * Default constructor.
      *
      * @param init. If true - serialId_ will get the next available
      * number and -1 in other case (for later call of deserialize).
@@ -105,9 +105,9 @@ public:
      * @throw WRONG_IDENTIFIER if classIdentifier is wrong
      * @throw ATTRIBUT_ERROR  if an attribut could not be initialized
      */
-    virtual void deserialize(const TiXmlElement* xml) 
+    virtual void deserialize(const TiXmlElement* xml)
         throw (XmlSerializable::Exceptions);
-  
+
     /**
      * Init Pointers. You should get all needed Pointers from
      * getPointer function and throw
@@ -117,7 +117,7 @@ public:
     virtual void initPointers() throw(XmlSerializable::Exceptions) {}
 
     /**
-     * Get pointer to an serializable object with given id. 
+     * Get pointer to an serializable object with given id.
      * @param serialId - id of searched object.
      * @return pointer to object or 0, if such an object does not exist.
      */
@@ -135,7 +135,7 @@ public:
      * </code>
      */
     virtual const Identifier& getClassIdentifier() const = 0;
-    
+
     /**
      * Factory design pattern method: implement on derived
      * classes as follows:
@@ -151,10 +151,10 @@ public:
      * Every child class can create a static instance of SubType of
      * XmlSerializableRegister and pass it to this function for
      * providing full automaticaly deserializing.
-     */ 
+     */
     static void registerNewClass(const Identifier& classID, XmlSerializable* (*creatorMethod)(void));
     //static void registerNewClass(XmlSerializableRegister* newClass);
-    
+
     /**
      * You can create a new class of your need just by passing
      * TiXmlElement to this function. If such a class is registered
@@ -181,19 +181,19 @@ public:
 
 protected:
     /**
-     * serial id . 
+     * serial id .
      */
     int serialId_;
 
 private:
     static int idCounter_;
-	/**
-	* Replace static members with static functions because of
+    /**
+    * Replace static members with static functions because of
     * static initialization order fiasco look at
-	* http://www.parashift.com/c++-faq-lite/ctors.html
-	*/
-	static std::list<XmlSerializable*>* getAllObjects();
-	//static std::list<XmlSerializableRegister*>* getAllClasses();
+    * http://www.parashift.com/c++-faq-lite/ctors.html
+    */
+    static std::list<XmlSerializable*>* getAllObjects();
+    //static std::list<XmlSerializableRegister*>* getAllClasses();
 
     typedef XmlSerializable* (*creatorMethod_)(void);
     typedef std::map<Identifier, creatorMethod_> ClassMap;
@@ -204,7 +204,7 @@ private:
 
 class XmlSerializableRegister {
 public:
-    XmlSerializableRegister(const Identifier& identifier, 
+    XmlSerializableRegister(const Identifier& identifier,
         XmlSerializable* (*creatorMethod)(void));
     const Identifier& getClassIdentifier() const;
 private:

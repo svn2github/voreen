@@ -33,7 +33,7 @@
 
 namespace voreen {
 
-QLabelClickable::QLabelClickable ( const char * text, QWidget * parent, Qt::WFlags f, Qt::CursorShape hoverCursor) : 
+QLabelClickable::QLabelClickable ( const char * text, QWidget * parent, Qt::WFlags f, Qt::CursorShape hoverCursor) :
     QLabel ( text, parent, f ),
     hoverCursor_(hoverCursor)
 {

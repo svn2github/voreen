@@ -36,12 +36,12 @@
 
 namespace voreen {
 
-DockBarHandler::DockBarHandler(QWidget* parent, QString title) : 
+DockBarHandler::DockBarHandler(QWidget* parent, QString title) :
     QDockWidget(title, parent),
     parent_(parent)
 {
     setObjectName(title);
-    
+
     mainFrame_ = new QFrame();
     mainFrame_->setFrameStyle(QFrame::NoFrame);
     mainFrame_->setContentsMargins(-6, -6, -6, -6);
@@ -95,7 +95,7 @@ void DockBarHandler::adjustWidthAndVisibility(PluginDialog* dialogToIgnore) {
         }
     }
     if (minWidth > 0) {
-        minWidth += scrollArea_->verticalScrollBar()->sizeHint().width() + 8; 
+        minWidth += scrollArea_->verticalScrollBar()->sizeHint().width() + 8;
         setMaximumWidth(minWidth);
         setMinimumWidth(minWidth);
         setVisible(true);

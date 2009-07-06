@@ -42,25 +42,39 @@ namespace voreen {
  */
 class CanvasRenderer : public Processor {
 public:
-	CanvasRenderer();
+    CanvasRenderer();
     ~CanvasRenderer();
+
     virtual void process(LocalPortMapping* portMapping);
 
-	virtual const Identifier getClassName() const;
-	virtual const std::string getProcessorInfo() const;
-    virtual Processor* create();
-        
+    virtual const Identifier getClassName() const;
+    virtual const std::string getProcessorInfo() const;
+    virtual Processor* create() const;
+
     virtual int initializeGL();
 
-protected:   
+    virtual bool isEndProcessor() const;
+    virtual bool usesCaching() const;
+
+    /**
+     * Returns the ID of the image which will be copied to the frame buffer in order
+     * to enable others to access the render target from the TextureContainer where
+     * the final image is held.
+     */
+    int getImageID() { return imageID_; }
+    
+protected:
     /**
      * The shader program used by this \c CanvasRenderer.
      */
     tgt::Shader* raycastPrg_;
 
     BoolProp useCaching_; ///< property that activates or deactivates caching in this processor
+
+    /// Render target holding the input image within the TextureContainer.
+    int imageID_;    
 };
 
 } // namespace voreen
 
-#endif //VRN_CANVASRENDERER_H
+#endif // VRN_CANVASRENDERER_H

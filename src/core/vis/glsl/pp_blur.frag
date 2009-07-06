@@ -54,7 +54,7 @@ vec4 blur(in vec2 fragCoord, in vec4 blurChannels, in vec4 nblurChannels, in flo
     vec4 southeast = textureLookup2D(shadeTex_, vec2(fragCoord.x+delta, fragCoord.y+delta) ).rgba;
     vec4 south = textureLookup2D(shadeTex_, vec2(fragCoord.x, fragCoord.y+delta) ).rgba;
     vec4 southwest = textureLookup2D(shadeTex_, vec2(fragCoord.x-delta, fragCoord.y+delta) ).rgba;
-    
+
     return nblurChannels*center + blurChannels*(3.0*center + west + northwest + north + northeast + east + southeast + south + southwest)/11.0;
 }
 
@@ -65,7 +65,7 @@ vec4 blur(in vec2 fragCoord, in vec4 blurChannels, in vec4 nblurChannels, in flo
 void main() {
     vec4 fragCoord = gl_FragCoord;
     gl_FragColor = blur(fragCoord.xy, blurChannels, nblurChannels, delta_);
-    
+
     gl_FragDepth = textureLookup2D(depthTex_, fragCoord.xy ).z;
-    
+
  }

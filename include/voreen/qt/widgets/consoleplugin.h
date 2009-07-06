@@ -32,18 +32,25 @@
 
 #include "widgetplugin.h"
 
-#include <QTextEdit>
+class QTextEdit;
 
 namespace voreen {
+
+class ConsoleLogQt;
 
 class ConsolePlugin : public WidgetPlugin {
     Q_OBJECT
 public:
     ConsolePlugin(QWidget* parent = 0, MessageReceiver* msgreceiver = 0);
 
+    void log(const std::string& msg);
+
 protected:
     virtual void createWidgets();
     virtual void createConnections();
+
+    ConsoleLogQt* log_;
+    QTextEdit* consoleText_;
 };
 
 } // namespace voreen

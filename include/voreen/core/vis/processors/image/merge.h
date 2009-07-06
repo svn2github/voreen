@@ -40,9 +40,9 @@
 
 #include "voreen/core/opengl/texturecontainer.h"
 #include "voreen/core/opengl/texunitmapper.h"
-#include "voreen/core/vis/processors/render/proxygeometry.h"
+#include "voreen/core/vis/processors/proxygeometry/proxygeometry.h"
 #include "voreen/core/vis/transfunc/transfunc.h"
-#include "voreen/core/vis/property.h"
+#include "voreen/core/vis/properties/property.h"
 #include "voreen/core/vis/processors/processor.h"
 #include "voreen/core/vis/processors/image/collect.h"
 
@@ -52,9 +52,9 @@ namespace voreen {
 class Merge : public Collect {
 public:
     Merge();
-    virtual const Identifier getClassName() const {return "PostProcessor.Merge";}
-	virtual const std::string getProcessorInfo() const;
-    virtual Processor* create() {return new Merge();}
+    virtual const Identifier getClassName() const {return "ImageProcessor.Merge";}
+    virtual const std::string getProcessorInfo() const;
+    virtual Processor* create() const {return new Merge();}
 
 protected:
     virtual void renderTwo(int source0, int source1, int pass);

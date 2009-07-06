@@ -41,7 +41,7 @@ public:
     ScalarGeometry() { }
     virtual ~ScalarGeometry() { }
 
-	void draw() { }
+    void draw() { }
 };
 
 } // namespace

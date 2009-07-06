@@ -28,14 +28,15 @@
  **********************************************************************/
 
 #include "voreen/core/vis/processors/interactionhandler.h"
+#include "voreen/core/vis/messagedistributor.h"
 
 namespace voreen{
 
 
 InteractionHandler::InteractionHandler() : tgt::EventListener(), defaultEventTypes_(tgt::Event::ALLEVENTTYPES) {
-	
+
 }
-    
+
 InteractionHandler::~InteractionHandler(){
     MsgDistr.postMessage(new TemplateMessage<tgt::EventListener*>(VoreenPainter::removeEventListener_, (tgt::EventListener*)this));
 }

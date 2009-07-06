@@ -34,7 +34,6 @@
 #include "tgt/vector.h"
 #include "tgt/event/mouseevent.h"
 #include "tgt/glcanvas.h"
-#include "tgt/navigation/trackball.h"
 #include "tgt/navigation/navigation.h"
 
 #include "voreen/core/vis/voreenpainter.h"

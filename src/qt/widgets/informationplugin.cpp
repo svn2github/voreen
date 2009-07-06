@@ -43,11 +43,11 @@ InformationPlugin::InformationPlugin(QWidget* parent, MessageReceiver* msgReceiv
 }
 
 void InformationPlugin::createWidgets() {
-    if (infoText_) 
+    if (infoText_)
         return;
     infoText_ = new QTextEdit(this);
     infoText_->setReadOnly(true);
-	QVBoxLayout* vboxLayout = new QVBoxLayout();
+    QVBoxLayout* vboxLayout = new QVBoxLayout();
     vboxLayout->addWidget(infoText_, 0, Qt::AlignTop);
     setLayout(vboxLayout);
 }

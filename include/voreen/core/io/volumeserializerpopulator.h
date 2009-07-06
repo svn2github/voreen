@@ -51,14 +51,14 @@ public:
     ~VolumeSerializerPopulator();
 
     /// get a pointer of the generated VolumeSerializer
-    VolumeSerializer* getVolumeSerializer();
+    VolumeSerializer* getVolumeSerializer() const;
 
 private:
     IOProgress* progress_;
 
     std::vector<VolumeReader*> readers_;
     std::vector<VolumeWriter*> writers_;
-    VolumeSerializer* vs_;
+    VolumeSerializer* const vs_;
 };
 
 } // namespace voreen

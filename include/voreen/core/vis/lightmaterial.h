@@ -34,7 +34,7 @@
 
 namespace voreen {
 
-struct LightMaterial {    
+struct LightMaterial {
     static const Identifier setLightPosition_;
     static const Identifier setLightAmbient_;
     static const Identifier setLightDiffuse_;

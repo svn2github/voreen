@@ -75,7 +75,7 @@ GridType:       EQUIDISTANT
 class DatVolumeReader : public VolumeReader {
 public:
     DatVolumeReader(IOProgress* progress = 0);
-    
+
     virtual VolumeSet* read(const std::string& fileName)
         throw (tgt::FileException, std::bad_alloc);
 

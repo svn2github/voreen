@@ -39,7 +39,7 @@ RptAggregationListWidget::RptAggregationListWidget(QWidget* parent)
     setHeaderLabel("Aggregations");
     setColumnCount(1);
     buildItems();
-    header()->hide();  
+    header()->hide();
 }
 
 void RptAggregationListWidget::buildItems() {
@@ -51,7 +51,7 @@ void RptAggregationListWidget::buildItems() {
     filters << "*.svnf";
     filters << "*.vnw";
     QStringList savedAggregations = dir.entryList(filters, QDir::Files, QDir::Name);
-    
+
     for (int i=0; i<savedAggregations.size(); i++) {
         items_.append(new RptAggregationListItem(savedAggregations[i].toStdString()));
     }
@@ -77,13 +77,13 @@ void RptAggregationListWidget::mousePressEvent(QMouseEvent *event) {
     // if no RptRenderListItem selected, return
     if (!item)
         return;
-    
+
     QString filename = "../../data/networks/aggregations/";
     filename += QString(item->getFileName().c_str());
 
     QMimeData *mimeData = new QMimeData;
     mimeData->setText(filename);
-        
+
     QDrag *drag = new QDrag(this);
     drag->setMimeData(mimeData);
 

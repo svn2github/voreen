@@ -40,7 +40,7 @@
 namespace voreen {
 
 /**
- * Downloading of datasets from a PACS. 
+ * Downloading of datasets from a PACS.
  */
 class DicomMoveSCU {
 public:
@@ -51,7 +51,7 @@ public:
         QMStudyRoot = 1,         ///< use study root information model
         QMPatientStudyOnly = 2   ///< use patient/study only information model
     } QueryModel;
-    
+
     /**
      * Set up connection parameters for the following C-MOVE operations.
      *

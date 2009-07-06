@@ -40,6 +40,8 @@
 #include "voreen/core/volume/volumeset.h"
 #endif
 
+#include "voreen/core/volume/volumehandle.h"
+
 namespace voreen {
 
 // forward declarations
@@ -92,6 +94,8 @@ public:
      */
     VolumeSet* load(const std::string& filename)
         throw (tgt::FileException, std::bad_alloc);
+
+    VolumeHandle* loadFromOrigin(VolumeHandle::Origin origin);
 
     /**
      * Saves a Volume to the given file.

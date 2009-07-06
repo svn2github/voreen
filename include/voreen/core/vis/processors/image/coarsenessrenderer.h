@@ -36,39 +36,37 @@ namespace voreen {
 
 class CoarsenessRenderer : public Processor {
 public:
-	/**
-	 * Default constructor. Sets the processorname, creates one in- and one outport and registers
+    /**
+     * Default constructor. Sets the processorname, creates one in- and one outport and registers
      * the coarsenessfactor property.
-	 */
-	CoarsenessRenderer();
-    ~CoarsenessRenderer();
+     */
+    CoarsenessRenderer();
+    virtual ~CoarsenessRenderer();
 
     /**
     * Gets the identifier for "Miscellaneous.CoarsenessRenderer"
     * @return The identifier
     */
-	virtual const Identifier getClassName() const;
-	
+    virtual const Identifier getClassName() const;
+
     /**
     * Gets further information about the processor.
     * @return A short text describing the processor
     */
     virtual const std::string getProcessorInfo() const;
-    
+
     /**
     * Returns a new instance of this processor
     * @return A newly created coarseness renderer
     */
-    virtual Processor* create();
-    
+    virtual Processor* create() const;
+
     /**
     * Loads the appropriate vertex and fragment shaders.
-    * @return VRN_OK if everything went fine. VRN_ERROR or VRN_OPENGL_INSUFFICIENT otherwise
     */
     virtual int initializeGL();
-	virtual void process(LocalPortMapping* portMapping);
-    virtual void processMessage(Message* msg, const Identifier& dest=Message::all_);
-    
+    virtual void process(LocalPortMapping* portMapping);
+
     /// Getter for useCoarseness_
     bool getUseCoarseness();
     /// Getter for ignoreCoarseness_
@@ -92,7 +90,7 @@ public:
 
 private:
 
-	/**
+    /**
      * Indicates if the coarseness factor is ignored. \see setIgnoreCoarseness
      */
     bool useCoarseness_;

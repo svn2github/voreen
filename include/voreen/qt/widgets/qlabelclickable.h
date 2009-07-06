@@ -41,7 +41,7 @@ class QLabelClickable : public QLabel {
     Q_OBJECT
 
 public:
-    QLabelClickable ( const char * text, QWidget * parent, Qt::WFlags f = 0, 
+    QLabelClickable ( const char * text, QWidget * parent, Qt::WFlags f = 0,
         Qt::CursorShape hoverCursor = Qt::PointingHandCursor);
     virtual ~QLabelClickable() { }
 

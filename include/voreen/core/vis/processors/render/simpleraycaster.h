@@ -42,24 +42,15 @@ public:
 
     /**
      * Constructor.
-     * 
+     *
      */
     SimpleRaycaster();
 
     virtual ~SimpleRaycaster();
 
-	virtual const Identifier getClassName() const {return "Raycaster.SimpleRaycaster";}
-	virtual const std::string getProcessorInfo() const;
-    virtual Processor* create() {return new SimpleRaycaster();}
-
-    /**
-     *  Takes care of incoming messages.  Accepts the following message-ids:
-     *      - setTransferFunction, which sets the current transfer-function. Msg-Type: TransferFunc*
-
-     *   @param msg The incoming message.
-     *   @param dest The destination of the message.
-     */
-    virtual void processMessage(Message* msg, const Identifier& dest=Message::all_);
+    virtual const Identifier getClassName() const {return "Raycaster.SimpleRaycaster";}
+    virtual const std::string getProcessorInfo() const;
+    virtual Processor* create() const {return new SimpleRaycaster();}
 
     virtual int initializeGL();
 
@@ -76,35 +67,15 @@ public:
      * a screen aligned quad. The render destination is determined by the
      * invoking class.
      */
-	virtual void process(LocalPortMapping*  portMapping);
-
-    virtual void setPropertyDestination(Identifier tag);
-
-    /**
-    * Returns the transfer function used by this raycaster
-    * \return The transfer function used by this raycaster
-    */
-    virtual TransFunc* getTransFunc();
-
-    /**
-    * Returns the i-th transfer function used by this raycaster
-    * \param i The number of the transfer function we want to get (i = 0 equals a getTransFunc()
-    call
-    * \retrurn The i-th transfer function
-    */
-    virtual TransFunc* getTransFunc(int i);
+    virtual void process(LocalPortMapping*  portMapping);
 
 protected:
-
     virtual std::string generateHeader();
 
     virtual void compile();
 
-
 private:
     TransFuncProp transferFunc_;  ///< the property that controls the transfer-function
-
-    bool firstPass_; ///< may need several rendering passes, this stores if this is the first
 };
 
 

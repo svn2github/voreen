@@ -40,7 +40,7 @@ class Processor;
 class RptProcessorItem;
 
 /**
- * This class summarizes several RptProcessorItems to one item in the scene. 
+ * This class summarizes several RptProcessorItems to one item in the scene.
  */
 class RptAggregationItem : public RptGuiItem {
 
@@ -100,7 +100,7 @@ public:
 
     /**
      * Used to identfy an item in the scene as RptAggregationItem.
-     */     
+     */
     enum { Type = UserType + 3 };
 
     /**

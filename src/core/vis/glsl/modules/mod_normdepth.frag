@@ -36,5 +36,5 @@ uniform float maxDepth_;
  * @depth - depth value to be normalized
  ***/
 float normDepth(float depth) {
-	return (depth - minDepth_) * (1.0 / (maxDepth_ - minDepth_));
+    return (depth - minDepth_) * (1.0 / (maxDepth_ - minDepth_));
 }

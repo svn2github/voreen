@@ -39,7 +39,7 @@
 namespace voreen {
 
 /**
- * Retrieve information about datasets stored on a Dicom PACS. 
+ * Retrieve information about datasets stored on a Dicom PACS.
  */
 class DicomFindSCU {
 public:

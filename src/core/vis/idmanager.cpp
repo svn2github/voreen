@@ -70,7 +70,7 @@ bool IDManager::isClicked(Identifier ident, int x, int y) {
             i = content_->picks_.size();
         }
     }
-	if (validI == -1)
+    if (validI == -1)
         return false;
     if (content_->picks_[validI].name_ == ident.getName())
         return true;
@@ -147,10 +147,10 @@ void IDManager::clearTextureTarget() {
         content_->tc_->setActiveTarget(content_->oldRT_);
     }
     else {
-		//FIXME
+        //FIXME
         //RPTMERGE: allocTarget shouldnt be called, we somehow have to get a portMapping here
         //content_->renderBufferID_ = content_->tc_->allocTarget(Processor::ttId_, "IDManager::initNewRendering");
-		//content_->tc_->setPersistent(content_->renderBufferID_, true);
+        //content_->tc_->setPersistent(content_->renderBufferID_, true);
     }
 }
 

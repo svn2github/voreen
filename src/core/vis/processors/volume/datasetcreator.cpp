@@ -31,16 +31,16 @@
 
 namespace voreen {
 
-	DatasetCreator::DatasetCreator() {
-	}
+    DatasetCreator::DatasetCreator() {
+    }
 
-	void DatasetCreator::createDataset() {
-	}
+    void DatasetCreator::createDataset() {
+    }
 
-	void DatasetCreator::processMessage(Message* /*msg*/, const Identifier& /*dest*/) {
-	}
+    void DatasetCreator::processMessage(Message* /*msg*/, const Identifier& /*dest*/) {
+    }
 
-	void DatasetCreator::process(LocalPortMapping* /*portMapping*/) {
-	}
+    void DatasetCreator::process(LocalPortMapping* /*portMapping*/) {
+    }
 
 } //namespace voreen

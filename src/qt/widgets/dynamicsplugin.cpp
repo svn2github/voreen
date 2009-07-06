@@ -88,7 +88,7 @@ void DynamicsPlugin::createWidgets() {
     vboxLayout->addWidget(playerBox);
 
     vboxLayout->addStretch();
-    
+
     setLayout(vboxLayout);
 }
 
@@ -139,7 +139,7 @@ void DynamicsPlugin::play() {
 void DynamicsPlugin::stop() {
     timer_->stop();
     playButton_->setChecked(false);
-} 
+}
 
 void DynamicsPlugin::rewind() {
     int curVal = dataset_->getValue();

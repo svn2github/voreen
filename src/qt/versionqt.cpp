@@ -49,7 +49,7 @@ const std::string VoreenVersionQt::getQtVersion() {
 
 void VoreenVersionQt::logAll(const std::string& loggerCat) {
     VoreenVersion::logAll(loggerCat);
-   
+
     LINFOC(loggerCat, "Qt version: " << getQtVersion());
 }
 

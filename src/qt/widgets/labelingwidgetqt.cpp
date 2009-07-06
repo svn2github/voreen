@@ -120,7 +120,7 @@ void LabelingWidgetQt::selectionChanged(QListWidgetItem* item) {
         postMessage(new StringMsg("add.unsegmentedLabel", item->text().toStdString() ) );
     else
         postMessage(new StringMsg("remove.unsegmentedLabel", item->text().toStdString() ) );
-    
+
     MsgDistr.postMessage(new Message(VoreenPainter::repaint_), VoreenPainter::visibleViews_);
 }
 

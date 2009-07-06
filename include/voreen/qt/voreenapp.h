@@ -27,6 +27,8 @@
  *                                                                    *
  **********************************************************************/
 
+// WARNING: THIS FILE IS DEPRECATED!
+
 #ifndef VRN_VOREENAPP_H
 #define VRN_VOREENAPP_H
 

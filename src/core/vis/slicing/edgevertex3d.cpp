@@ -88,7 +88,7 @@ bool EdgeVertex3D::operator >(const EdgeVertex3D& v) const {
         return true;
     if ( (v_.x == v2.x) && (v_.y == v2.y) && (v_.z > v2.z) )
         return true;
-    
+
     return false;
 }
 

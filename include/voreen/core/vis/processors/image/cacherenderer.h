@@ -41,15 +41,15 @@ namespace voreen {
  */
 class CacheRenderer : public Processor {
 public:
-	CacheRenderer();
+    CacheRenderer();
     ~CacheRenderer();
 
-	virtual void process(LocalPortMapping* portMapping);
+    virtual void process(LocalPortMapping* portMapping);
 
-	virtual const Identifier getClassName() const;
-	virtual const std::string getProcessorInfo() const;
-    virtual Processor* create();
-        
+    virtual const Identifier getClassName() const;
+    virtual const std::string getProcessorInfo() const;
+    virtual Processor* create() const;
+
     virtual int initializeGL();
 
 protected:
@@ -59,6 +59,6 @@ protected:
     tgt::Shader* raycastPrg_;
 };
 
-} // namespace
+} // namespace voreen
 
 #endif // VRN_CACHERENDERER_H

@@ -55,8 +55,8 @@ void RenderObjectsPlugin::createWidgets() {
 }
 
 void RenderObjectsPlugin::createConnections() {
-//	connect(width_, SIGNAL(valueChanged(int)), this, SLOT(setWidth(int)));
-//	connect(height_, SIGNAL(valueChanged(int)), this, SLOT(setHeight(int)));
+//    connect(width_, SIGNAL(valueChanged(int)), this, SLOT(setWidth(int)));
+//    connect(height_, SIGNAL(valueChanged(int)), this, SLOT(setHeight(int)));
 }
 
 void RenderObjectsPlugin::readRenderingPipeline() {

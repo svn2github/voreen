@@ -109,7 +109,7 @@ VolumeSet* PVMVolumeReader::read(const std::string &fileName)
             LINFO("Comment: " << comment);
         if (components == 1) {
             try {
-				LINFO("Create 8 bit data set.");
+                LINFO("Create 8 bit data set.");
                 dataset = new VolumeUInt8(data, tgt::ivec3(width, height, depth),
                                           tgt::vec3(scalex, scaley, scalez));
             } catch (std::bad_alloc) {
@@ -118,7 +118,7 @@ VolumeSet* PVMVolumeReader::read(const std::string &fileName)
         }
         else if (components == 2) {
             try {
-				LINFO("Create 16 bit data set.");
+                LINFO("Create 16 bit data set.");
                 dataset = new VolumeUInt16((uint16_t*) data, tgt::ivec3(width, height, depth),
                                            tgt::vec3(scalex, scaley, scalez));
             } catch (std::bad_alloc) {
@@ -133,10 +133,10 @@ VolumeSet* PVMVolumeReader::read(const std::string &fileName)
 
     VolumeSet* volumeSet = 0;
     try {
-         volumeSet = new VolumeSet(0, fileName);
-         VolumeSeries* volumeSeries = new VolumeSeries(volumeSet, "unknown", Modality::MODALITY_UNKNOWN);
+        volumeSet = new VolumeSet(tgt::File::fileName(fileName));
+         VolumeSeries* volumeSeries = new VolumeSeries("unknown", Modality::MODALITY_UNKNOWN);
          volumeSet->addSeries(volumeSeries);
-         VolumeHandle* volumeHandle = new VolumeHandle(volumeSeries, dataset, 0.0f);
+         VolumeHandle* volumeHandle = new VolumeHandle(dataset, 0.0f);
          volumeHandle->setOrigin(fileName, "unknown", 0.0f);
          volumeSeries->addVolumeHandle(volumeHandle);
     } catch (std::bad_alloc) {

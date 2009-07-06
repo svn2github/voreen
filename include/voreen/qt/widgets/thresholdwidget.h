@@ -62,7 +62,7 @@ namespace voreen {
         void upperStateToggled(bool);
         void lowerStateToggled(bool);
         void sliderPressedChanged(bool);
-        
+
     public slots:
         virtual void setValues(int lowerValue, int upperValue);
         virtual void setLowerValue( int value );

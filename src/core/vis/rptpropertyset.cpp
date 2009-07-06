@@ -33,7 +33,7 @@ namespace voreen{
 
 RptPropertySet::RptPropertySet(){
     props_.clear();
-	props_.push_back(0);
+    props_.push_back(0);
 }
 
 RptPropertySet::~RptPropertySet(){
@@ -42,7 +42,7 @@ RptPropertySet::~RptPropertySet(){
 
 
 void RptPropertySet::addRenderWrapper(RptRendererWrapper* rw){
-	rendererWrapper_.push_back(rw); 
+    rendererWrapper_.push_back(rw);
 
 }
 
@@ -52,27 +52,27 @@ void RptPropertySet::removeRenderWrapper(RptRendererWrapper* rw){
 
 
 void RptPropertySet::addProperty(Property* prop){
-	props_.push_back(prop);  
+    props_.push_back(prop);
 }
 
 void RptPropertySet::removeProperty(Property* prop){
-  	//delete last ocurrence
+      //delete last ocurrence
     std::vector<Property*>::iterator index;
-    
 
-	//for (std::vector<Property*>::iterator iter=props_.begin();iter!=props_.end();iter++) { 
- //                
- //       if ((props_.at((int)iter))->getIdent() == prop->getIdent()) index = iter;   
-	//}
 
-   // props_.erase(index); 
+    //for (std::vector<Property*>::iterator iter=props_.begin();iter!=props_.end();iter++) {
+ //
+ //       if ((props_.at((int)iter))->getIdent() == prop->getIdent()) index = iter;
+    //}
+
+   // props_.erase(index);
 }
 
 Property* RptPropertySet::getProperty(Identifier ident){
-    Property* result;   
+    Property* result;
 
     for (size_t i=0;i<props_.size();i++){
-         if(props_.at(i)->getIdent() == ident) result = props_.at(i);  
+         if(props_.at(i)->getIdent() == ident) result = props_.at(i);
     }
     return result;
 }

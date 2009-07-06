@@ -103,10 +103,10 @@ VolumeSet* SiemensReader::read(const std::string &fname)
 
    fin.close();
 
-   VolumeSet* volumeSet = new VolumeSet(0, fileName);
-   VolumeSeries* volumeSeries = new VolumeSeries(volumeSet, "unknown", Modality::MODALITY_UNKNOWN);
+   VolumeSet* volumeSet = new VolumeSet(tgt::File::fileName(fileName));
+   VolumeSeries* volumeSeries = new VolumeSeries("unknown", Modality::MODALITY_UNKNOWN);
    volumeSet->addSeries(volumeSeries);
-   VolumeHandle* volumeHandle = new VolumeHandle(volumeSeries, dataset, 0.0f);
+   VolumeHandle* volumeHandle = new VolumeHandle(dataset, 0.0f);
    volumeHandle->setOrigin(fileName, "unknown", 0.0f);
    volumeSeries->addVolumeHandle(volumeHandle);
    return volumeSet;

@@ -54,7 +54,7 @@ public:
      * @name Name of the processor
      */
     void addProcessorName(const std::string& name);
-        
+
     void processMessage(Message* msg, const Identifier& dest);
 
 protected:
@@ -63,15 +63,15 @@ protected:
 
     uint64_t totalTime_;
     int frameCount_;
-    
+
     void beforeProcess(Processor* p);
     void afterProcess(Processor* p);
-    
+
     uint64_t getTicks();
 
-    static const std::string loggerCat_;    
+    static const std::string loggerCat_;
 };
 
 } // namespace
-    
+
 #endif //VRN_BENCHMARK_H

@@ -76,7 +76,7 @@ struct DicomSecurityOptions {
 /**
  * Attributes of a Dicom series. The attributes correspond directly to the Dicom data fields.
  * As Dicom has no real support for volumetric datasets, series are used for modelling volumes.
- * Each image specifies a slice of the volume. 
+ * Each image specifies a slice of the volume.
  */
 struct DicomSeriesInfo {
     std::string uid_;            ///< globally unique series identifier
@@ -87,7 +87,7 @@ struct DicomSeriesInfo {
     std::string modality_;       ///< e.g. CT, MR, US
     std::string numImages_;      ///< number of images in the series
     std::string description_;    ///< SeriesDescription
-}; 
+};
 
 } // namespace voreen
 

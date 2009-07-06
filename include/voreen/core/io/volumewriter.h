@@ -40,7 +40,6 @@ namespace voreen {
 // forward declarations
 class IOProgress;
 class Volume;
-class VolumeContainer;
 
 /**
  * Reads a volume dataset.

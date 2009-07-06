@@ -28,14 +28,17 @@
  **********************************************************************/
 
 #include "voreen/core/vis/processors/image/colordepth.h"
-#include "voreen/core/vis/processors/portmapping.h"
+#include "voreen/core/application.h"
+
+#include "tgt/texturemanager.h"
 
 namespace voreen {
 
 const Identifier ColorDepth::chromadepthTexUnit_ = "chromadepthTexUnit";
 
 ColorDepth::ColorDepth()
-    : GenericFragment("pp_colordepth"),
+    : ImageProcessor("pp_colordepth"),
+      chromaDepthTex_(0),
       factor_("set.colordepth.factor", "Factor", 1.0f, 0.0f, 10.0f, false)
 {
     setName("Color Depth");
@@ -46,14 +49,13 @@ ColorDepth::ColorDepth()
     colorModes_.push_back("Light-dark (modulate)");
     colorModes_.push_back("Chromadepth");
     colorModes_.push_back("Pseudo chromadepth");
-    colorMode_ = new EnumProp("set.colordepth.mode", "Choose mode:", colorModes_, &needRecompileShader_, 1, false);
-	addProperty(colorMode_);
+    colorMode_ = new EnumProp("set.colordepth.mode", "Choose mode:", colorModes_, 1, true, true);
+    addProperty(colorMode_);
 
     addProperty(&factor_);
-    chromaDepthTex_ = 0;
 
-	createInport("image.inport");
-	createOutport("image.outport");
+    createInport("image.inport");
+    createOutport("image.outport");
 }
 
 ColorDepth::~ColorDepth() {
@@ -62,16 +64,17 @@ ColorDepth::~ColorDepth() {
 }
 
 const std::string ColorDepth::getProcessorInfo() const {
-	return "Performs a color filtering which encodes depth information";
+    return "Performs a color filtering which encodes depth information";
+}
+
+int ColorDepth::initializeGL() {
+    chromaDepthTex_ = TexMgr.load(VoreenApplication::app()->getTransFuncPath("chromadepthspectrum.bmp"));
+    return ImageProcessor::initializeGL();
 }
 
 void ColorDepth::process(LocalPortMapping* portMapping) {
-	int source = portMapping->getTarget("image.inport");
+    int source = portMapping->getTarget("image.inport");
     int dest = portMapping->getTarget("image.outport");
-
-    if (chromaDepthTex_ == 0)
-        chromaDepthTex_ = TexMgr.load("../../data/transferfuncs/chromadepthspectrum.bmp");
-
 
     analyzeDepthBuffer(source);
 
@@ -102,7 +105,7 @@ void ColorDepth::process(LocalPortMapping* portMapping) {
     program_->setUniform("chromadepthTex_", tm_.getTexUnit(chromadepthTexUnit_));
     program_->setUniform("minDepth_", minDepth_.get());
     program_->setUniform("maxDepth_", maxDepth_.get());
-	program_->setUniform("colorMode_", colorMode_->get());
+    program_->setUniform("colorMode_", colorMode_->get());
     program_->setUniform("colorDepthFactor_", factor_.get());
 
     renderQuad();
@@ -110,19 +113,6 @@ void ColorDepth::process(LocalPortMapping* portMapping) {
     program_->deactivate();
     glActiveTexture(TexUnitMapper::getGLTexUnitFromInt(0));
     LGL_ERROR;
-}
-
-void ColorDepth::processMessage(Message* msg, const Identifier& dest)
-{
-	GenericFragment::processMessage(msg, dest);
-    if (msg->id_ == "set.colordepth.mode") {
-        colorMode_->set(msg->getValue<int>());
-        invalidate();
-    } 
-    else if (msg->id_ == "set.colordepth.factor") {
-        factor_.set(msg->getValue<float>());
-        invalidate();
-    }
 }
 
 } // voreen namespace

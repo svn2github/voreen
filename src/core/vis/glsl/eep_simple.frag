@@ -27,11 +27,6 @@
  *                                                                    *
  **********************************************************************/
 
-varying vec4 eep_;
-
-/**
- * Use the entry exit positions interpolated by OpenGL as color value.
- */
-void main() {   
-    gl_FragColor = eep_;
+void main() {
+    gl_FragColor = gl_TexCoord[0];
 }

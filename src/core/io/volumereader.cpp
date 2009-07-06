@@ -64,6 +64,21 @@ void VolumeReader::read(Volume* volume, std::fstream& fin) {
         fin.read(reinterpret_cast<char*>(volume->getData()), volume->getNumBytes());
 }
 
+VolumeHandle* VolumeReader::readFromOrigin(const VolumeHandle::Origin& origin) {
+    VolumeSet* set = read(origin.filename);
+    std::vector<VolumeHandle*> handles = set->getAllVolumeHandles();
+
+    if (handles.size() == 1) {
+        // first remove from set, so it won't be deleted when the set is deleted
+        handles[0]->getParentSeries()->removeVolumeHandle(handles[0]);
+        delete set;
+        return handles[0];
+    } else {
+        delete set;
+        throw VoreenException("More VolumeHandles present than expected");
+    }
+}
+
 void VolumeReader::fixOrigins(VolumeSet* vs, const std::string& fn) {
     // change all the origins to the right filename
     // FIXME: this feels hackish

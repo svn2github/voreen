@@ -42,18 +42,18 @@ namespace voreen {
  * using a QProgressDialog.
  */
 class IOProgressDialog : public voreen::IOProgress {
-public:   
+public:
     IOProgressDialog(QWidget* parent);
     ~IOProgressDialog();
-    
+
     virtual void update();
     virtual void setNumSteps(int numSteps);
     void show(const std::string& filename = "");
     void hide();
-    
+
 protected:
     QProgressDialog* progressDialog_;
-    QTime* time_;        
+    QTime* time_;
 };
 
 } // namespace
