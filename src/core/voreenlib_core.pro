@@ -484,8 +484,7 @@ HEADERS += \
     ../../include/voreen/core/xml/serializable.h
 HEADERS += \
     ../../ext/tinyxml/tinyxml.h \
-    ../../ext/tinyxml/tinystr.h \
-    ../../ext/il/include/IL/il.h
+    ../../ext/tinyxml/tinystr.h
 
 ####################################################
 # Modules which can be enabled/disabled by defines

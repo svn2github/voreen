@@ -1,7 +1,7 @@
 Voreen Changelog
 ----------------
 
-2009-08-04: Snapshot r23 (voreen-7059)
+2009-08-04: Snapshot r24 (voreen-7062)
 --------------------------------------
 
    * New experimental dynamic bricking support, for rendering volumes larger
@@ -12,10 +12,10 @@ Voreen Changelog
      controlling details of the bricking technique, such as interpolation
      between adjacent bricks and the method for selection of brick resolutions.
 
-	 The amount of GPU memory used for bricking is calculated using a simple
-	 heuristic approach, taking into account the total amount of GPU memory. For
-	 non-Windows platforms or when the heuristic fails, the memory size can be
-	 set manually in brickingmanager.h (gpuMemorySize and gpuMemoryReserve).
+     The amount of GPU memory used for bricking is calculated using a simple
+     heuristic approach, taking into account the total amount of GPU memory. For
+     non-Windows platforms or when the heuristic fails, the memory size can be
+     set manually in brickingmanager.h (gpuMemorySize and gpuMemoryReserve).
 
    * A new getting started guide is available in the 'Help' menu.
 
