@@ -255,8 +255,7 @@ private:
     RptPropertyListWidget* propertyListWidget_;
     RptProcessorListWidget* processorListWidget_;
     VoreenToolDockWindow* processorListTool_;
-    VoreenToolWindow* consoleTool_;
-
+    
     QSettings settings_;
     QByteArray visualizationModeState_;
     QByteArray networkModeState_;

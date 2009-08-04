@@ -112,11 +112,7 @@ ReturnValue VolumeOperatorUnary<Derived>::apply(Volume* volume) const {
         return ReturnValue(d->apply_internal(v));*/
     else if (Volume3xFloat* v = dynamic_cast<Volume3xFloat*>(volume))
         return ReturnValue(d->apply_internal(v));
-    else if (VolumeAtomic<tgt::Vector3<float> >* v = dynamic_cast<VolumeAtomic<tgt::Vector3<float> >*>(volume))
-        return ReturnValue(d->apply_internal(v));
     else if (Volume3xDouble* v = dynamic_cast<Volume3xDouble*>(volume))
-        return ReturnValue(d->apply_internal(v));
-    else if (VolumeAtomic<tgt::Vector3<double> >* v = dynamic_cast<VolumeAtomic<tgt::Vector3<double> >*>(volume))
         return ReturnValue(d->apply_internal(v));
     /*else if (Volume4xUInt8* v = dynamic_cast<Volume4xUInt8*>(volume))
         return ReturnValue(d->apply_internal(v));
@@ -128,11 +124,7 @@ ReturnValue VolumeOperatorUnary<Derived>::apply(Volume* volume) const {
         return ReturnValue(d->apply_internal(v));*/
     else if (Volume4xFloat* v = dynamic_cast<Volume4xFloat*>(volume))
         return ReturnValue(d->apply_internal(v));
-    else if (VolumeAtomic<tgt::Vector4<float> >* v = dynamic_cast<VolumeAtomic<tgt::Vector4<float> >*>(volume))
-        return ReturnValue(d->apply_internal(v));
     else if (Volume4xDouble* v = dynamic_cast<Volume4xDouble*>(volume))
-        return ReturnValue(d->apply_internal(v));
-    else if (VolumeAtomic<tgt::Vector4<double> >* v = dynamic_cast<VolumeAtomic<tgt::Vector4<double> >*>(volume))
         return ReturnValue(d->apply_internal(v));
     else {
         std::cout << "serious problem:\n\tcannot apply unary volume operator to volume of type '"

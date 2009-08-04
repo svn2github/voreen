@@ -479,9 +479,9 @@ bool Shader::loadSeparate(const string& vert_filename, const string& frag_filena
         }
 
         if (!vert->loadSourceFromFile(vert_filename)) {
-            LERROR("Failed to load vertexshader " << vert_filename);
+            LWARNING("Failed to load vertexshader " << vert_filename);
             delete vert;
-            return false;
+            vert = 0;
         } else {
             vert->uploadSource();
 
@@ -505,10 +505,9 @@ bool Shader::loadSeparate(const string& vert_filename, const string& frag_filena
         }
 
         if (!geom->loadSourceFromFile(geom_filename)) {
-            LERROR("Failed to load geometryshader " << geom_filename);
-            delete vert;
+            LWARNING("Failed to load geometryshader " << geom_filename);
             delete geom;
-            return false;
+            geom = 0;
         } else {
             geom->uploadSource();
 
@@ -535,11 +534,9 @@ bool Shader::loadSeparate(const string& vert_filename, const string& frag_filena
         }
 
         if (!frag->loadSourceFromFile(frag_filename)) {
-            LERROR("Failed to load fragmentshader " << frag_filename);
+            LWARNING("Failed to load fragmentshader " << frag_filename);
             delete frag;
-            delete geom;
-            delete vert;
-            return false;
+            frag = 0;
         } else {
 			frag->uploadSource();
 

@@ -862,8 +862,8 @@ void VoreenMainWindow::createToolWindows() {
     // console
     QAction* consoleAction = new QAction(QIcon(":/icons/console.png"), tr("Debug Console"), this);
     consoleAction->setShortcut(tr("Ctrl+D"));
-    consoleTool_ = addToolWindow(consoleAction, consolePlugin_, "Console");
-    consoleTool_->resize(700, 300);
+    VoreenToolWindow* console = addToolWindow(consoleAction, consolePlugin_, "Console");
+    console->resize(700, 300);
 
     // texture container
     ShowTexContainerWidget* texContainerWidget = new ShowTexContainerWidget(renderWidget_);
@@ -1309,7 +1309,6 @@ void VoreenMainWindow::evaluateNetwork() {
 
     if (!vis_->evaluateNetwork()) {
         QApplication::restoreOverrideCursor();
-        consoleTool_->show();
         QMessageBox::critical(this, tr("Error"),
                               tr("Initialization of one or more processors failed.\n"
                                  "Please check the console or log file for error messages."),
