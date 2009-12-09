@@ -1,7 +1,7 @@
 Voreen Changelog
 ----------------
 
-2009-12-09: Snapshot r26 (voreen-8367)
+2009-12-09: Snapshot r28 (voreen-8367)
 --------------------------------------
    * Bug fixes:
      o Workaround for a driver bug in some ATI drivers that would introduce
