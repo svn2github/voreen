@@ -93,7 +93,7 @@ string findBasePath(const string& path) {
     p = findWithSubDir(path, "share/voreen/networks", 1);
 #else
     if (p.empty())
-        p = findWithSubDir(path, "data/networks", 7);
+        p = findWithSubDir(path, "data/workspaces", 7);
 #endif
 
 #ifdef VRN_INSTALL_PREFIX

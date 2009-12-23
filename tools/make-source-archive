@@ -32,7 +32,7 @@ EOF
   zip -rX $OUT $LINK -x@$DISTDIR/exclude.lst
   rm -f $DISTDIR/exclude.lst
   rm -f $LINK
-  echo Writen to $OUT
+  echo Written to $OUT
 
 elif [ "$1" == "unix" ]; then
   echo "Creating unix source tarball..."
