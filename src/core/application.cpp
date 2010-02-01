@@ -185,11 +185,14 @@ void VoreenApplication::prepareCommandParser() {
 }
 
 void VoreenApplication::init() {
-
     //
     // tgt initialization
     //
-    tgt::init();
+    tgt::InitFeature::Features featureset
+        = tgt::InitFeature::Features(tgt::InitFeature::ALL | tgt::InitFeature::NO_SHADER_CACHING);
+    if (!(appType_ & APP_LOGGING)) // TODO: has no effect, LOG_TO_CONSOLE is used nowhere in tgt
+        featureset = tgt::InitFeature::Features(featureset & ~tgt::InitFeature::LOG_TO_CONSOLE);
+    tgt::init(featureset);
 
     //
     // Command line parser
