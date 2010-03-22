@@ -31,7 +31,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "voreen/core/io/serialization/iserializable.h"
+#include "voreen/core/io/serialization/serializable.h"
 #include "voreen/core/io/serialization/xmlserializer.h"
 #include "voreen/core/io/serialization/xmldeserializer.h"
 
@@ -399,7 +399,7 @@ void testPtrVarPtrVarOrder() {
  *
  * @see ISerializable
  */
-class UserDefinedData : public ISerializable {
+class UserDefinedData : public Serializable {
 public:
     /**
      * Contained data.
@@ -430,9 +430,9 @@ public:
  * interface for de- and serialization.
  *
  * @see UserDefinedData
- * @see ISerializable
+ * @see Serializable
  */
-class UserDefinedDataContainer : public ISerializable {
+class UserDefinedDataContainer : public Serializable {
 public:
     /**
      * Contained user defined data.
@@ -676,7 +676,7 @@ void testComplexSTL() {
  * @see Child
  * @see ISerializable
  */
-class Parent : public ISerializable {
+class Parent : public Serializable {
 public:
     /**
      * Contained data.
@@ -733,12 +733,12 @@ public:
  *
  * @see Parent
  * @see Child
- * @see IISerializableFactory
+ * @see SerializableFactory
  */
-class Factory : public IISerializableFactory {
+class Factory : public SerializableFactory {
 public:
     /**
-     * @see IISerializableFactory::getTypeString
+     * @see SerializableFactory::getTypeString
      */
     virtual const std::string getTypeString(const std::type_info& type) const {
         if (type == typeid(Parent))
@@ -750,9 +750,9 @@ public:
     }
 
     /**
-     * @see IISerializableFactory::createType
+     * @see SerializableFactory::createType
      */
-    virtual ISerializable* createType(const std::string& typeString) {
+    virtual Serializable* createType(const std::string& typeString) {
         if (typeString == "Parent")
             return new Parent();
         else if (typeString == "Child")
@@ -845,9 +845,9 @@ void testPolymorphism() {
 /**
  * @c Node class for building a graph with a cycle.
  *
- * @see ISerializable
+ * @see Serializable
  */
-class Node : public ISerializable {
+class Node : public Serializable {
 public:
     /**
      * Predecessor node.
@@ -929,7 +929,7 @@ void testCycle() {
  * @c Abstract class for testing serialization and deserialization
  * of pointers to abstract classes.
  */
-class Abstract : public IAbstractSerializable {
+class Abstract : public AbstractSerializable {
 };
 
 /**
@@ -958,9 +958,9 @@ public:
     int i;
 };
 
-class AbstractFactory : public IISerializableFactory {
+class AbstractFactory : public SerializableFactory {
     /**
-     * @see IISerializableFactory::getTypeString
+     * @see SerializableFactory::getTypeString
      */
     virtual const std::string getTypeString(const std::type_info& type) const {
         if (type == typeid(Specific))
@@ -972,7 +972,7 @@ class AbstractFactory : public IISerializableFactory {
     /**
      * @see IISerializableFactory::createType
      */
-    virtual ISerializable* createType(const std::string& typeString) {
+    virtual Serializable* createType(const std::string& typeString) {
         if (typeString == "Specific")
             return new Specific();
         else
