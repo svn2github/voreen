@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -40,11 +38,11 @@
 #include "tgt/scriptmanager.h"
 
 #include "voreen/qt/pyvoreenqt.h"
-#include "voreen/core/vis/pyvoreen.h"
+#include "voreen/core/utils/pyvoreen.h"
 
-#include "voreen/core/vis/network/processornetwork.h"
-#include "voreen/core/vis/network/networkevaluator.h"
-#include "voreen/core/vis/processors/image/canvasrenderer.h"
+#include "voreen/core/network/processornetwork.h"
+#include "voreen/core/network/networkevaluator.h"
+#include "voreen/core/processors/canvasrenderer.h"
 #include "voreen/qt/widgets/processor/canvasrendererwidget.h"
 
 #include <cstdlib>

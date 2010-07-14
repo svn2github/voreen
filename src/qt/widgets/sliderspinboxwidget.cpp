@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -31,8 +29,9 @@
 
 #include "tgt/math.h"
 
-#include <qslider.h>
-#include <qspinbox.h>
+#include <QMouseEvent>
+#include <QSlider>
+#include <QSpinBox>
 
 namespace voreen {
 
@@ -69,9 +68,9 @@ SliderSpinBoxWidget::SliderSpinBoxWidget(QWidget* parent ) :
 
     vboxLayout->addLayout(hboxLayout);
 
-    spacerItem = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    //spacerItem = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
-    vboxLayout->addItem(spacerItem);
+    //vboxLayout->addItem(spacerItem);
 
     setWindowTitle(QApplication::translate("SliderSpinBoxWidget", "SliderSpinBoxWidget", 0, QApplication::UnicodeUTF8));
     // signals and slots connections

@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -28,8 +26,8 @@
  **********************************************************************/
 
 #include "voreen/core/io/datvolumewriter.h"
-#include "voreen/core/volume/volumeatomic.h"
-#include "voreen/core/volume/volumehandle.h"
+#include "voreen/core/datastructures/volume/volumeatomic.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
 
 #include "tgt/filesystem.h"
 #include "tgt/matrix.h"
@@ -47,7 +45,7 @@ void DatVolumeWriter::write(const std::string& filename, VolumeHandle* volumeHan
 {
 
     tgtAssert(volumeHandle, "No volume handle");
-    Volume* volume = volumeHandle->getVolume(); 
+    Volume* volume = volumeHandle->getVolume();
     if (!volume) {
         LWARNING("No volume");
         return;
@@ -66,10 +64,14 @@ void DatVolumeWriter::write(const std::string& filename, VolumeHandle* volumeHan
     char* data = 0;
     size_t numbytes = 0;
     datout << getDatFileString(volumeHandle, rawname, &data, numbytes);
+    if (datout.bad())
+        throw tgt::IOException();
     datout.close();
 
     // write raw file
     rawout.write(data, numbytes);
+    if (rawout.bad())
+        throw tgt::IOException();
     rawout.close();
 }
 
@@ -78,7 +80,7 @@ std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, 
 {
     std::ostringstream datout;
     tgtAssert(volumeHandle, "No volume handle");
-    Volume* volume = volumeHandle->getVolume(); 
+    Volume* volume = volumeHandle->getVolume();
     if ((!volume) || (!volData)) {
         LWARNING("No volume or no storage for casted volume data!");
         return "";
@@ -93,12 +95,28 @@ std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, 
         *volData = reinterpret_cast<char*>(vol->voxel());
         numBytes = vol->getNumBytes();
     }
+    else if (VolumeInt8* vol = dynamic_cast<VolumeInt8*>(volume)) {
+        format = "CHAR";
+        *volData = reinterpret_cast<char*>(vol->voxel());
+        numBytes = vol->getNumBytes();
+    }
     else if (VolumeUInt16* vol = dynamic_cast<VolumeUInt16*>(volume)) {
         if (vol->getBitsStored() == 12)
             format = "USHORT_12";
         else
             format = "USHORT";
 
+        *volData = reinterpret_cast<char*>(vol->voxel());
+        numBytes = vol->getNumBytes();
+
+    }
+    else if (VolumeInt16* vol = dynamic_cast<VolumeInt16*>(volume)) {
+        format = "SHORT";
+        *volData = reinterpret_cast<char*>(vol->voxel());
+        numBytes = vol->getNumBytes();
+    }
+    else if (VolumeFloat* vol = dynamic_cast<VolumeFloat*>(volume)) {
+        format = "FLOAT";
         *volData = reinterpret_cast<char*>(vol->voxel());
         numBytes = vol->getNumBytes();
 
@@ -172,6 +190,10 @@ std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, 
         datout << "MetaString:\t" << metaString << std::endl;
 
     return datout.str();
+}
+
+VolumeWriter* DatVolumeWriter::create(IOProgress* /*progress*/) const {
+    return new DatVolumeWriter(/*progress*/);
 }
 
 } // namespace voreen

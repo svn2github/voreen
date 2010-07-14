@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -43,6 +41,9 @@ Q_OBJECT
 public:
     ButtonPropertyWidget(ButtonProperty* prop, QWidget* parent = 0);
     void updateFromProperty() {}
+
+    /// Returns an empty label.
+    virtual const QLabel* getNameLabel() const;
 
 public slots:
     void clicked();

@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -29,8 +27,13 @@
 
 #include "voreen/core/io/serialization/meta/metadatacontainer.h"
 
+#include "voreen/core/io/serialization/meta/aggregationmetadata.h"
 #include "voreen/core/io/serialization/meta/positionmetadata.h"
+#include "voreen/core/io/serialization/meta/primitivemetadata.h"
+#include "voreen/core/io/serialization/meta/selectionmetadata.h"
 #include "voreen/core/io/serialization/meta/windowstatemetadata.h"
+#include "voreen/core/io/serialization/meta/zoommetadata.h"
+#include "voreen/core/processors/processor.h"
 
 namespace voreen {
 
@@ -115,8 +118,18 @@ bool MetaDataContainer::factoriesInitialized_ = false;
 MetaDataContainer::FactoryCollection MetaDataContainer::factories_;
 
 void MetaDataContainer::initializeFactories() {
+    // primitive types
+    factories_.push_back(new BoolMetaData());
+    factories_.push_back(new StringMetaData());
+    factories_.push_back(new IntMetaData());
+    factories_.push_back(new FloatMetaData());
+
+    // additional types
+    factories_.push_back(new AggregationMetaDataContainer());
     factories_.push_back(new PositionMetaData());
     factories_.push_back(new WindowStateMetaData());
+    factories_.push_back(new SelectionMetaData<Processor*>());
+    factories_.push_back(new ZoomMetaData);
 
     factoriesInitialized_ = true;
 }

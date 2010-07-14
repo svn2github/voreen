@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -40,13 +38,13 @@ class HistogramIntensity;
 
 /**
  * This class draws a polygon that shows the histogram of a volume dataset.
- * To use this painter you have to create an insta nce of this class with the parent set
+ * To use this painter you have to create an instance of this class with the parent set
  * to the widget where the histogram should be painted. Propagate the histogram that
  * should be painted via the method setHistogram(). The histogram is painted in the method
  * paintEvent() which is called by Qt automatically.
  */
 class HistogramPainter : public QWidget {
-    Q_OBJECT
+Q_OBJECT
 public:
     /**
      * Constructor - inits member variables

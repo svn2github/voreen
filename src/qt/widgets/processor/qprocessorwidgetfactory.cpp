@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -34,7 +32,7 @@
 namespace voreen {
 
 QProcessorWidgetFactory::QProcessorWidgetFactory(QWidget* parent, NetworkEvaluator* nwe) : nwe_(nwe) {
-    parent_ = parent;
+        parent_ = parent;
 }
 
 ProcessorWidget* QProcessorWidgetFactory::createWidget(Processor* processor) const {
@@ -44,5 +42,4 @@ ProcessorWidget* QProcessorWidgetFactory::createWidget(Processor* processor) con
     else
         return 0;
 }
-
 } // namespace voreen

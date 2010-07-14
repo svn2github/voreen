@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -34,7 +32,7 @@
 #include "voreen/core/io/volumereader.h"
 #include "voreen/core/io/brickedvolumereader.h"
 #include "voreen/core/io/volumewriter.h"
-#include "voreen/core/volume/volumehandle.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
 #include "tgt/filesystem.h"
 
 namespace voreen {
@@ -43,14 +41,19 @@ namespace voreen {
 
 FormatClashException::FormatClashException(const Extensions& extensions)
     : extensions_(extensions)
-{}
+{
+    message_ = "FormatClashException: ";
+    for (size_t i=0; i<extensions_.size(); i++) {
+        message_ += extensions_[i] + " ";
+    }
+}
 
 const FormatClashException::Extensions& FormatClashException::getExtensions() const throw() {
     return extensions_;
 }
 
 const char* FormatClashException::what() const throw() {
-    return "FormatClashException";
+    return message_.c_str();
 }
 
 
@@ -102,14 +105,14 @@ void VolumeSerializer::save(const std::string& filename, Volume* volume) const t
 }
 
 VolumeOrigin VolumeSerializer::convertOriginToRelativePath(const VolumeOrigin& origin, std::string& basePath) const
-    throw (tgt::FileException)
+    throw (tgt::UnsupportedFormatException)
 {
     VolumeReader* reader = getReader(origin.getURL());
     return reader->convertOriginToRelativePath(origin, basePath);
 }
 
 VolumeOrigin VolumeSerializer::convertOriginToAbsolutePath(const VolumeOrigin& origin, std::string& basePath) const
-    throw (tgt::FileException)
+    throw (tgt::UnsupportedFormatException)
 {
     VolumeReader* reader = getReader(origin.getURL());
     return reader->convertOriginToAbsolutePath(origin, basePath);
@@ -166,9 +169,8 @@ void VolumeSerializer::registerWriter(VolumeWriter* vw)
 }
 
 VolumeReader* VolumeSerializer::getReader(const std::string& url) const
-        throw (tgt::FileException, std::bad_alloc)
+    throw (tgt::UnsupportedFormatException)
 {
-
     VolumeOrigin origin(url);
 
     // check if a reader for the URL's resource type is available
@@ -177,21 +179,21 @@ VolumeReader* VolumeSerializer::getReader(const std::string& url) const
         if (readersProtocolMap_.find(protocol) != readersProtocolMap_.end())
             return readersProtocolMap_.find(protocol)->second;
         else
-            tgt::UnsupportedFormatException(protocol, url);
+            throw tgt::UnsupportedFormatException(protocol, url);
     }
 
     // check if a reader for the filename extension is available
     std::string extension = tgt::FileSystem::fileExtension(origin.getPath(), true);
+
     if (readersExtensionMap_.find(extension) != readersExtensionMap_.end())
         return readersExtensionMap_.find(extension)->second;
     else
         throw tgt::UnsupportedFormatException(extension, url);
-
 }
 
-VolumeWriter* VolumeSerializer::getWriter(const std::string& filename)
-    const throw (tgt::FileException, std::bad_alloc) {
-
+VolumeWriter* VolumeSerializer::getWriter(const std::string& filename) const
+    throw (tgt::UnsupportedFormatException)
+{
     std::string extension = tgt::FileSystem::fileExtension(filename, true);
 
     if (writersMap_.find(extension) == writersMap_.end())

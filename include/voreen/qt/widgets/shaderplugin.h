@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -30,9 +28,10 @@
 #ifndef VRN_SHADERPLUGIN_H
 #define VRN_SHADERPLUGIN_H
 
-#include "voreen/core/application.h"
-#include "voreen/core/vis/properties/shaderproperty.h"
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/properties/shaderproperty.h"
 #include "voreen/qt/widgets/glslhighlighter.h"
+#include "voreen/qt/widgets/codeedit.h"
 
 #include <QToolButton>
 #include <QUrl>
@@ -67,12 +66,14 @@ public:
      * Creates all necessary connections.
      */
     void createConnections();
+    void updateFromProperty();
 
 signals:
-    void modified(); 
-                            
+    void modified();
+
 public slots:
     void undoShader();
+    void fullUndoShader();
     void openShader();
     void saveShader();
     void setProperty();
@@ -83,10 +84,11 @@ private:
 
     ShaderProperty* property_;               ///< shader property that belongs to this plugin
     QToolButton* undoBt_;
+    QToolButton* fullUndoBt_;
     QToolButton* openBt_;
     QToolButton* saveBt_;
     QToolButton* updateBt_;
-    QTextEdit* textEdit_;
+    CodeEdit* codeEdit_;
     QTextEdit* compilerLogWidget_;
     GLSLHighlighter* highlighter_;
 };

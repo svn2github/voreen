@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -28,8 +26,8 @@
  **********************************************************************/
 
 #include "voreen/qt/widgets/processor/canvasrendererwidget.h"
-#include "voreen/core/vis/network/networkevaluator.h"
-#include "voreen/core/vis/voreenpainter.h"
+#include "voreen/core/network/networkevaluator.h"
+#include "voreen/core/utils/voreenpainter.h"
 #include "voreen/qt/widgets/snapshotplugin.h"
 #include "voreen/qt/voreenapplicationqt.h"
 
@@ -40,20 +38,19 @@
 
 namespace voreen {
 
-CanvasRendererWidget::CanvasRendererWidget(QWidget* parent, CanvasRenderer* canvasRenderer, NetworkEvaluator* evaluator) :
-    QProcessorWidget(canvasRenderer, parent),
-    evaluator_(evaluator),
-    snapshotTool_(0)
+CanvasRendererWidget::CanvasRendererWidget(QWidget* parent, CanvasRenderer* canvasRenderer, NetworkEvaluator* evaluator)
+    : QProcessorWidget(canvasRenderer, parent)
+    , evaluator_(evaluator)
+    , snapshotTool_(0)
 {
     tgtAssert(canvasRenderer, "No CanvasRenderer");
     tgtAssert(evaluator_, "No evaluator");
 
     setWindowTitle(QString::fromStdString(canvasRenderer->getName()));
-
+    resize(256, 256);
 }
 
 CanvasRendererWidget::~CanvasRendererWidget() {
-
     delete snapshotTool_;
 
     // deregister canvas at owning CanvasRenderer
@@ -68,15 +65,15 @@ CanvasRendererWidget::~CanvasRendererWidget() {
 }
 
 void CanvasRendererWidget::initialize() {
+
     QProcessorWidget::initialize();
 
     CanvasRenderer* canvasRenderer = dynamic_cast<CanvasRenderer*>(processor_);
     tgtAssert(canvasRenderer, "CanvasRenderer expected");
 
     canvasWidget_ = new tgt::QtCanvas("", tgt::ivec2(getSize().x, getSize().y), tgt::GLCanvas::RGBADD, this, true, 0);
-    canvasWidget_->setMinimumSize(256, 256);
-    // necessary for receiving keyboard events
-    setFocusPolicy(Qt::StrongFocus);
+    canvasWidget_->setMinimumSize(64, 64);
+    canvasWidget_->setMouseTracking(true); // for receiving mouse move events without a pressed button
 
     QGridLayout* layout = new QGridLayout;
     layout->setContentsMargins(0, 0, 0, 0);
@@ -93,15 +90,17 @@ void CanvasRendererWidget::initialize() {
     initialized_ = true;
 }
 
+#ifdef VRN_WITH_DEVIL
 void CanvasRendererWidget::keyPressEvent(QKeyEvent* event) {
     if ((event->modifiers() == Qt::AltModifier) && (event->key() == Qt::Key_P) ) {
-#ifdef VRN_WITH_DEVIL
         if (!snapshotTool_)
             createSnapshotTool();
         snapshotTool_->show();
         snapshotTool_->setFocus();
-#endif
     }
+#else
+void CanvasRendererWidget::keyPressEvent(QKeyEvent*) {
+#endif
 }
 
 void CanvasRendererWidget::resizeEvent(QResizeEvent* event) {
@@ -111,14 +110,11 @@ void CanvasRendererWidget::resizeEvent(QResizeEvent* event) {
 }
 
 void CanvasRendererWidget::createSnapshotTool() {
-
     if (snapshotTool_)
         return;
 
     snapshotTool_ = new SnapshotPlugin(VoreenApplicationQt::qtApp()->getMainWindow(),
-        static_cast<CanvasRenderer*>(processor_));
-    snapshotTool_->createWidgets();
-    snapshotTool_->createConnections();
+                                       dynamic_cast<CanvasRenderer*>(processor_));
     snapshotTool_->adjustSize();
     snapshotTool_->setFixedSize(snapshotTool_->sizeHint());
 }

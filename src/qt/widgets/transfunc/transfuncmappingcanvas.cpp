@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -31,11 +29,11 @@
 
 #include "voreen/qt/widgets/transfunc/histogrampainter.h"
 
-#include "voreen/core/volume/volume.h"
-#include "voreen/core/volume/volumehandle.h"
-#include "voreen/core/volume/histogram.h"
-#include "voreen/core/vis/transfunc/transfuncintensity.h"
-#include "voreen/core/vis/transfunc/transfuncmappingkey.h"
+#include "voreen/core/datastructures/volume/volume.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
+#include "voreen/core/datastructures/volume/histogram.h"
+#include "voreen/core/datastructures/transfunc/transfuncintensity.h"
+#include "voreen/core/datastructures/transfunc/transfuncmappingkey.h"
 
 #include <QAction>
 #include <QApplication>
@@ -52,6 +50,14 @@
 namespace voreen {
 
 using tgt::vec2;
+
+HistogramThread::HistogramThread(Volume* volume, int count, QObject* parent)
+    : QThread(parent)
+    , volume_(volume)
+    , count_(count)
+{
+    tgtAssert(volume, "No volume");
+}
 
 void HistogramThread::run() {
     HistogramIntensity* hist = new HistogramIntensity(volume_, count_);
@@ -71,6 +77,7 @@ TransFuncMappingCanvas::TransFuncMappingCanvas(QWidget* parent, TransFuncIntensi
     , xAxisText_(xAxisText)
     , yAxisText_(yAxisText)
     , histogramThread_(0)
+    , histogramNeedsUpdate_(false)
 {
     xRange_ = vec2(0.f, 1.f);
     yRange_ = vec2(0.f, 1.f);
@@ -161,7 +168,16 @@ void TransFuncMappingCanvas::resizeEvent(QResizeEvent* event) {
     }
 }
 
+void TransFuncMappingCanvas::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    updateHistogram(); // only if necessary
+}
+
 void TransFuncMappingCanvas::showKeyContextMenu(QMouseEvent* event) {
+
+    if (!tf_)
+        return;
+
     // Set context-dependent text for menu items
 
     // Split/merge
@@ -187,13 +203,14 @@ void TransFuncMappingCanvas::showKeyContextMenu(QMouseEvent* event) {
 }
 
 void TransFuncMappingCanvas::paintEvent(QPaintEvent* event) {
+
     if (!tf_)
         return;
 
     //the histogram is automatically painted onto this widget
     //we do not need to call the paintevent for the Histogrampainter directly
     event->accept();
-    
+
     QPainter paint(this);
 
     // put origin in lower lefthand corner
@@ -472,7 +489,7 @@ void TransFuncMappingCanvas::mouseMoveEvent(QMouseEvent* event) {
             key->setAlphaL(dragLineAlphaRight_);
             tf_->updateKey(key);
         }
-        repaint();
+        update();
         emit changed();
         return;
     }
@@ -520,7 +537,7 @@ void TransFuncMappingCanvas::mouseMoveEvent(QMouseEvent* event) {
         }
         tf_->updateKey(selectedKey_);
 
-        repaint();
+        update();
         emit changed();
     }
 }
@@ -626,6 +643,10 @@ void TransFuncMappingCanvas::zeroKey() {
 }
 
 void TransFuncMappingCanvas::deleteKey() {
+
+    if (!tf_)
+        return;
+
     if (!selectedKey_ || tf_->getNumKeys() < 3)
         return;
 
@@ -672,6 +693,10 @@ void TransFuncMappingCanvas::changeCurrentColor() {
 }
 
 void TransFuncMappingCanvas::insertNewKey(vec2& hit) {
+
+    if (!tf_)
+        return;
+
     hit = tgt::clamp(hit, 0.f, 1.f);
 
     TransFuncMappingKey* key = new TransFuncMappingKey(hit.x, QColor2Col(Qt::lightGray));
@@ -707,6 +732,10 @@ void TransFuncMappingCanvas::insertNewKey(vec2& hit) {
 }
 
 TransFuncMappingKey* TransFuncMappingCanvas::getOtherKey(TransFuncMappingKey* selectedKey, bool selectedLeftPart) {
+
+    if (!tf_)
+        return 0;
+
     TransFuncMappingKey* otherKey = 0;
     for (int i=0; i < tf_->getNumKeys(); ++i) {
         if ((selectedLeftPart && i < tf_->getNumKeys() - 1 && tf_->getKey(i + 1) == selectedKey) ||
@@ -719,6 +748,10 @@ TransFuncMappingKey* TransFuncMappingCanvas::getOtherKey(TransFuncMappingKey* se
 }
 
 int TransFuncMappingCanvas::hitLine(const tgt::vec2& p) {
+
+    if (!tf_)
+        return -1;
+
     int hit = -1;
     vec2 sHit = vec2(p.x, static_cast<float>(height()) - p.y);
     vec2 old;
@@ -743,6 +776,10 @@ int TransFuncMappingCanvas::hitLine(const tgt::vec2& p) {
 }
 
 void TransFuncMappingCanvas::paintKeys(QPainter& paint) {
+
+    if (!tf_)
+        return;
+
     for (int i=0; i<tf_->getNumKeys(); ++i) {
         TransFuncMappingKey *key = tf_->getKey(i);
         vec2 p = wtos(vec2(key->getIntensity(), key->getColorL().a / 255.0));
@@ -855,6 +892,33 @@ void TransFuncMappingCanvas::updateCoordinates(QPoint pos, vec2 values) {
     QToolTip::showText(mapToGlobal(pos), QString(os.str().c_str()));
 }
 
+void TransFuncMappingCanvas::updateHistogram() {
+
+    if (!histogramNeedsUpdate_)
+        return;
+    histogramNeedsUpdate_ = false;
+
+    tgtAssert(histogramPainter_, "No histogram painter");
+
+    // calculate new histogram in background thread and propagate to HistogramPainter
+    if (volumeHandle_ && volumeHandle_->getVolume()) {
+        int bits = volumeHandle_->getVolume()->getBitsStored() / volumeHandle_->getVolume()->getNumChannels();
+        if (bits > 16)
+            bits = 16; // handle float data as if it was 16 bit to prevent overflow
+        int maximumIntensity = (1 << bits) - 1;
+
+        histogramThread_ = new HistogramThread(volumeHandle_->getVolume(), maximumIntensity + 1, this);
+        connect(histogramThread_, SIGNAL(setHistogram(HistogramIntensity*)),
+                histogramPainter_, SLOT(setHistogram(HistogramIntensity*)));
+        connect(histogramThread_, SIGNAL(finished()),
+                this, SLOT(update()));
+        histogramThread_->start();
+    }
+    else {
+        histogramPainter_->setHistogram(0);
+    }
+}
+
 void TransFuncMappingCanvas::volumeChanged(VolumeHandle* volumeHandle) {
     // stop histogram thread and deregister from volume handle as observer
     if (histogramThread_) {
@@ -870,36 +934,20 @@ void TransFuncMappingCanvas::volumeChanged(VolumeHandle* volumeHandle) {
     volumeHandle_ = volumeHandle;
 
     if (volumeHandle_) {
-
         volumeHandle_->addObserver(this);
-
-        // calculate new histogram in background thread and propagate to HistogramPainter
-        if (volumeHandle_->getVolume()) {
-
-            int bits = volumeHandle_->getVolume()->getBitsStored() / volumeHandle_->getVolume()->getNumChannels();
-            int maximumIntensity_ = static_cast<int>(pow(2.f, static_cast<float>(bits)))-1;
-
-            histogramThread_ = new HistogramThread(volumeHandle_->getVolume(), maximumIntensity_ + 1, this);
-            connect(histogramThread_, SIGNAL(setHistogram(HistogramIntensity*)),
-                    histogramPainter_, SLOT(setHistogram(HistogramIntensity*)));
-            connect(histogramThread_, SIGNAL(finished()),
-                    this, SLOT(update()));
-            histogramThread_->start();
-        }
-        update();
-
-    }
-    else {
-        tf_ = 0;
-        update();
+        histogramNeedsUpdate_ = true;
     }
 
+    if (isVisible())
+        updateHistogram();
+
+    update();
 }
 
 void TransFuncMappingCanvas::setTransFunc(TransFuncIntensity* tf) {
     tf_ = tf;
     selectedKey_ = 0;
-    repaint();
+    update();
 }
 
 void TransFuncMappingCanvas::setXAxisText(const std::string& text) {

@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -37,11 +35,10 @@
 #include "tgt/filesystem.h"
 #include "tgt/ziparchive.h"
 
+#include "voreen/core/version.h"
 #include "voreen/qt/voreenapplicationqt.h"
 
-#ifdef VRN_SPLASHSCREEN
-#include <QSplashScreen>
-#endif
+#include "voreen/modules/moduleregistration.h"
 
 using namespace voreen;
 
@@ -58,9 +55,11 @@ public:
         p->addCommand(new Command_LoadDatasetSingle(&datasetFilename_));
         p->addCommandForNamelessArguments(new Command_LoadDatasetSingle(&datasetFilename_));
 
-        p->addCommand(new SingleCommand<std::string>(&workspaceFilename_, "--workspace", "-w", "Load a workspace", "<workspace file>"));
+        p->addCommand(new SingleCommand<std::string>(&workspaceFilename_, "--workspace", "-w",
+                                                     "Loads a workspace", "<workspace file>"));
 #ifdef VRN_WITH_PYTHON
-        p->addCommand(new SingleCommand<std::string>(&scriptFilename_, "--script", "-s", "Runs a python script", "<script file>"));
+        p->addCommand(new SingleCommand<std::string>(&scriptFilename_, "--script", "-s",
+                                                     "Runs a python script", "<script file>"));
 #endif
     }
 
@@ -69,13 +68,80 @@ public:
     std::string scriptFilename_;
 };
 
+/// Reimplement QApplication to catch unhandled exceptions
+class CatchApp : public QApplication {
+public:
+    CatchApp(int & argc, char ** argv )
+        : QApplication(argc, argv)
+    {}
+
+    virtual bool notify(QObject* receiver, QEvent* event) {
+        bool result = false;
+        try {
+            result = QApplication::notify(receiver, event);
+        }
+        catch (const VoreenException& e) {
+            LERRORC("voreenve.main", "Caught unhandled VoreenException: " << e.what());
+#ifndef TGT_NON_INTERACTIVE_ASSERT
+            int choice = QMessageBox::critical(0, tr("VoreenVE"), tr("Caught unhandled VoreenException:\n\"")
+                                               + e.what() + +"\"\n" + tr("Continue?"),
+                                               QMessageBox::Ok | QMessageBox::Cancel);
+            if (choice == QMessageBox::Cancel) {
+  #ifdef VRN_DEBUG
+                TGT_THROW_BREAKPOINT;
+  #else
+                exit(1);
+  #endif
+            }
+#else
+            exit(1);
+#endif // TGT_NON_INTERACTIVE_ASSERT
+        }
+        catch (const std::exception& e) {
+            LERRORC("voreenve.main", "Caught unhandled std::exception: " << e.what());
+#ifndef TGT_NON_INTERACTIVE_ASSERT
+            int choice = QMessageBox::critical(0, tr("VoreenVE"), tr("Caught unhandled std::exception:\n\"")
+                                               + e.what() + "\"\n" + tr("Continue?"),
+                                               QMessageBox::Ok | QMessageBox::Cancel);
+            if (choice == QMessageBox::Cancel) {
+  #ifdef VRN_DEBUG
+                TGT_THROW_BREAKPOINT;
+  #else
+                exit(1);
+  #endif
+            }
+#else
+            exit(1);
+#endif // TGT_NON_INTERACTIVE_ASSERT
+        }
+        catch (...) {
+            LERRORC("voreenve.main", "Caught unhandled unknown exception!");
+#ifndef TGT_NON_INTERACTIVE_ASSERT
+            int choice = QMessageBox::critical(0, tr("VoreenVE"), tr("Caught unhandled unknown exception!\nContinue?"),
+                                               QMessageBox::Ok | QMessageBox::Cancel);
+            if (choice == QMessageBox::Cancel) {
+  #ifdef VRN_DEBUG
+                TGT_THROW_BREAKPOINT;
+  #else
+                exit(1);
+  #endif
+            }
+#else
+            exit(1);
+#endif // TGT_NON_INTERACTIVE_ASSERT
+            throw;
+        }
+        return result;
+    }
+};
+
 int main(int argc, char** argv) {
-    QApplication app(argc, argv);
+    CatchApp app(argc, argv);
+
     app.setOverrideCursor(Qt::WaitCursor);
 
 #ifdef VRN_SPLASHSCREEN
-    QPixmap pixmap(":/voreenve/image/splash.png");
-    QSplashScreen splash(pixmap);
+    VoreenSplashScreen splash;
     splash.show();
 #endif
 
@@ -88,6 +154,9 @@ int main(int argc, char** argv) {
     file.open(QFile::ReadOnly);
     QString styleSheet = QLatin1String(file.readAll());
     app.setStyleSheet(styleSheet);
+#ifdef VRN_SPLASHSCREEN
+    splash.showMessage("Starting up...");
+#endif
 #endif
 
     // init resources for voreen_qt
@@ -95,27 +164,30 @@ int main(int argc, char** argv) {
     // init common application resources
     Q_INIT_RESOURCE(vrn_app);
 
-    // initialize virtual file system for shaders
-    // (only in distribution mode)
-#ifdef VRN_DISTRIBUTION
-    LINFOC("voreenve.main", "Loading shaders.tar into virtual file system ...");
-    #ifndef __APPLE__
-        FileSys.addPackage(vapp.getBasePath() + "/shaders.tar", "/src/core/vis/glsl/");
-    #else
-        FileSys.addPackage(vapp.getAppBundleResourcesPath() + "/shaders.tar", "/src/core/vis/glsl/");
-    #endif
+    // initialize all Voreen modules
+#ifdef VRN_SPLASHSCREEN
+    splash.showMessage("Initializing modules...");
 #endif
+    addAllModules(&vapp);
 
+#ifdef VRN_SPLASHSCREEN
+    splash.showMessage("Creating main window...");
+#endif
     VoreenMainWindow mainWindow(vapp.workspaceFilename_, vapp.datasetFilename_);
     vapp.setMainWindow(&mainWindow);
     mainWindow.show();
-    mainWindow.init();  // also calls VoreenApplication::app()->initGL();
-
 #ifdef VRN_SPLASHSCREEN
-    splash.close();
+    mainWindow.init(&splash);  // also calls VoreenApplication::app()->initGL()
+#else
+    mainWindow.init();
 #endif
 
     app.restoreOverrideCursor();
+
+#ifdef VRN_SPLASHSCREEN
+    splash.showMessage("Initialization complete.");
+    splash.close();
+#endif
 
     if (!vapp.scriptFilename_.empty()) {
         // first make sure that all Qt events have been processed

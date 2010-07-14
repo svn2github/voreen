@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -51,9 +49,15 @@ ExpandableHeaderButton::ExpandableHeaderButton(const QString& name, QWidget* par
     expandLabel_->setMaximumWidth(20);
     frameLayout->addWidget(expandLabel_);
 
+    // replace line breaks in proc name by spaces
+    QString titleSingleLine = name;
+    titleSingleLine.replace("\r\n", " ");
+    titleSingleLine.replace("\r", " ");
+    titleSingleLine.replace("\n", " ");
+
     rendName_ = new QLabel();
     rendName_->setAlignment(Qt::AlignCenter);
-    rendName_->setText(name);
+    rendName_->setText(titleSingleLine);
     frameLayout->addSpacing(2);
     frameLayout->addWidget(rendName_);
 
@@ -122,7 +126,11 @@ bool ExpandableHeaderButton::userExpandable() const {
 }
 
 void ExpandableHeaderButton::updateNameLabel(const std::string& name) {
-    rendName_->setText(name.c_str());
+    QString titleSingleLine = QString::fromStdString(name);
+    titleSingleLine.replace("\r\n", " ");
+    titleSingleLine.replace("\r", " ");
+    titleSingleLine.replace("\n", " ");
+    rendName_->setText(titleSingleLine);
 }
 
 

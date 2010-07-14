@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -35,6 +33,7 @@ ModifierDetectorWidget::ModifierDetectorWidget(QWidget* parent)
     : QLineEdit(parent)
 {
     setReadOnly(true);
+    setAlignment(Qt::AlignHCenter);
 }
 
 void ModifierDetectorWidget::keyPressEvent(QKeyEvent* event) {
@@ -80,13 +79,13 @@ tgt::Event::Modifier ModifierDetectorWidget::getTGTModifierFromQt(Qt::KeyboardMo
 Qt::KeyboardModifiers ModifierDetectorWidget::getQtModifierFromTGT(tgt::Event::Modifier tgtKey) {
     int result = 0;
 
-    if ((tgtKey & tgt::Event::LSHIFT) || (tgtKey & tgt::Event::RSHIFT))
+    if (tgtKey & tgt::Event::SHIFT)
         result |=  Qt::ShiftModifier;
-    if ((tgtKey & tgt::Event::LCTRL) || (tgtKey & tgt::Event::RCTRL))
+    if (tgtKey & tgt::Event::CTRL)
         result |=  Qt::ControlModifier;
-    if ((tgtKey & tgt::Event::LALT) || (tgtKey & tgt::Event::RALT))
+    if (tgtKey & tgt::Event::ALT)
         result |=  Qt::AltModifier;
-    if ((tgtKey & tgt::Event::LMETA) || (tgtKey & tgt::Event::RMETA))
+    if (tgtKey & tgt::Event::META)
         result |=  Qt::MetaModifier;
 
     return Qt::KeyboardModifier(result);
@@ -100,6 +99,7 @@ KeyDetectorWidget::KeyDetectorWidget(bool ignoreModifierKeys, QWidget* parent)
     , ignoreModifierKeys_(ignoreModifierKeys)
 {
     setReadOnly(true);
+    setAlignment(Qt::AlignHCenter);
 }
 
 void KeyDetectorWidget::keyPressEvent(QKeyEvent* event) {

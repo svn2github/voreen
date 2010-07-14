@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -84,7 +82,7 @@ public:
      * Tests whether the volume associated with the transFuncProperty has changed and updates
      * the editor to the new volume when necessary.
      */
-    void update();
+    void updateFromProperty();
 
     /**
      * Propagates the new volume to the painter for the mapping canvas and updates the control

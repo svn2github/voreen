@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -30,7 +28,7 @@
 #ifndef VRN_INTVEC3PROPERTYWIDGET_H
 #define VRN_INTVEC3PROPERTYWIDGET_H
 
-#include "voreen/core/vis/properties/vectorproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
 #include "voreen/qt/widgets/property/intpropertywidget.h"
 #include "voreen/qt/widgets/property/vecpropertywidget.h"
 

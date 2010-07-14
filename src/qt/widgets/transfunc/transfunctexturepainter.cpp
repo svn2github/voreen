@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -28,7 +26,7 @@
  **********************************************************************/
 
 #include "voreen/qt/widgets/transfunc/transfunctexturepainter.h"
-#include "voreen/core/vis/transfunc/transfuncintensity.h"
+#include "voreen/core/datastructures/transfunc/transfuncintensity.h"
 
 #include "tgt/shadermanager.h"
 #include "tgt/gpucapabilities.h"

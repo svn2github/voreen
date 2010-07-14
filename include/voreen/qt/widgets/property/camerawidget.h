@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -30,8 +28,7 @@
 #ifndef CAMERAPLUGIN_H
 #define CAMERAPLUGIN_H
 
-#include "voreen/qt/widgets/widgetplugin.h"
-
+#include "voreen/core/processors/processor.h"
 #include "tgt/quaternion.h"
 
 #include <QLabel>
@@ -51,10 +48,9 @@ namespace voreen {
 class VoreenTrackball;
 class CameraProperty;
 
-class CameraWidget : public WidgetPlugin {
+class CameraWidget : public QWidget {
     Q_OBJECT
 public:
-
     CameraWidget(CameraProperty* camera, float minDist = 0.01f, float maxDist = 50.f, QWidget* parent = 0);
     ~CameraWidget();
 
@@ -92,8 +88,7 @@ private:
     /**
      * Helper class ensuring freeing used resources in case an excpetion is thrown.
      */
-    class SerializationResource
-    {
+    class SerializationResource {
     public:
         /**
          * Creates a @c SerializationResource.
@@ -168,7 +163,6 @@ private:
 
     QToolButton* buSaveTrackball_;
     QToolButton* buRestoreTrackball_;
-
 };
 
 } // namespace voreen

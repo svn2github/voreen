@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -42,11 +40,13 @@ const std::string VoreenVersion::getCompilerVersion() {
     std::stringstream ver;
 #if defined(WIN32) && defined(_MSC_VER)
     #if _MSC_VER == 1310
-        ver << "Microsoft Visual C++ .NET 2003");
+        ver << "Microsoft Visual C++ .NET 2003";
     #elif _MSC_VER == 1400
         ver << "Microsoft Visual C++ 2005";
     #elif _MSC_VER == 1500
         ver << "Microsoft Visual C++ 2008";
+    #elif _MSC_VER == 1600
+        ver << "Microsoft Visual C++ 2010";
     #else
         ver << "Unknown Microsoft Visual C++ (_MSC_VER=" << _MSC_VER << ")";
     #endif
@@ -71,17 +71,21 @@ const std::string VoreenVersion::getCompilerVersion() {
 }
 
 const std::string VoreenVersion::getVersion() {
-    return "2.01";
+    return "2.5";
 }
 
 const std::string VoreenVersion::getRevision() {
 #if defined(VRN_WITH_SVNVERSION)
     return VRN_SVN_REVISION;
 #elif defined(VRN_SNAPSHOT)
-    return "snapshot-34";
+    return "snapshot-35";
 #else
     return "";
 #endif
+}
+
+const std::string VoreenVersion::getCopyright() {
+    return "Copyright (C) 2005-2010 The Voreen Team.";
 }
 
 void VoreenVersion::logAll(const std::string& loggerCat) {

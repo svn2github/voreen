@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -29,8 +27,11 @@
 
 #include "voreen/qt/widgets/property/floatpropertywidget.h"
 
-#include "voreen/core/vis/properties/floatproperty.h"
+#include "voreen/core/properties/floatproperty.h"
 #include "voreen/qt/widgets/sliderspinboxwidget.h"
+
+#include <QMenu>
+#include <QMouseEvent>
 
 namespace voreen {
 
@@ -46,6 +47,7 @@ FloatPropertyWidget::FloatPropertyWidget(FloatProperty* prop, QWidget* parent, b
 
     connect(widget_, SIGNAL(valueChanged(double)), this, SLOT(setProperty(double)));
     connect(widget_, SIGNAL(sliderPressedChanged(bool)), this, SLOT(toggleInteractionMode(bool)));
+    connect(widget_, SIGNAL(valueChanged(double)), this, SIGNAL(widgetChanged()));
 
     if (addVisibilityControl)
         QPropertyWidget::addVisibilityControls();
@@ -85,6 +87,25 @@ void FloatPropertyWidget::setProperty(double value) {
 
     emit valueChanged(value);
     emit modified();
+}
+
+void FloatPropertyWidget::mousePressEvent(QMouseEvent* event) {
+    if(event->button() == Qt::RightButton) {
+        QMenu* precisionMenu = new QMenu(this);
+        QAction* normalAction = precisionMenu->addAction("Normal Precision");
+        QAction* highAction = precisionMenu->addAction("High Precision");
+        QAction* prec = precisionMenu->exec(mapToGlobal(event->pos()));
+        if(prec == normalAction) {
+            property_->setStepping(0.05f);
+            property_->setNumDecimals(2);
+        }
+        else if (prec == highAction){
+            property_->setStepping(0.0001f);
+            property_->setNumDecimals(4);
+        }
+        updateFromProperty();
+    }
+    QWidget::mousePressEvent(event);
 }
 
 } // namespace

@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -27,7 +25,7 @@
  *                                                                    *
  **********************************************************************/
 
-#include "voreen/core/volume/volumeatomic.h"
+#include "voreen/core/datastructures/volume/volumeatomic.h"
 #include "voreen/core/io/tiffvolumereader.h"
 #include "voreen/core/io/textfilereader.h"
 #include "voreen/core/io/ioprogress.h"
@@ -55,9 +53,12 @@ TiffVolumeReader::TiffVolumeReader(IOProgress* progress) : VolumeReader(progress
     extensions_.push_back("tif");
 }
 
-VolumeCollection* TiffVolumeReader::read(const std::string &fileName)
+VolumeCollection* TiffVolumeReader::read(const std::string &url)
     throw (tgt::CorruptedFileException, tgt::IOException, std::bad_alloc)
 {
+    VolumeOrigin origin(url);
+    std::string fileName = origin.getPath();
+
     ivec3 dimensions;
     int band = 1;
 
@@ -212,6 +213,8 @@ VolumeCollection* TiffVolumeReader::read(const std::string &fileName)
                                     stripSize)) == -1){
                         LERROR("Read error on input strip number " << stripCount);
                         delete[] buffer;
+                        delete[] minValue;
+                        delete[] maxValue;
                         for (int i=0; i<band; ++i)
                             delete targetDataset[i];
                         TIFFClose(tif);
@@ -269,6 +272,10 @@ VolumeCollection* TiffVolumeReader::read(const std::string &fileName)
         volumeCollection->add(volumeHandle);
     }
     return volumeCollection;
+}
+
+VolumeReader* TiffVolumeReader::create(IOProgress* progress) const {
+    return new TiffVolumeReader(progress);
 }
 
 } // namespace voreen

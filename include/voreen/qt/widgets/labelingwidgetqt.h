@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -30,23 +28,20 @@
 #ifndef LABELINGWIDGETQT_H
 #define LABELINGWIDGETQT_H
 
-#include "widgetplugin.h"
-#include "voreen/core/vis/processors/image/labeling.h"
+#include "voreen/modules/base/processors/image/labeling.h"
+
 #include <QTabWidget>
 #include <QListWidget>
 
-
 namespace voreen {
 
-class LabelingWidgetQt : public WidgetPlugin, LabelingWidget
-{
+class LabelingWidgetQt : public QWidget, LabelingWidget {
     Q_OBJECT
-
 public:
     LabelingWidgetQt(QWidget* parent=0);
     std::string showInputDialog(const std::string &title,
-        const std::string &label,
-        const std::string &text);
+                                const std::string &label,
+                                const std::string &text);
 
 public slots:
     void selectionChanged(QListWidgetItem* item=0);

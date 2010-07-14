@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -29,7 +27,7 @@
 
 #include "voreen/qt/widgets/property/vecpropertywidget.h"
 
-#include "voreen/core/vis/properties/vectorproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
 #include "voreen/qt/widgets/sliderspinboxwidget.h"
 
 namespace voreen {
@@ -44,8 +42,9 @@ VecPropertyWidget<WIDGETTYPE, VECTORPROP, ELEMTYPE>::VecPropertyWidget(VECTORPRO
     widgets_(0),
     vectorProp_(prop)
 {
-    myLayout_->setSpacing(1);
+    myLayout_->setSpacing(0);
     myLayout_->setMargin(1);
+    myLayout_->setContentsMargins(0, 0, 0, 0);
 
     widgets_ = new WIDGETTYPE*[numComponents_];
     for (size_t i = 0; i < numComponents_; ++i) {
@@ -74,6 +73,13 @@ void VecPropertyWidget<WIDGETTYPE, VECTORPROP, ELEMTYPE>::updateFromProperty() {
     const typename VECTORPROP::ElemType& minValues = vectorProp_->getMinValue();
     const typename VECTORPROP::ElemType& maxValues = vectorProp_->getMaxValue();
     const typename VECTORPROP::ElemType& steppings = vectorProp_->getStepping();
+
+    if(typeid(vectorProp_) == typeid(FloatVec4Property*) || typeid(vectorProp_) == typeid(FloatVec3Property*) || typeid(vectorProp_) == typeid(FloatVec2Property*)){
+        size_t decimals = vectorProp_->getNumDecimals();
+        for (size_t i = 0; i < numComponents_; ++i) {
+            dynamic_cast<DoubleSliderSpinBoxWidget*>(widgets_[i])->setDecimals(decimals);
+        }
+    }
 
     for (size_t i = 0; i < numComponents_; ++i) {
         widgets_[i]->blockSignals(true);

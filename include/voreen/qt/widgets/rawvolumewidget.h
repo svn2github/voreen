@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -33,12 +31,14 @@
 #include <QDialog>
 
 #include "tgt/vector.h"
+#include "tgt/matrix.h"
 
+class QComboBox;
+class QDoubleSpinBox;
+class FloatMat4Property;
 class QLabel;
 class QPushButton;
 class QSpinBox;
-class QComboBox;
-class QDoubleSpinBox;
 
 namespace voreen {
 
@@ -46,16 +46,18 @@ class RawVolumeWidget : public QDialog {
     Q_OBJECT
 public:
     RawVolumeWidget(QWidget* parent, const QString& filename, std::string& objectModel, std::string& format,
-                    tgt::ivec3& dim, tgt::vec3& spacing, int& headerSkip);
+        tgt::ivec3& dim, tgt::vec3& spacing, int& headerSkip, bool& bigEndian, tgt::mat4& trafoMat,  int fixedZDim = -1);
+    ~RawVolumeWidget();
 
 protected:
     void resizeEvent(QResizeEvent *);
 
 private:
     QPushButton* submit_;
-    QSpinBox* headerSkipBox_;
     QComboBox* datatypeComboBox_;
     QComboBox* objectModelComboBox_;
+    QSpinBox* headerSkipSpin_;
+    QComboBox* endiannessCombo_;
     QSpinBox* xDimension_;
     QSpinBox* yDimension_;
     QSpinBox* zDimension_;
@@ -67,7 +69,11 @@ private:
     std::string& format_;
     tgt::ivec3& dim_;
     tgt::vec3& spacing_;
+    tgt::mat4& trafoMat_;
+    FloatMat4Property* trafoMatProp_;
+    QWidget* trafoMatWidget_;
     int& headerSkip_;
+    bool& bigEndian_;
 
 private slots:
     void updateValues();

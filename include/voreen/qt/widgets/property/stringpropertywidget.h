@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -31,7 +29,7 @@
 #define VRN_STRINGPROPERTYWIDGET_H
 
 #include "voreen/qt/widgets/property/qpropertywidget.h"
-#include "voreen/core/vis/properties/stringproperty.h"
+#include "voreen/core/properties/stringproperty.h"
 
 class QLineEdit;
 
@@ -52,6 +50,8 @@ public slots:
 protected:
     StringProperty* property_;
     QLineEdit* lineEdit_;
+    // true if the propertychange originates in this widget
+    bool textChangeSource_;
 };
 
 } // namespace

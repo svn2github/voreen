@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -33,15 +31,16 @@
 #include <QFrame>
 #include <QPushButton>
 
-#include "voreen/core/vis/voreenpainter.h"
+#include "voreen/core/utils/voreenpainter.h"
 
 namespace voreen {
 
 LabelingWidgetQt::LabelingWidgetQt(QWidget *parent) :
-    WidgetPlugin(parent)
+    QWidget(parent)
 {
     setObjectName(tr("Labeling"));
     createWidgets();
+    createConnections();
 }
 
 void LabelingWidgetQt::createWidgets() {

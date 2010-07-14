@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -31,9 +29,9 @@
 #define VRN_CACHE_H
 
 #include "voreen/core/io/cacheindex.h"
-#include "voreen/core/vis/processors/ports/allports.h"
-#include "voreen/core/volume/volumehandle.h"
-#include "voreen/core/application.h"
+#include "voreen/core/ports/allports.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
+#include "voreen/core/voreenapplication.h"
 #include "tgt/filesystem.h"
 #include <typeinfo>
 

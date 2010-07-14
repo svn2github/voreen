@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2008 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -31,7 +29,7 @@
 #define VRN_BRICKEDVOLUMEWRITER_H
 
 #include "voreen/core/io/volumewriter.h"
-#include "voreen/core/volume/bricking/brickinginformation.h"
+#include "voreen/core/datastructures/volume/bricking/brickinginformation.h"
 
 namespace voreen {
 
@@ -43,6 +41,8 @@ namespace voreen {
     class BrickedVolumeWriter : public VolumeWriter {
     public:
         BrickedVolumeWriter(BrickingInformation& brickingInformation);
+
+        virtual VolumeWriter* create(IOProgress* progress = 0) const;
 
         ~BrickedVolumeWriter();
 

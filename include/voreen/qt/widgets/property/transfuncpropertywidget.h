@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -30,7 +28,7 @@
 #ifndef VRN_TRANSFUNCPROPERTYWIDGET_H
 #define VRN_TRANSFUNCPROPERTYWIDGET_H
 
-#include "voreen/qt/widgets/property/qpropertywidget.h"
+#include "voreen/qt/widgets/property/qpropertywidgetwitheditorwindow.h"
 
 class QPushButton;
 
@@ -40,35 +38,24 @@ class TransFuncPlugin;
 class VoreenToolWindow;
 class TransFuncProperty;
 
-class TransFuncPropertyWidget : public QPropertyWidget {
+class TransFuncPropertyWidget : public QPropertyWidgetWithEditorWindow {
 Q_OBJECT
 public:
     TransFuncPropertyWidget(TransFuncProperty* prop, QWidget* parent = 0);
 
-    ~TransFuncPropertyWidget();
-
     void updateFromProperty();
     void disconnect();
-
-    /**
-     * Stores the state of the transfer function editor window.
-     */
-    virtual MetaDataBase* getWidgetMetaData() const;
 
 public slots:
     void setProperty();
 
 protected:
-    /// Creates the transfunc editor
-    void createEditorWindow();
-
-    /// Queries the property's meta data for
-    /// the editor window's visibility state
-    bool editorVisibleOnStartup() const;
+    virtual QWidget* createEditorWindowWidget();
+    virtual void customizeEditorWindow();
+    virtual Property* getProperty();
 
     TransFuncPlugin* plugin_;
     TransFuncProperty* property_;
-    VoreenToolWindow* window_;
     QPushButton* editBt_;
 };
 

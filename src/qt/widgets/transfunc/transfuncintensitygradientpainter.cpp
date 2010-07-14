@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -29,11 +27,11 @@
 
 #include "voreen/qt/widgets/transfunc/transfuncintensitygradientpainter.h"
 
-#include "voreen/core/vis/transfunc/transfuncintensitygradient.h"
-#include "voreen/core/vis/transfunc/transfuncprimitive.h"
-#include "voreen/core/volume/gradient.h"
-#include "voreen/core/volume/histogram.h"
-#include "voreen/core/volume/volume.h"
+#include "voreen/core/datastructures/transfunc/transfuncintensitygradient.h"
+#include "voreen/core/datastructures/transfunc/transfuncprimitive.h"
+#include "voreen/core/datastructures/volume/gradient.h"
+#include "voreen/core/datastructures/volume/histogram.h"
+#include "voreen/core/datastructures/volume/volume.h"
 
 #include "tgt/qt/qtcanvas.h"
 #include "tgt/glcanvas.h"
@@ -87,7 +85,7 @@ void TransFuncIntensityGradientPainter::mousePressEvent(tgt::MouseEvent* event) 
 
     mouseCoord_ = pos;
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::mouseMoveEvent(tgt::MouseEvent* event) {
@@ -120,7 +118,7 @@ void TransFuncIntensityGradientPainter::mouseMoveEvent(tgt::MouseEvent* event) {
         }
     }
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::mouseReleaseEvent(tgt::MouseEvent* event) {
@@ -229,7 +227,7 @@ void TransFuncIntensityGradientPainter::addQuadPrimitive() {
     selectPrimitive(p);
 
     // repaint canvas
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::addBananaPrimitive() {
@@ -248,7 +246,7 @@ void TransFuncIntensityGradientPainter::addBananaPrimitive() {
     selectPrimitive(p);
 
     // repaint canvas
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::deletePrimitive() {
@@ -258,7 +256,7 @@ void TransFuncIntensityGradientPainter::deletePrimitive() {
         updateTF();
         emit primitiveDeselected();
 
-        getCanvas()->repaint();
+        getCanvas()->update();
     }
 }
 
@@ -280,7 +278,7 @@ void TransFuncIntensityGradientPainter::colorizePrimitive() {
 
             updateTF();
 
-            getCanvas()->repaint();
+            getCanvas()->update();
         }
     }
 }
@@ -291,7 +289,7 @@ void TransFuncIntensityGradientPainter::fuzzinessChanged(int fuzzi) {
 
     updateTF();
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::transparencyChanged(int trans) {
@@ -303,7 +301,7 @@ void TransFuncIntensityGradientPainter::transparencyChanged(int trans) {
 
     updateTF();
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::resetTransferFunction() {
@@ -312,7 +310,7 @@ void TransFuncIntensityGradientPainter::resetTransferFunction() {
 
     updateTF();
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::paint() {
@@ -412,7 +410,7 @@ void TransFuncIntensityGradientPainter::toggleHistogramLogarithmic(int state) {
 
     updateHistogramTexture();
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::histogramBrightnessChanged(int brightness) {
@@ -420,7 +418,7 @@ void TransFuncIntensityGradientPainter::histogramBrightnessChanged(int brightnes
 
     updateHistogramTexture();
 
-    getCanvas()->repaint();
+    getCanvas()->update();
 }
 
 void TransFuncIntensityGradientPainter::setHistogramVisible(bool v) {
@@ -453,30 +451,26 @@ void TransFuncIntensityGradientPainter::createHistogram() {
         bucketsi = bucketsg;
     }
     else {
-
         // calculate 8 bit gradients
         if (tgt::max(volume_->getDimensions()) <= 128) {
             intensityVolume = volume_;
-        }
-        else {
+        } else {
             // HACK!
             tgt::ivec3 newDims = tgt::ivec3(tgt::vec3(volume_->getDimensions()) / (tgt::max(volume_->getDimensions()) / 128.f));
-            intensityVolume = volume_->scale(newDims, Volume::LINEAR);
-            gradientVolume = calcGradients<tgt::col3>(intensityVolume);
+            intensityVolume = volume_->resample(newDims, Volume::LINEAR);
         }
-
         gradientVolume = calcGradients<tgt::col3>(intensityVolume);
+
         bucketsg = 256;
         if ((intensityVolume->getBitsStored() / numChannels) > 8)
             bucketsi = 512;
         else
             bucketsi = 256;
     }
-    // create histogram with scaling to the maximum gradientlength in the dataset
+    // create histogram with scaling to the maximum gradient length in the dataset
     histogram_ = new HistogramIntensityGradient(gradientVolume, intensityVolume, bucketsi, bucketsg, true);
-    // Todo: re-enable scaling (does currently break serialization)
-    //scaleFactor_ = histogram_->getScaleFactor();
-    //tf_->setScaleFactor(scaleFactor_);
+    scaleFactor_ = histogram_->getScaleFactor();
+    tf_->setScaleFactor(scaleFactor_);
 
     if (numChannels != 4)
         delete gradientVolume;

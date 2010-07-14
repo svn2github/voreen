@@ -2,9 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -30,9 +28,10 @@
 #include "commands_modify.h"
 #include "voreen/core/io/volumeserializer.h"
 #include "voreen/core/io/volumeserializerpopulator.h"
-#include "voreen/core/volume/volumecollection.h"
-#include "voreen/core/volume/volumeatomic.h"
-#include "voreen/core/volume/bricking/brickinginformation.h"
+#include "voreen/core/datastructures/volume/volumecollection.h"
+#include "voreen/core/datastructures/volume/volumeatomic.h"
+#include "voreen/core/datastructures/volume/volumeoperator.h"
+#include "voreen/core/datastructures/volume/bricking/brickinginformation.h"
 #include "voreen/core/io/brickedvolumewriter.h"
 
 #include "tgt/vector.h"
@@ -100,7 +99,6 @@ bool CommandCutToPieces::execute(const std::vector<std::string>& parameters) {
             }
         }
     }
-    delete serializer;
     return true;
 }
 
@@ -123,7 +121,7 @@ bool CommandScale::checkParameters(const std::vector<std::string>& parameters) {
     set.insert("nearest");
     set.insert("l");
     set.insert("linear");
-    return (parameters.size() == 6) && isValueInSet(parameters[0], &set) && is<int>(parameters[1]) && is<int>(parameters[2]) && is<int>(parameters[3]);
+    return (parameters.size() == 6) && isValueInSet(parameters[0], set) && is<int>(parameters[1]) && is<int>(parameters[2]) && is<int>(parameters[3]);
 }
 
 bool CommandScale::execute(const std::vector<std::string>& parameters) {
@@ -152,7 +150,7 @@ bool CommandScale::execute(const std::vector<std::string>& parameters) {
     VolumeCollection* volumeCollection = serializer->load(parameters[4]);
     Volume* sourceDataset_ = volumeCollection->first()->getVolume();
 
-    Volume* targetDataset_ = sourceDataset_->scale(dimensions, filter);
+    Volume* targetDataset_ = sourceDataset_->resample(dimensions, filter);
     serializer->save(parameters.back(), targetDataset_);
     delete sourceDataset_;
     delete targetDataset_;
@@ -175,7 +173,10 @@ bool CommandMirrorZ::execute(const std::vector<std::string>& parameters) {
     VolumeCollection* volumeCollection = serializer->load(parameters[0]);
     Volume* sourceDataset_ = volumeCollection->first()->getVolume();
 
-    Volume* targetDataset_ = sourceDataset_->mirrorZ();
+    Volume* targetDataset_ = sourceDataset_->clone();
+    VolumeOperatorMirrorZ mirrorZ;
+    mirrorZ(targetDataset_);
+
     serializer->save(parameters.back(), targetDataset_);
     delete targetDataset_;
     return true;
@@ -244,7 +245,7 @@ bool CommandBrick::execute(const std::vector<std::string>& parameters) {
     brickingInformation.totalNumberOfResolutions = static_cast<int> ( ( log(
             (float)bricksize) / log (2.0) ) + 1);
 
-    VolumeCollection* volumeCollection;
+    VolumeCollection* volumeCollection = 0;
     Volume* volume;
     bool readSliceWise = true;
     try {
