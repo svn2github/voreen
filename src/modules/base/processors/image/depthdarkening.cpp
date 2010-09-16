@@ -58,8 +58,8 @@ Processor* DepthDarkening::create() const {
 }
 
 void DepthDarkening::process() {
-    privatePort_.activateTarget();
 
+    privatePort_.activateTarget();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!interactionMode())
@@ -111,6 +111,7 @@ void DepthDarkening::process() {
     renderQuad();
 
     program_->deactivate();
+    outport_.deactivateTarget();
     LGL_ERROR;
 }
 

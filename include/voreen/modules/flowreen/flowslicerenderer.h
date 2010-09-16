@@ -34,6 +34,10 @@
 #include "voreen/modules/flowreen/colorcodingability.h"
 #include "voreen/modules/flowreen/flowreenprocessor.h"
 
+#include "voreen/core/properties/intproperty.h"
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/optionproperty.h"
+
 namespace tgt { class Texture; }
 
 namespace voreen {

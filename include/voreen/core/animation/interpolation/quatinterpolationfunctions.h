@@ -37,7 +37,6 @@ namespace voreen {
  * This class offers an interpolation function for quat-values. Interpolation: focus on startvalue.
  */
 class QuatStartInterpolationFunction : public InterpolationFunction<tgt::quat> {
-
 public:
         QuatStartInterpolationFunction();
         InterpolationFunction<tgt::quat>* clone() const;
@@ -51,7 +50,6 @@ public:
  * This class offers an interpolation function for quat-values. Interpolation: focus on endvalue.
  */
 class QuatEndInterpolationFunction : public InterpolationFunction<tgt::quat> {
-
 public:
     QuatEndInterpolationFunction();
     InterpolationFunction<tgt::quat>* clone() const;
@@ -65,7 +63,6 @@ public:
  * This class offers an interpolation function for quat-values. Interpolation: bisection.
  */
 class QuatStartEndInterpolationFunction : public InterpolationFunction<tgt::quat> {
-
 public:
     QuatStartEndInterpolationFunction();
     InterpolationFunction<tgt::quat>* clone() const;
@@ -79,7 +76,6 @@ public:
  * This class offers an interpolation function for quat. Interpolation: linear.
  */
 class QuatLinearInterpolationFunction : public InterpolationFunction<tgt::quat> {
-
 public:
     QuatLinearInterpolationFunction();
     InterpolationFunction<tgt::quat>* clone() const;
@@ -93,7 +89,6 @@ public:
  * This class offers an interpolation function for quat. Interpolation: spherical linear.
  */
 class QuatSphericalLinearInterpolationFunction : public InterpolationFunction<tgt::quat> {
-
 public:
     QuatSphericalLinearInterpolationFunction();
     InterpolationFunction<tgt::quat>* clone() const;

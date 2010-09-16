@@ -29,7 +29,10 @@
 #define VRN_MULTISURFACERENDERER_H
 
 #include "voreen/modules/base/processors/geometry/geometryrenderer.h"
-#include <hpmc.h>
+#include "hpmc/hpmc.h"
+
+#include "voreen/core/ports/allports.h"
+#include "voreen/core/properties/allproperties.h"
 
 namespace voreen {
 

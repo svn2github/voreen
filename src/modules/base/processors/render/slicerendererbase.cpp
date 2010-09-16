@@ -51,7 +51,7 @@ namespace voreen {
 
 SliceRendererBase::SliceRendererBase()
     : VolumeRenderer(),
-    transferFunc_("transferFunction", "Transfer function"),
+    transferFunc_("transferFunction", "Transfer Function"),
     filterTexture_("filterTexture", "Filter Texture", true),
     sliceShader_(0),
     outport_(Port::OUTPORT, "image.outport"),
@@ -103,7 +103,9 @@ bool SliceRendererBase::ready() const {
 }
 
 
-bool SliceRendererBase::setupShader(VolumeGL* volume, TextureUnit* volUnit, TextureUnit* transferUnit) {
+bool SliceRendererBase::setupShader(VolumeGL* volume, TextureUnit* volUnit, TextureUnit* transferUnit,
+    const tgt::Camera* camera, const tgt::vec4& lightPosition) {
+
     // if we don't have hardware support -> return
     if (!GpuCaps.areShadersSupported())
         return false;
@@ -129,9 +131,10 @@ bool SliceRendererBase::setupShader(VolumeGL* volume, TextureUnit* volUnit, Text
                 volume,
                 volUnit,
                 "volume_",
-                "volumeParameters_")
+                "volumeParameters_",
+                true)
                 );
-            bindVolumes(sliceShader_, volumeTextures);
+            bindVolumes(sliceShader_, volumeTextures, camera, lightPosition);
 
             LGL_ERROR;
         }
@@ -157,7 +160,7 @@ bool SliceRendererBase::rebuildShader() {
     if (!sliceShader_)
         return false;
 
-    sliceShader_->setHeaders(buildShaderHeader(), false);
+    sliceShader_->setHeaders(buildShaderHeader());
     return sliceShader_->rebuild();
 }
 

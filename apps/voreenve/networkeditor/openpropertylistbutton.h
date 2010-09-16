@@ -31,6 +31,8 @@
 #include <QObject>
 #include <QGraphicsItem>
 
+#include "networkeditor_common.h"
+
 namespace voreen {
 
 /**
@@ -49,6 +51,15 @@ public:
      * \param parent The parent item. Might be 0
      */
     OpenPropertyListButton(QGraphicsItem* parent);
+
+    /// The type of this QGraphicsItem subclass
+    enum {Type = UserType + UserTypesOpenPropertyListButton};
+
+    /**
+     * Returns the type of this class. Necessary for all QGraphicsItem subclasses.
+     * \return The type of this class
+     */
+    int type() const;
 
     /**
      * The bounding rect of this PortGraphicsItem. \sa QGraphicsItem::boundingRect()
@@ -69,6 +80,8 @@ signals:
 protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
     void mousePressEvent(QGraphicsSceneMouseEvent* event);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 };
 
 } //namespace voreen

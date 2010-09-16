@@ -54,6 +54,7 @@ class RenderTargetViewer;
 class LinkingScriptManager;
 class AnimationEditor;
 
+
 //---------------------------------------------------------------------------
 
 class VoreenSplashScreen : public QSplashScreen {
@@ -90,8 +91,8 @@ public:
 
     enum GuiMode {
         MODE_NONE,
-        MODE_VISUALIZATION,
-        MODE_NETWORK
+        MODE_APPLICATION,
+        MODE_DEVELOPMENT
     };
 
     VoreenMainWindow(const std::string& workspace = "", const std::string& dataset = "");
@@ -112,7 +113,8 @@ public slots:
 
     // workspace
     void exportWorkspace();
-    void extractZippedWorkspace();
+    void extractWorkspaceArchive();
+    void extractWorkspaceArchive(QString archivFile);
     void newWorkspace();
     void openWorkspace();
     void openWorkspace(const QString& filename);
@@ -138,11 +140,11 @@ public slots:
 
     // help menu
     void helpFirstSteps();
+    void helpAnimation();
     void helpWebsite();
     void helpAbout();
 
     // further slots
-    void networkModified();
     void guiModeChanged();
 
 protected:
@@ -156,6 +158,9 @@ protected slots:
 
     /// Adjust snapshot tool menu to network.
     void adjustSnapshotMenu();
+
+    /// Updates the window after network modifications
+    void updateWindowTitle();
 
 private:
     //
@@ -212,8 +217,6 @@ private:
     void addToRecentFiles(const QString& filename);
     void updateRecentFiles();
 
-    void updateWindowTitle();
-
     void closeEvent(QCloseEvent* event);
     void dragEnterEvent(QDragEnterEvent* event);
     void dropEvent(QDropEvent* event);
@@ -246,8 +249,8 @@ private:
     VoreenToolWindow* consoleTool_;
 
     QSettings settings_;
-    QByteArray visualizationModeState_;
-    QByteArray networkModeState_;
+    QByteArray applicationModeState_;
+    QByteArray developmentModeState_;
     QByteArray networkEditorWindowState_;
 
     QMdiArea* mdiArea_;
@@ -270,6 +273,7 @@ private:
 
     QAction* aboutAction_;
     QAction* helpFirstStepsAct_;
+    QAction* helpAnimationAct_;
     QAction* openDatasetAction_;
     QAction* openRawDatasetAction_;
     QAction* importNetworkAction_;
@@ -284,8 +288,8 @@ private:
     QAction* loadLastWorkspaceAct_;
     QAction* scriptAction_;
 
-    QAction* modeVisualizationAction_;
-    QAction* modeNetworkAction_;
+    QAction* modeApplicationAction_;
+    QAction* modeDevelopmentAction_;
 
     QAction* processorListAction_;
     QAction* snapshotAction_;
@@ -293,7 +297,7 @@ private:
     QList<QAction*> recentFileActs_;
 
     ConsolePlugin* consolePlugin_;
-    
+
     bool resetSettings_;
     bool loadLastWorkspace_;
     QString lastWorkspace_;

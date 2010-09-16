@@ -43,6 +43,8 @@ public:
 
     virtual ~FloatMat2Property() {}
 
+    virtual std::string getTypeString() const;
+
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
 
@@ -56,6 +58,8 @@ public:
 
     virtual ~FloatMat3Property() {}
 
+    virtual std::string getTypeString() const;
+
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
 
@@ -68,6 +72,8 @@ public:
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
 
     virtual ~FloatMat4Property() {}
+
+    virtual std::string getTypeString() const;
 
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };

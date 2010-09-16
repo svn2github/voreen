@@ -66,7 +66,7 @@ VolumeCollection* TUVVolumeReader::read(const std::string &url)
     VolumeUInt16* dataset;
     try {
         dataset = new VolumeUInt16(dimensions, ivec3(1));
-    } catch (std::bad_alloc) {
+    } catch (std::bad_alloc&) {
         throw; // throw it to the caller
     }
 
@@ -85,7 +85,7 @@ VolumeCollection* TUVVolumeReader::read(const std::string &url)
     return volumeCollection;
 }
 
-VolumeReader* TUVVolumeReader::create(IOProgress* /*progress*/) const {
+VolumeReader* TUVVolumeReader::create(ProgressBar* /*progress*/) const {
     return new TUVVolumeReader(/*progress*/);
 }
 

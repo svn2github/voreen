@@ -30,6 +30,8 @@
 
 #include "voreen/core/processors/renderprocessor.h"
 
+#include "voreen/core/properties/intproperty.h"
+
 namespace voreen {
 
 class LoopCompositor : public RenderProcessor {

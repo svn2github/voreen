@@ -55,7 +55,7 @@ public:
     virtual std::string getPropertyName() const = 0;
 
     /// returns true if there ist no keyvalue
-    virtual bool empty() = 0;
+    virtual bool isEmpty() = 0;
 
     /**
      * The current setting of the corresponding property in the rendernetwork is
@@ -67,6 +67,11 @@ public:
      * Returns if the property is animated on rendering.
      */
     virtual bool getActiveOnRendering() const = 0;
+
+    /**
+    * Sets the rendering state for the corresponding property
+    */
+    virtual void setActiveOnRendering(bool) = 0;
 
     /**
      * Called by the animation-class to set the interactionmode.
@@ -117,7 +122,7 @@ public:
     virtual bool isChanged() const = 0;
 
     virtual Property* getProperty() const = 0;
-    
+
 protected:
     float duration_;
 

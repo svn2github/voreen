@@ -36,7 +36,7 @@ namespace voreen {
 Compositor::Compositor()
     : ImageProcessor("pp_compositor")
     , compositingMode_("blendMode", "Blend mode", Processor::INVALID_PROGRAM)
-    , weightingFactor_("weightingFactor", "Weighting factor", 0.5f, 0.0f, 1.0f, true)
+    , weightingFactor_("weightingFactor", "Weighting factor", 0.5f, 0.0f, 1.0f)
     , inport0_(Port::INPORT, "image.inport0")
     , inport1_(Port::INPORT, "image.inport1")
     , outport_(Port::OUTPORT, "image.outport")
@@ -119,7 +119,7 @@ std::string Compositor::generateHeader() {
 
 void Compositor::compile() {
     if (program_)
-        program_->setHeaders(generateHeader(), false);
+        program_->setHeaders(generateHeader());
     ImageProcessor::compile();
 }
 

@@ -51,6 +51,8 @@ public:
     VolumeCollectionProperty(const std::string& id, const std::string& guiText, VolumeCollection* const value = 0,
         Processor::InvalidationLevel invalidationLevel = Processor::INVALID_PARAMETERS);
 
+    virtual std::string getTypeString() const;
+
     /// @see Property::createWidget
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 

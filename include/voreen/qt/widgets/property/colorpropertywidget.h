@@ -28,6 +28,8 @@
 #ifndef VRN_COLORPROPERTYWIDGET_H
 #define VRN_COLORPROPERTYWIDGET_H
 
+#include "voreen/core/properties/templateproperty.h"
+
 #include "voreen/qt/widgets/property/qpropertywidget.h"
 
 #include "tgt/vector.h"
@@ -35,8 +37,6 @@
 #include <QLabel>
 
 namespace voreen {
-
-class ColorProperty;
 
 class ClickableColorLabel : public QLabel {
     Q_OBJECT
@@ -57,7 +57,7 @@ protected:
 class ColorPropertyWidget : public QPropertyWidget {
     Q_OBJECT
 public:
-    ColorPropertyWidget(ColorProperty* prop, QWidget* parent = 0);
+    ColorPropertyWidget(TemplateProperty<tgt::vec4>* prop, QWidget* parent = 0);
 
     void updateFromProperty();
 
@@ -71,7 +71,7 @@ protected:
     QColor toQColor(tgt::Color color);
 
 private:
-    ColorProperty* property_;
+    TemplateProperty<tgt::vec4>* property_;
     ClickableColorLabel* colorLbl_;
     QColor currentColor_;
 };

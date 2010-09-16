@@ -32,6 +32,7 @@
 #include <QApplication>
 #include <QTextEdit>
 #include <QVBoxLayout>
+#include <QScrollBar>
 
 namespace voreen {
 
@@ -105,8 +106,9 @@ protected:
     std::string errorStyle_;
 };
 
-ConsolePlugin::ConsolePlugin(QWidget* parent)
-  : QWidget(parent)
+ConsolePlugin::ConsolePlugin(QWidget* parent, bool autoScroll)
+    : QWidget(parent)
+    , autoScroll_(autoScroll)
 {
     setObjectName(tr("Console"));
 
@@ -128,8 +130,16 @@ ConsolePlugin::~ConsolePlugin() {
 }
 
 void ConsolePlugin::log(const std::string& msg) {
+
+    // write log message to text box
     consoleText_->append(msg.c_str());
-    consoleText_->ensureCursorVisible();
+
+    // scroll to bottom
+    if (autoScroll_ && isVisible()) {
+        QScrollBar* scrollBar = consoleText_->verticalScrollBar();
+        if (scrollBar)
+            scrollBar->setValue(scrollBar->maximum());
+    }
 }
 
 } // namespace voreen

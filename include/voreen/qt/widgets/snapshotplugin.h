@@ -50,7 +50,7 @@ public slots:
     void takeSnapshot();
     void widthSpinChanged(int value);
     void heightSpinChanged(int value);
-    void sizeComboChanged(int index);
+    virtual void sizeComboChanged(int index);
     void updateFromProcessor();
 
 protected:

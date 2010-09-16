@@ -35,8 +35,10 @@
 #include "voreen/modules/base/processors/datasource/geometrysource.h"
 #include "voreen/modules/base/processors/datasource/imagesequencesource.h"
 #include "voreen/modules/base/processors/datasource/imagesource.h"
+#include "voreen/modules/base/processors/datasource/plotdatasource.h"
 #include "voreen/modules/base/processors/datasource/textsource.h"
 #include "voreen/modules/base/processors/datasource/volumecollectionsource.h"
+#include "voreen/modules/base/processors/datasource/volumeseriessource.h"
 #include "voreen/modules/base/processors/datasource/volumesource.h"
 
 // entry-exit points
@@ -46,8 +48,8 @@
 // geometry
 #include "voreen/modules/base/processors/geometry/boundingboxrenderer.h"
 #include "voreen/modules/base/processors/geometry/camerapositionrenderer.h"
-#include "voreen/modules/base/processors/geometry/clippingplanewidget.h"
 #include "voreen/modules/base/processors/geometry/depthpeelingprocessor.h"
+#include "voreen/modules/base/processors/geometry/eepgeometryintegrator.h"
 #include "voreen/modules/base/processors/geometry/geometryprocessor.h"
 #include "voreen/modules/base/processors/geometry/geometryrenderer.h"
 #include "voreen/modules/base/processors/geometry/isosurfaceextractor.h"
@@ -55,16 +57,16 @@
 #include "voreen/modules/base/processors/geometry/meshclipping.h"
 #include "voreen/modules/base/processors/geometry/meshclippingwidget.h"
 #include "voreen/modules/base/processors/geometry/meshslabclipping.h"
+#include "voreen/modules/base/processors/geometry/planewidgetprocessor.h"
 #include "voreen/modules/base/processors/geometry/pointlistrenderer.h"
 #include "voreen/modules/base/processors/geometry/pointsegmentlistrenderer.h"
-#include "voreen/modules/base/processors/geometry/eepgeometryintegrator.h"
+#include "voreen/modules/base/processors/geometry/quadricrenderer.h"
 #include "voreen/modules/base/processors/geometry/slicepositionrenderer.h"
 
 // image
 #include "voreen/modules/base/processors/image/background.h"
 #include "voreen/modules/base/processors/image/binaryimageprocessor.h"
 #include "voreen/modules/base/processors/image/unaryimageprocessor.h"
-#include "voreen/modules/base/processors/image/imageabstraction.h"
 #include "voreen/modules/base/processors/image/gaussian.h"
 #include "voreen/modules/base/processors/image/dilation.h"
 #include "voreen/modules/base/processors/image/erosion.h"
@@ -89,6 +91,9 @@
 #include "voreen/modules/base/processors/image/orientationoverlay.h"
 #include "voreen/modules/base/processors/image/regionofinterest2d.h"
 #include "voreen/modules/base/processors/image/quadview.h"
+
+// plotting
+#include "voreen/modules/base/processors/plotting/lineplot.h"
 
 // proxy geometry
 #include "voreen/modules/base/processors/proxygeometry/cubeproxygeometry.h"
@@ -117,6 +122,7 @@
 #include "voreen/modules/base/processors/utility/coordinatetransformation.h"
 #include "voreen/modules/base/processors/utility/distancemeasure.h"
 #include "voreen/modules/base/processors/utility/intensitymeasure.h"
+#include "voreen/modules/base/processors/utility/imageanalyzer.h"
 #include "voreen/modules/base/processors/utility/imageselector.h"
 #include "voreen/modules/base/processors/utility/imagesequenceloopinitiator.h"
 #include "voreen/modules/base/processors/utility/imagesequenceloopfinalizer.h"
@@ -125,14 +131,18 @@
 #include "voreen/modules/base/processors/utility/renderloopfinalizer.h"
 #include "voreen/modules/base/processors/utility/renderstore.h"
 #include "voreen/modules/base/processors/utility/scale.h"
+#include "voreen/modules/base/processors/utility/propertycontainer.h"
 #include "voreen/modules/base/processors/utility/segmentationvalidation.h"
 #include "voreen/modules/base/processors/utility/textoverlay.h"
 #include "voreen/modules/base/processors/utility/volumecollectionmodalityfilter.h"
 #include "voreen/modules/base/processors/utility/volumeinformation.h"
+#include "voreen/modules/base/processors/utility/volumepicking.h"
+#include "voreen/modules/base/processors/utility/volumeregistration.h"
 #include "voreen/modules/base/processors/utility/volumeselector.h"
 
 // volume
 #include "voreen/modules/base/processors/volume/vectormagnitude.h"
+#include "voreen/modules/base/processors/volume/volumebitscale.h"
 #include "voreen/modules/base/processors/volume/volumeinversion.h"
 #include "voreen/modules/base/processors/volume/volumecombine.h"
 #include "voreen/modules/base/processors/volume/volumecurvature.h"
@@ -145,11 +155,10 @@
 #include "voreen/modules/base/processors/volume/volumedistancetransform.h"
 #include "voreen/modules/base/processors/volume/volumeresample.h"
 #include "voreen/modules/base/processors/volume/volumesave.h"
-#include "voreen/modules/base/processors/volume/volumeconvert.h"
 #include "voreen/modules/base/processors/volume/volumecreate.h"
 #include "voreen/modules/base/processors/volume/volumecubify.h"
 #include "voreen/modules/base/processors/volume/volumehalfsample.h"
-#include "voreen/modules/base/processors/volume/volumemirrorz.h"
+#include "voreen/modules/base/processors/volume/volumemirror.h"
 #include "voreen/modules/base/processors/volume/volumesubset.h"
 
 
@@ -179,8 +188,10 @@ BaseModule::BaseModule()
     addProcessor(new GeometrySource());
     addProcessor(new ImageSequenceSource());
     addProcessor(new ImageSource());
+    addProcessor(new PlotDataSource());
     addProcessor(new TextSource());
     addProcessor(new VolumeCollectionSource());
+    addProcessor(new VolumeSeriesSource());
     addProcessor(new VolumeSource());
 
     // entry-exit points
@@ -190,7 +201,6 @@ BaseModule::BaseModule()
     // geometry
     addProcessor(new BoundingBoxRenderer());
     addProcessor(new CameraPositionRenderer());
-    addProcessor(new ClippingPlaneWidget());
     addProcessor(new DepthPeelingProcessor());
     addProcessor(new EEPGeometryIntegrator());
     addProcessor(new GeometryProcessor());
@@ -200,17 +210,18 @@ BaseModule::BaseModule()
     addProcessor(new MeshClipping());
     addProcessor(new MeshClippingWidget());
     addProcessor(new MeshSlabClipping());
+    addProcessor(new PlaneWidgetProcessor());
     addProcessor(new PointListRenderer());
     addProcessor(new PointSegmentListRenderer());
+    addProcessor(new QuadricRenderer());
     addProcessor(new SlicePositionRenderer());
-    addProcessor(new TexturedGeometryRenderer());
+
 
     // image
     addProcessor(new Background());
     addProcessor(new UnaryImageProcessor());
     addProcessor(new BinaryImageProcessor());
     addProcessor(new Gaussian());
-    addProcessor(new ImageAbstraction());
     addProcessor(new Erosion());
     addProcessor(new ExplosionCompositor());
     addProcessor(new Dilation());
@@ -224,6 +235,7 @@ BaseModule::BaseModule()
     addProcessor(new DepthDarkening());
     addProcessor(new EdgeDetect());
     addProcessor(new Fade());
+    addProcessor(new PropertyContainer());
     addProcessor(new Gabor());
     addProcessor(new Grayscale());
     addProcessor(new ImageMasking());
@@ -233,6 +245,9 @@ BaseModule::BaseModule()
     addProcessor(new QuadView());
     addProcessor(new RegionOfInterest2D());
     addProcessor(new OrientationOverlay());
+
+    // plotting
+    addProcessor(new LinePlot());
 
     // proxy geometry
     addProcessor(new CubeProxyGeometry());
@@ -260,6 +275,7 @@ BaseModule::BaseModule()
     addProcessor(new CoordinateTransformation());
     addProcessor(new DistanceMeasure());
     addProcessor(new IntensityMeasure());
+    addProcessor(new ImageAnalyzer());
     addProcessor(new ImageSequenceLoopInitiator());
     addProcessor(new ImageSequenceLoopFinalizer());
     addProcessor(new ImageSelector());
@@ -272,6 +288,8 @@ BaseModule::BaseModule()
     addProcessor(new TextOverlay());
     addProcessor(new VolumeCollectionModalityFilter());
     addProcessor(new VolumeInformation());
+    addProcessor(new VolumePicking());
+    addProcessor(new VolumeRegistration());
     addProcessor(new VolumeSelector());
 
     // volume
@@ -286,12 +304,12 @@ BaseModule::BaseModule()
     addProcessor(new VolumeResample());
     addProcessor(new VolumeSave());
     addProcessor(new VolumeTransformation());
-    addProcessor(new VolumeConvert());
+    addProcessor(new VolumeBitScale());
     addProcessor(new VolumeCreate());
     addProcessor(new VolumeCubify());
     addProcessor(new VolumeFiltering());
     addProcessor(new VolumeHalfsample());
-    addProcessor(new VolumeMirrorZ());
+    addProcessor(new VolumeMirror());
     addProcessor(new VolumeMorphology());
     addProcessor(new VolumeSubSet());
 
@@ -306,8 +324,7 @@ BaseModule::BaseModule()
     addVolumeReader(new TUVVolumeReader());
 
     // shader paths
-    addShaderPath(VoreenApplication::app()->getModulePath("base/glsl"));
-
+    addShaderPath(getModulesPath("base/glsl"));
 }
 
 void BaseModule::initialize() throw (VoreenException) {

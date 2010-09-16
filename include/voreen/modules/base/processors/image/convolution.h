@@ -30,6 +30,8 @@
 
 #include "voreen/core/processors/imageprocessor.h"
 
+#include "voreen/core/properties/intproperty.h"
+
 namespace voreen {
 
 class Convolution : public ImageProcessor {
@@ -39,7 +41,7 @@ public:
 
     virtual std::string getClassName() const { return "Convolution"; }
     virtual std::string getCategory() const  { return "Image Processing"; }
-    virtual CodeState getCodeState() const   { return CODE_STATE_EXPERIMENTAL; }
+    virtual CodeState getCodeState() const   { return CODE_STATE_STABLE; }
     virtual std::string getProcessorInfo() const;
 
 protected:

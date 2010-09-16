@@ -37,7 +37,6 @@ namespace voreen {
  * This class offers an interpolation function for ShaderSources. Interpolation: focus on startvalue.
  */
 class ShaderSourceStartInterpolationFunction : public InterpolationFunction<ShaderSource> {
-
 public:
     ShaderSourceStartInterpolationFunction();
     InterpolationFunction<ShaderSource>* clone() const;
@@ -51,7 +50,6 @@ public:
  * This class offers an interpolation function for ShaderSources. Interpolation: focus on endvalue.
  */
 class ShaderSourceEndInterpolationFunction : public InterpolationFunction<ShaderSource> {
-
 public:
     ShaderSourceEndInterpolationFunction();
     InterpolationFunction<ShaderSource>* clone() const;
@@ -65,7 +63,6 @@ public:
  * This class offers an interpolation function for ShaderSources. Interpolation: bisection.
  */
 class ShaderSourceStartEndInterpolationFunction : public InterpolationFunction<ShaderSource> {
-
 public:
     ShaderSourceStartEndInterpolationFunction();
     InterpolationFunction<ShaderSource>* clone() const;

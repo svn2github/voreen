@@ -88,6 +88,8 @@ public:
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
     virtual ~OptionProperty() {}
 
+    virtual std::string getTypeString() const;
+
     virtual void addOption(const std::string& key, const std::string& description, const T& value);
 
     virtual void select(const std::string& key);
@@ -114,6 +116,10 @@ protected:
     std::vector<Option<T> > options_;
 };
 
+template<class T>
+std::string voreen::OptionProperty<T>::getTypeString() const {
+    return "OptionProperty";
+}
 
 // ----------------------------------------------------------------------------
 // template implementations
@@ -257,6 +263,10 @@ public:
                          Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT) :
         OptionProperty<std::string>(id, guiText, invalidationLevel)
     {}
+
+    virtual std::string getTypeString() const {
+        return "StringOptionProperty";
+    }
 
     virtual void addOption(const std::string& key, const std::string& description) {
         addOption(key, description, key);

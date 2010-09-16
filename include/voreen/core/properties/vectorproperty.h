@@ -43,6 +43,8 @@ public:
 
     virtual ~FloatVec2Property() {}
 
+    virtual std::string getTypeString() const;
+
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
 
@@ -55,6 +57,8 @@ public:
                   Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
 
     virtual ~FloatVec3Property() {}
+
+    virtual std::string getTypeString() const;
 
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
@@ -69,6 +73,8 @@ public:
 
     virtual ~FloatVec4Property() {}
 
+    virtual std::string getTypeString() const;
+
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
 
@@ -81,6 +87,8 @@ public:
                 Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
 
     virtual ~IntVec2Property() {}
+
+    virtual std::string getTypeString() const;
 
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
@@ -95,6 +103,8 @@ public:
 
     virtual ~IntVec3Property() {}
 
+    virtual std::string getTypeString() const;
+
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
 
@@ -107,6 +117,8 @@ public:
                 Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
 
     virtual ~IntVec4Property() {}
+
+    virtual std::string getTypeString() const;
 
     virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };

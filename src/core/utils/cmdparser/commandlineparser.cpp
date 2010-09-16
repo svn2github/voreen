@@ -53,7 +53,7 @@ namespace {
  * If <code>count</code> is <code>-1</code>, the rest of the line will be extracted<br>
  * If <code>count</code> is > 0, that many arguments will be extracted and returned
  */
-inline int extractArguments(const vector<string> in, vector<string>* out, const size_t begin, const int count) {
+int extractArguments(const vector<string> in, vector<string>* out, const size_t begin, const int count) {
     int num = 0;
     if (count == -1) {
         for (size_t i = 0; (i < in.size()) && (static_cast<size_t>(begin+1+i) < in.size()) ; ++i, num++)
@@ -79,9 +79,9 @@ inline int extractArguments(const vector<string> in, vector<string>* out, const 
 namespace voreen {
 
 CommandlineParser::CommandlineParser(const std::string& programName)
-: commandForNamelessArguments_(0)
-, programName_(programName)
-, verbosity_(false)
+  : commandForNamelessArguments_(0)
+  , programName_(programName)
+  , verbosity_(false)
 {}
 
 CommandlineParser::~CommandlineParser() {
@@ -102,7 +102,10 @@ void CommandlineParser::setVerbosity(const bool verbosity) {
 void CommandlineParser::setCommandLine(int argc, char** argv) {
     // argv[0] = program name
     // argv[i] = i-th argument
-    programPath_ = argv[0];
+    if (argc > 0 && argv && argv[0])
+        programPath_ = argv[0];
+    else
+        programPath_ = "";
 
     // Might be possible that someone calls us multiple times
     arguments_.clear();
@@ -115,7 +118,10 @@ void CommandlineParser::setCommandLine(int argc, char** argv) {
 void CommandlineParser::setCommandLine(std::vector<std::string> arguments) {
     // argv[0] = program name
     // argv[i] = i-th argument
-    programPath_ = arguments[0];
+    if (arguments.size() > 0)
+        programPath_ = arguments[0];
+    else
+        programPath_ = "";
 
     // Might be possible that someone calls us multiple times
     arguments_.clear();
@@ -127,9 +133,8 @@ void CommandlineParser::setCommandLine(std::vector<std::string> arguments) {
 
 void CommandlineParser::execute() {
     // There is only one argument and this is either "-h" or "--help" ; so display the help
-    if ((arguments_.size() == 1) && ( (arguments_[0] == "-h") || (arguments_[0] == "--help")) ) {
+    if ((arguments_.size() == 1) && ((arguments_[0] == "-h") || (arguments_[0] == "--help")))
         displayHelp();
-    }
 
     vector<string> argumentsForNameless;
 
@@ -290,7 +295,7 @@ Command* CommandlineParser::getCommand(const std::string& shortOrLongName) {
     return 0;
 }
 
-inline void CommandlineParser::exitWithError(const std::string& msg, const std::string& command) {
+void CommandlineParser::exitWithError(const std::string& msg, const std::string& command) {
     std::cout << msg << std::endl << std::endl;
     displayUsage(command);
     exit(EXIT_FAILURE);

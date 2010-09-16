@@ -82,10 +82,8 @@ void ColorLuminancePicker::setVal(int v) {
 
     val_ = qMax(0, qMin(v,255));
 
-    if (pix_) {
-        delete pix_;
-        pix_ = 0;
-    }
+    delete pix_;
+    pix_ = 0;
 
     repaint();
 

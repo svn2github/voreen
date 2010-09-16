@@ -33,7 +33,7 @@ namespace voreen {
 FloatVec2Property::FloatVec2Property(const std::string& id, const std::string& guiText,
                              const tgt::vec2& value, const tgt::vec2& minValue,
                              const tgt::vec2& maxValue, Processor::InvalidationLevel invalidationLevel)
-    : NumericProperty<tgt::vec2>(id, guiText, value, minValue, maxValue, tgt::vec2(0.1f),
+    : NumericProperty<tgt::vec2>(id, guiText, value, minValue, maxValue, tgt::vec2(0.01f),
         invalidationLevel)
 {}
 
@@ -41,17 +41,26 @@ PropertyWidget* FloatVec2Property::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
 }
 
+std::string FloatVec2Property::getTypeString() const {
+    return "FloatVector2";
+}
+
 //---------------------------------------------------------------------------
 
 FloatVec3Property::FloatVec3Property(const std::string& id, const std::string& guiText,
                              const tgt::vec3& value, const tgt::vec3& minValue,
                              const tgt::vec3& maxValue, Processor::InvalidationLevel invalidationLevel)
-    : NumericProperty<tgt::vec3>(id, guiText, value, minValue, maxValue, tgt::vec3(0.1f),
+    : NumericProperty<tgt::vec3>(id, guiText, value, minValue, maxValue, tgt::vec3(0.01f),
         invalidationLevel)
 {}
 
+
 PropertyWidget* FloatVec3Property::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
+}
+
+std::string FloatVec3Property::getTypeString() const {
+    return "FloatVector3";
 }
 
 //---------------------------------------------------------------------------
@@ -59,12 +68,16 @@ PropertyWidget* FloatVec3Property::createWidget(PropertyWidgetFactory* f) {
 FloatVec4Property::FloatVec4Property(const std::string& id, const std::string& guiText,
                              const tgt::vec4& value, const tgt::vec4& minValue,
                              const tgt::vec4& maxValue, Processor::InvalidationLevel invalidationLevel)
-    : NumericProperty<tgt::vec4>(id, guiText, value, minValue, maxValue, tgt::vec4(0.1f),
+    : NumericProperty<tgt::vec4>(id, guiText, value, minValue, maxValue, tgt::vec4(0.01f),
         invalidationLevel)
 {}
 
 PropertyWidget* FloatVec4Property::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
+}
+
+std::string FloatVec4Property::getTypeString() const {
+    return "FloatVector4";
 }
 
 //---------------------------------------------------------------------------
@@ -80,6 +93,10 @@ PropertyWidget* IntVec2Property::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
 }
 
+std::string IntVec2Property::getTypeString() const {
+    return "IntVector2";
+}
+
 //---------------------------------------------------------------------------
 
 IntVec3Property::IntVec3Property(const std::string& id, const std::string& guiText,
@@ -93,6 +110,10 @@ PropertyWidget* IntVec3Property::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
 }
 
+std::string IntVec3Property::getTypeString() const {
+    return "IntVector3";
+}
+
 //---------------------------------------------------------------------------
 
 IntVec4Property::IntVec4Property(const std::string& id, const std::string& guiText,
@@ -104,6 +125,10 @@ IntVec4Property::IntVec4Property(const std::string& id, const std::string& guiTe
 
 PropertyWidget* IntVec4Property::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
+}
+
+std::string IntVec4Property::getTypeString() const {
+    return "IntVector4";
 }
 
 } // namespace voreen

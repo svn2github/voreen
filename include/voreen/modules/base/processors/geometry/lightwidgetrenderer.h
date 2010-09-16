@@ -30,7 +30,7 @@
 
 #include "voreen/core/processors/geometryrendererbase.h"
 #include "voreen/core/properties/boolproperty.h"
-#include "voreen/core/properties/lightproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
 #include "voreen/core/properties/eventproperty.h"
 
 namespace voreen {
@@ -63,7 +63,7 @@ private:
 
     bool isClicked_;
 
-    LightProperty lightPosition_;
+    FloatVec4Property lightPosition_;
     tgt::vec4 lightPositionAbs_;
     tgt::ivec2 startCoord_;
 

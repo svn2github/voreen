@@ -39,6 +39,8 @@ public:
 
     virtual ~StringProperty() {}
 
+    virtual std::string getTypeString() const;
+
     /**
      * @see Property::serialize
      */

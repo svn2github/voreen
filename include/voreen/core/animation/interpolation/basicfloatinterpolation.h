@@ -232,7 +232,6 @@ public:
      * timeinterval 0-1
      */
     static float outInCircInterpolation(float startvalue, float endvalue, float time);
-
 };
 
 } // namespace voreen

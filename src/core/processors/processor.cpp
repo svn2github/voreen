@@ -63,6 +63,7 @@ const std::string Processor::loggerCat_("voreen.Processor");
 Processor::Processor()
     : PropertyOwner()
     , initialized_(false)
+    , progressBar_(0)
     , name_("Processor")
     , moduleName_("undefined")
     , processorWidget_(0)
@@ -101,6 +102,9 @@ Processor* Processor::clone() const {
 }
 
 void Processor::initialize() throw (VoreenException) {
+
+    tgtAssert(VoreenApplication::app(), "VoreenApplication not instantiated");
+
     if (isInitialized()) {
         LWARNING("initialize(): '" << getName() << "' already initialized");
         return;
@@ -109,8 +113,14 @@ void Processor::initialize() throw (VoreenException) {
     // create and initialize processor widget
     if (VoreenApplication::app()->getProcessorWidgetFactory()) {
         processorWidget_ = VoreenApplication::app()->getProcessorWidgetFactory()->createWidget(this);
-        if (processorWidget_)
+        if (processorWidget_) {
             processorWidget_->initialize();
+
+            // inform the observers about the new widget
+            std::vector<ProcessorObserver*> observers = getObservers();
+            for (size_t i = 0; i < observers.size(); ++i)
+                observers[i]->processorWidgetCreated(this);
+        }
     }
 
     // initialize ports
@@ -150,7 +160,11 @@ void Processor::deinitialize() throw (VoreenException) {
     // delete processor widget
     delete processorWidget_;
     processorWidget_ = 0;
-    //LGL_ERROR;
+
+    // notify observers about the deleted widget
+    std::vector<ProcessorObserver*> observers = getObservers();
+    for (size_t i = 0; i < observers.size(); ++i)
+        observers[i]->processorWidgetDeleted(this);
 
     initialized_ = false;
 }
@@ -259,6 +273,17 @@ std::vector<Port*> Processor::getPorts() const {
     return result;
 }
 
+Port* Processor::getPort(const std::string& name) const {
+    const std::vector<Port*> ports = getPorts();
+
+    for (size_t i=0; i < ports.size(); i++) {
+        if (ports[i]->getName() == name)
+            return ports[i];
+    }
+
+    return 0;
+}
+
 void Processor::invalidate(int inv) {
     PropertyOwner::invalidate(inv);
 
@@ -271,11 +296,16 @@ void Processor::invalidate(int inv) {
     if (!invalidationVisited_) {
         invalidationVisited_ = true;
 
-        for (size_t i=0; i<outports_.size(); ++i) {
+        for (size_t i=0; i<outports_.size(); ++i)
             outports_[i]->invalidate();
-        }
-        for (size_t i=0; i<coProcessorOutports_.size(); ++i) {
+
+        for (size_t i=0; i<coProcessorOutports_.size(); ++i)
             coProcessorOutports_[i]->invalidate();
+
+        if (isEndProcessor()) {
+            tgtAssert(VoreenApplication::app(), "VoreenApplication not instantiated");
+            // triggers non-blocking network update
+            VoreenApplication::app()->scheduleNetworkProcessing();
         }
 
         invalidationVisited_ = false;
@@ -283,7 +313,6 @@ void Processor::invalidate(int inv) {
 }
 
 bool Processor::isReady() const {
-
     if (!isInitialized())
         return false;
 
@@ -312,24 +341,21 @@ void Processor::toggleInteractionMode(bool interactionMode, void* source) {
             if (interactionModeSources_.find(source) == interactionModeSources_.end()) {
                 PropertyOwner::toggleInteractionMode(interactionMode, source);
                 // propagate over outports
-                for (size_t i=0; i<outports_.size(); ++i) {
+                for (size_t i=0; i<outports_.size(); ++i)
                     outports_[i]->toggleInteractionMode(true, source);
-                }
-                for (size_t i=0; i<coProcessorOutports_.size(); ++i) {
+
+                for (size_t i=0; i<coProcessorOutports_.size(); ++i)
                     coProcessorOutports_[i]->toggleInteractionMode(true, source);
-                }
             }
-        }
-        else {
+        } else {
             if (interactionModeSources_.find(source) != interactionModeSources_.end()) {
                 PropertyOwner::toggleInteractionMode(interactionMode, source);
                 // propagate over outports
-                for (size_t i=0; i<outports_.size(); ++i) {
+                for (size_t i=0; i<outports_.size(); ++i)
                     outports_[i]->toggleInteractionMode(false, source);
-                }
-                for (size_t i=0; i<coProcessorOutports_.size(); ++i) {
+
+                for (size_t i=0; i<coProcessorOutports_.size(); ++i)
                     coProcessorOutports_[i]->toggleInteractionMode(false, source);
-                }
             }
         }
 
@@ -338,12 +364,10 @@ void Processor::toggleInteractionMode(bool interactionMode, void* source) {
 }
 
 void Processor::interactionModeToggled() {
-    if (interactionMode()) {
+    if (interactionMode())
         LDEBUG(getName() << " interactionModeSwitched  on");
-    }
-    else {
+    else
         LDEBUG(getName() << " interactionModeSwitched  off");
-    }
 }
 
 bool Processor::isValid() const {
@@ -353,17 +377,15 @@ bool Processor::isValid() const {
 void Processor::setValid() {
     PropertyOwner::setValid();
 
-    for (size_t i=0; i<inports_.size(); ++i) {
+    for (size_t i=0; i<inports_.size(); ++i)
         inports_[i]->setValid();
-    }
 
-    for (size_t i=0; i<coProcessorInports_.size(); ++i) {
+    for (size_t i=0; i<coProcessorInports_.size(); ++i)
         coProcessorInports_[i]->setValid();
-    }
 }
 
 bool Processor::isEndProcessor() const {
-    return ((outports_.empty()) && (coProcessorOutports_.empty()));
+    return (outports_.empty() && coProcessorOutports_.empty());
 }
 
 void Processor::serialize(XmlSerializer& s) const {
@@ -411,7 +433,7 @@ void Processor::deserialize(XmlDeserializer& s) {
         s.setUsePointerContentSerialization(true);
         s.deserialize("InteractionHandlers", handlerMap, "Handler", "name");
     }
-    catch(XmlSerializationNoSuchDataException& /*e*/){
+    catch (XmlSerializationNoSuchDataException& /*e*/){
         // interaction handler key missing => just ignore
         s.removeLastError();
     }
@@ -422,8 +444,21 @@ MetaDataContainer& Processor::getMetaDataContainer() const {
     return metaDataContainer_;
 }
 
+void Processor::setProgressBar(ProgressBar* progressBar) {
+    progressBar_ = progressBar;
+}
+
+void Processor::setProgress(float progress) {
+    if (progressBar_)
+        progressBar_->setProgress(progress);
+}
+
 ProcessorWidget* Processor::getProcessorWidget() const {
     return processorWidget_;
+}
+
+bool Processor::usesExpensiveComputation() const {
+    return false;
 }
 
 void Processor::addEventProperty(EventPropertyBase* prop) {
@@ -441,9 +476,9 @@ void Processor::addInteractionHandler(InteractionHandler* handler) {
     tgtAssert(handler, "Null pointer passed");
     handler->setOwner(this);
     interactionHandlers_.push_back(handler);
-    if (handler->getEventProperties().empty()) {
+
+    if (handler->getEventProperties().empty())
         LWARNING("Interaction handler '" << handler->getName() << "' has no event property.");
-    }
 }
 
 void Processor::addInteractionHandler(InteractionHandler& handler) {
@@ -458,12 +493,11 @@ const std::vector<InteractionHandler*>& Processor::getInteractionHandlers() cons
 }
 
 void Processor::onEvent(tgt::Event* e) {
-
     // cycle prevention
     if (eventVisited_)
         return;
-    eventVisited_ = true;
 
+    eventVisited_ = true;
     e->ignore();
 
     // propagate to interaction handlers (via their event properties)
@@ -474,24 +508,20 @@ void Processor::onEvent(tgt::Event* e) {
     }
 
     // propagate to event properties
-    for (size_t i = 0; (i < eventProperties_.size()) && !e->isAccepted(); ++i) {
+    for (size_t i = 0; (i < eventProperties_.size()) && !e->isAccepted(); ++i)
         eventProperties_[i]->execute(e);
-    }
 
     // pass-over event to processor's default event handling
-    if (!e->isAccepted()) {
+    if (!e->isAccepted())
         tgt::EventListener::onEvent(e);
-    }
 
     // propagate to coprocessor inports
-    for (size_t i=0; i<coProcessorInports_.size() && !e->isAccepted(); ++i) {
+    for (size_t i=0; i<coProcessorInports_.size() && !e->isAccepted(); ++i)
         coProcessorInports_[i]->distributeEvent(e);
-    }
 
     // propagate to inports
-    for (size_t i=0; i<inports_.size() && !e->isAccepted(); ++i) {
+    for (size_t i=0; i<inports_.size() && !e->isAccepted(); ++i)
         inports_[i]->distributeEvent(e);
-    }
 
     eventVisited_ = false;
 }
@@ -500,6 +530,4 @@ void Processor::deregisterWidget() {
     processorWidget_ = 0;
 }
 
-
 } // namespace voreen
-

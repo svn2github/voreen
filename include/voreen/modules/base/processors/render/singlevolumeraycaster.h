@@ -30,6 +30,12 @@
 
 #include "voreen/core/processors/volumeraycaster.h"
 
+#include "voreen/core/properties/transfuncproperty.h"
+#include "voreen/core/properties/cameraproperty.h"
+#include "voreen/core/properties/optionproperty.h"
+
+#include "voreen/core/ports/volumeport.h"
+
 namespace voreen {
 
 /**
@@ -82,6 +88,8 @@ protected:
     virtual void compile(VolumeHandle* volumeHandle);
 
 private:
+    void adjustPropertyVisibilities();
+
     TransFuncProperty transferFunc_;  ///< the property that controls the transfer-function
     CameraProperty camera_;           ///< the camera used for lighting calculations
 
@@ -97,6 +105,8 @@ private:
     RenderPort outport2_;
 
     PortGroup portGroup_;
+
+    static const std::string loggerCat_; ///< category used in logging
 };
 
 

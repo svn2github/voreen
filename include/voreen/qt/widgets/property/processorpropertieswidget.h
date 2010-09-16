@@ -39,6 +39,7 @@ class Processor;
 class PropertyWidgetFactory;
 class QPropertyWidget;
 class VolumeContainer;
+class GroupPropertyWidget;
 
 
 /**
@@ -55,7 +56,7 @@ public:
         ALL
     };
 
-    ProcessorPropertiesWidget(QWidget* parent = 0, const Processor* processor = 0, PropertyWidgetFactory* factory = 0,
+    ProcessorPropertiesWidget(QWidget* parent = 0, const Processor* processor = 0,
                               bool expanded = false, bool userExpandable = true);
 
     bool isExpanded() const;
@@ -74,18 +75,19 @@ public slots:
     void updateHeaderTitle();
     void instantiateWidgets();
     void updateState();
-
+    void showHeader(bool);
 
 protected slots:
+    void propertyModified();
     void setLODHidden();
     void setLODVisible();
-    void propertyModified();
 
 protected:
     ExpandableHeaderButton* header_;
     QWidget* propertyWidget_;
     const Processor* processor_;
     std::vector<QPropertyWidget*> widgets_;
+    std::map<std::string, GroupPropertyWidget*> propertyGroupsMap_;
     void showEvent(QShowEvent*);
 
     VolumeContainer* volumeContainer_;

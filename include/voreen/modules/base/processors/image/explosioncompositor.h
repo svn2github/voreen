@@ -31,6 +31,9 @@
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/processors/imageprocessor.h"
 
+#include "voreen/core/properties/optionproperty.h"
+#include "voreen/core/properties/floatproperty.h"
+
 namespace voreen {
 
 /**
@@ -47,7 +50,7 @@ public:
 
     virtual std::string getClassName() const    { return "ExplosionCompositor"; }
     virtual std::string getCategory() const     { return "Image Processing";    }
-    virtual CodeState getCodeState() const      { return CODE_STATE_TESTING;    }
+    virtual CodeState getCodeState() const      { return CODE_STATE_STABLE;     }
     virtual std::string getProcessorInfo() const;
 
 protected:

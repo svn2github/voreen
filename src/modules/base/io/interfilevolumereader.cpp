@@ -191,7 +191,7 @@ VolumeCollection* InterfileVolumeReader::read(const std::string &url)
             //
             volume = volume->clone();
             VolumeOperatorMirrorZ mirrorZ;
-            mirrorZ(volume);
+            mirrorZ.apply<void>(volume);
             volumeCollection->at(i)->setVolume(volume);
         }
         return volumeCollection;
@@ -210,7 +210,7 @@ std::string InterfileVolumeReader::removeEnclosingWhitespaces(const std::string 
         return "";
 }
 
-VolumeReader* InterfileVolumeReader::create(IOProgress* /*progress*/) const {
+VolumeReader* InterfileVolumeReader::create(ProgressBar* /*progress*/) const {
     return new InterfileVolumeReader(/*progress*/);
 }
 

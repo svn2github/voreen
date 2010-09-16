@@ -74,11 +74,11 @@ GeometryProcessor::~GeometryProcessor() {
 void GeometryProcessor::initialize() throw (VoreenException) {
     RenderProcessor::initialize();
 
-    idManager_.setRenderTarget(pickingPort_.getData());
+    idManager_.setRenderTarget(pickingPort_.getRenderTarget());
     idManager_.initializeTarget();
 
     shaderPrg_ = ShdrMgr.loadSeparate("passthrough.vert", "pp_compositor.frag",
-        generateHeader(), false, false);
+        generateHeader(), false);
 
     if (!shaderPrg_) {
         LERROR("Failed to load shaders!");
@@ -107,17 +107,6 @@ bool GeometryProcessor::isReady() const {
 
 void GeometryProcessor::process() {
 
-    //if there is no data on the inport we can render directly into the outport:
-    if (!inport_.isReady())
-        outport_.activateTarget();
-    else
-        tempPort_.activateTarget();
-
-    LGL_ERROR;
-    glClearDepth(1.0);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    LGL_ERROR;
-
     // set modelview and projection matrices
     glMatrixMode(GL_PROJECTION);
     tgt::loadMatrix(camera_.get()->getProjectionMatrix());
@@ -125,8 +114,21 @@ void GeometryProcessor::process() {
     tgt::loadMatrix(camera_.get()->getViewMatrix());
     LGL_ERROR;
 
-    //render geometry:
-    glDepthFunc(GL_LESS);
+    //
+    // render geometry
+    //
+
+    //if there is no data on the inport we can render directly into the outport:
+    if (!inport_.isReady())
+        outport_.activateTarget();
+    else
+        tempPort_.activateTarget("internal");
+
+    LGL_ERROR;
+    glClearDepth(1.0);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    LGL_ERROR;
+
     std::vector<GeometryRendererBase*> portData = cpPort_.getConnectedProcessors();
     for (size_t i=0; i<portData.size(); i++) {
         GeometryRendererBase* geomRenderer = portData.at(i);
@@ -137,8 +139,15 @@ void GeometryProcessor::process() {
             LGL_ERROR;
         }
     }
+    if (!inport_.isReady())
+        outport_.deactivateTarget();
+    else
+        tempPort_.deactivateTarget();
+    LGL_ERROR;
 
-    //render picking objects:
+    //
+    // render picking objects
+    //
     idManager_.activateTarget(getName());
     idManager_.clearTarget();
     for (size_t i=0; i<portData.size(); i++) {
@@ -149,6 +158,7 @@ void GeometryProcessor::process() {
             LGL_ERROR;
         }
     }
+    idManager_.deactivateTarget();
 
     // restore matrices
     glMatrixMode(GL_PROJECTION);
@@ -161,7 +171,6 @@ void GeometryProcessor::process() {
     if (inport_.isReady()) {
         outport_.activateTarget();
 
-        LGL_ERROR;
         glClearDepth(1.0);
         glClearColor(0.0, 0.0, 0.0, 0.0);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -181,12 +190,12 @@ void GeometryProcessor::process() {
         shaderPrg_->setUniform("depthTex1_", 3);
         tempPort_.setTextureParameters(shaderPrg_, "textureParameters1_");
 
-        glDepthFunc(GL_ALWAYS);
         renderQuad();
         shaderPrg_->deactivate();
+        outport_.deactivateTarget();
+        LGL_ERROR;
     }
 
-    glDepthFunc(GL_LESS);
     TextureUnit::setZeroUnit();
     LGL_ERROR;
 }

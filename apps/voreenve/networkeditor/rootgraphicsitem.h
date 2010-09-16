@@ -36,6 +36,7 @@
 #include "propertylistgraphicsitem.h"
 #include "openpropertylistbutton.h"
 #include "textgraphicsitem.h"
+#include "widgetindicatorbutton.h"
 
 namespace voreen {
 
@@ -43,6 +44,7 @@ class LinkArrowGraphicsItemStub;
 class NetworkEditor;
 class PortGraphicsItem;
 class Processor;
+class ProgressBarGraphicsItem;
 class PropertyGraphicsItem;
 
 /**
@@ -289,6 +291,16 @@ public:
      */
     virtual bool contains(Processor* processor) const = 0;
 
+    /**
+     * Returns a list of already connected QActions for the contained ProcessorWidgets
+     */
+    virtual QList<QAction*> getProcessorWidgetContextMenuActions();
+
+    /**
+     * Returns the \sa ProgressBarGraphicsItem maintained by this RootGraphicsItem
+     */
+    ProgressBarGraphicsItem* getProgressBar() const;
+
 public slots:
     /**
      * This slot should be called if the name of this RootGraphicsItem changes and it will induce
@@ -309,6 +321,9 @@ public slots:
      * accordingly.
      */
     void togglePropertyList();
+
+    void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 
 signals:
     /**
@@ -331,11 +346,15 @@ signals:
      */
     void endedArrow();
 
+protected slots:
+    /**
+     * Shows or hides the currently associated processor widget
+     */
+    virtual void toggleProcessorWidget();
+
 protected:
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
     QVariant itemChange(GraphicsItemChange change, const QVariant& value);
-    void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 
     /**
      * Creates all necessary child items for this RootGraphicsItem. Will call \sa layoutChildItems()
@@ -402,6 +421,12 @@ protected:
 
     /// This button toggles the visibility of the \sa PropertyListGraphicsItem
     OpenPropertyListButton openPropertyListButton_;
+
+    /// Indicator used to show whether the RootGraphicsItem is connected to a specific widget
+    WidgetIndicatorButton widgetIndicatorButton_;
+
+    /// This bar represents the state of a lengthy task which a processor wants to show progress of
+    ProgressBarGraphicsItem* progressBar_;
 
     /**
      * This variable stores the arrow that is being created while dragging the mouse,

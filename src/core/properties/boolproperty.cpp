@@ -60,4 +60,8 @@ PropertyWidget* BoolProperty::createWidget(PropertyWidgetFactory* f) {
     return f->createWidget(this);
 }
 
+std::string BoolProperty::getTypeString() const {
+    return "Boolean";
+}
+
 }   // namespace

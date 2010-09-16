@@ -37,6 +37,10 @@
 #include "voreen/core/datastructures/transfunc/transfunc.h"
 #include "voreen/core/datastructures/transfunc/transfuncintensity.h"
 #include "voreen/core/datastructures/volume/volumegl.h"
+#include "voreen/core/properties/optionproperty.h"
+#include "voreen/core/properties/intproperty.h"
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/boolproperty.h"
 
 namespace voreen {
 
@@ -59,11 +63,11 @@ public:
     /**
      * Binds volume textures (inherited from VolumeRenderer) and sets the sampling step size
      * relative to the resolution of the first volume.
+     *
+     * @see VolumeRenderer::bindVolumes
      */
-    virtual void bindVolumes(tgt::Shader* shader, const std::vector<VolumeStruct> &volumes);
-
-    static const std::string setSegment_;
-    static const std::string switchSegmentation_;
+    virtual void bindVolumes(tgt::Shader* shader, const std::vector<VolumeStruct> &volumes,
+        const tgt::Camera* camera = 0, const tgt::vec4& lightPosition = tgt::vec4(0.f));
 
 protected:
     /**

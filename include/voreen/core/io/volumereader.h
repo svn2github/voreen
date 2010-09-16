@@ -32,7 +32,7 @@
 #include <vector>
 
 #include "voreen/core/datastructures/volume/volumecollection.h"
-#include "voreen/core/io/ioprogress.h"
+#include "voreen/core/io/progressbar.h"
 
 #include "tgt/exception.h"
 
@@ -47,13 +47,13 @@ class Volume;
  */
 class VolumeReader {
 public:
-    VolumeReader(IOProgress* progress = 0);
+    VolumeReader(ProgressBar* progress = 0);
     virtual ~VolumeReader() {}
 
     /**
      * Virtual constructor.
      */
-    virtual VolumeReader* create(IOProgress* progress = 0) const = 0;
+    virtual VolumeReader* create(ProgressBar* progress = 0) const = 0;
 
     /**
      * Loads one or multiple volumes from the specified URL.
@@ -141,7 +141,7 @@ public:
 
 protected:
     void read(Volume* volume, FILE* fin);
-    IOProgress* getProgress() const { return progress_; }
+    ProgressBar* getProgressBar() const { return progress_; }
 
     /**
      * Reverses the order of the slice in x-direction. This method
@@ -170,9 +170,7 @@ protected:
     static const std::string loggerCat_;
 
 private:
-
-    IOProgress* progress_;
-
+    ProgressBar* progress_;
 };
 
 } // namespace voreen

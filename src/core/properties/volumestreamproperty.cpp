@@ -38,4 +38,8 @@ PropertyWidget* VolumeStreamProperty::createWidget(PropertyWidgetFactory* f) {
     return 0;
 }
 
+std::string VolumeStreamProperty::getTypeString() const {
+    return "VolumeStream";
+}
+
 } // namespace

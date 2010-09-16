@@ -51,7 +51,7 @@ public:
      * @param col color of the primitive
      * @param scalefactor scaling of the y coordinate of the primitive
      */
-    TransFuncPrimitive(tgt::col4 col, float scaleFactor);
+    TransFuncPrimitive(const tgt::col4& col, float scaleFactor);
 
     /**
      * Destructor
@@ -133,7 +133,7 @@ public:
      * @param pos position the distance of control points is measured to
      * @param distance between pos and closest control point
      */
-    virtual float getClosestControlPointDist(tgt::vec2 pos) = 0;
+    virtual float getClosestControlPointDist(const tgt::vec2& pos) = 0;
 
     /**
      * Returns true if a control point is under the mouse cursor and grabs this control point.
@@ -142,7 +142,7 @@ public:
      * @param pos position of the mouse cursor
      * @return true if a contorl point is grabbed, false otherwise
      */
-    virtual bool selectControlPoint(tgt::vec2 pos) = 0;
+    virtual bool selectControlPoint(const tgt::vec2& pos) = 0;
 
     /**
      * Moves the primitive by the given offset. If a control point is grabbed only the control
@@ -151,7 +151,7 @@ public:
      * @param offset offset the primitive is moved by
      * @return true when moved primitive lies completely inside the editor widget, false otherwise
      */
-    virtual bool move(tgt::vec2 offset) = 0;
+    virtual bool move(const tgt::vec2& offset) = 0;
 
     /**
      * Sets the selection state of this primitive to true. Furthermore is tested whether the
@@ -159,7 +159,7 @@ public:
      *
      * @param pos position of the mouse cursor
      */
-    virtual void select(tgt::vec2 pos);
+    virtual void select(const tgt::vec2& pos);
 
     /**
      * Sets the selection state of the primitive to false.
@@ -210,7 +210,7 @@ public:
      * @param col color of the quad
      * @param scaleFactor scaling of the y coordinate of the primitive
      */
-    TransFuncQuad(tgt::vec2 center, float size, tgt::col4 col, float scaleFactor);
+    TransFuncQuad(const tgt::vec2& center, float size, const tgt::col4& col, float scaleFactor);
 
     /**
      * Destructor
@@ -249,7 +249,7 @@ public:
      * @param pos position the distance of control points is measured to
      * @param distance between pos and closest control point
      */
-    float getClosestControlPointDist(tgt::vec2 pos);
+    float getClosestControlPointDist(const tgt::vec2& pos);
 
     /**
      * Grabs a control point when the mouse cursor is over one. Returns true when a control
@@ -258,7 +258,7 @@ public:
      * @param pos position of the mouse cursor
      * @return true when mouse cursor is over a control point, false otherwise
      */
-    bool selectControlPoint(tgt::vec2 pos);
+    bool selectControlPoint(const tgt::vec2& pos);
 
     /**
      * Moves the 4 vertices by the given offset. Returns true when the moved vertices
@@ -267,7 +267,7 @@ public:
      * @param offset offset the coordinates are moved by
      * @return true when moved coordinates are lying in the interval [0,1] and false otherwise
      */
-    bool move(tgt::vec2 offset);
+    bool move(const tgt::vec2& offset);
 
     /**
      * @see Serializable::serialize
@@ -318,7 +318,7 @@ public:
      * @param col color of the primitive
      * @param scaleFactor scaling of the y coordinate of the primitive
      */
-    TransFuncBanana(tgt::vec2 a, tgt::vec2 b1, tgt::vec2 b2, tgt::vec2 c, tgt::col4 col, float scaleFactor);
+    TransFuncBanana(const tgt::vec2& a, const tgt::vec2& b1, const tgt::vec2& b2, const tgt::vec2& c, const tgt::col4& col, float scaleFactor);
 
     /**
      * Destructor
@@ -357,7 +357,7 @@ public:
      * @param pos position the distance of control points is measured to
      * @param distance between pos and closest control point
      */
-    float getClosestControlPointDist(tgt::vec2 pos);
+    float getClosestControlPointDist(const tgt::vec2& pos);
 
     /**
      * Grabs a control point when the mouse cursor is over one. Returns true when a control
@@ -366,7 +366,7 @@ public:
      * @param pos position of the mouse cursor
      * @return true when mouse cursor is over a control point, false otherwise
      */
-    bool selectControlPoint(tgt::vec2 m);
+    bool selectControlPoint(const tgt::vec2& m);
 
     /**
      * Moves the 4 vertices by the given offset. Returns true when the moved vertices
@@ -375,7 +375,7 @@ public:
      * @param offset offset the coordinates are moved by
      * @return true when moved coordinates are lying in the interval [0,1] and false otherwise
      */
-    bool move(tgt::vec2 offset);
+    bool move(const tgt::vec2& offset);
 
     /**
      * @see Serializable::serialize

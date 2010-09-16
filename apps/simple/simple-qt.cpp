@@ -35,6 +35,7 @@
 #include "voreen/core/utils/voreenpainter.h"
 #include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/network/workspace.h"
+#include "voreen/core/network/processornetwork.h"
 #include "voreen/core/processors/canvasrenderer.h"
 #include "voreen/qt/voreenapplicationqt.h"
 #include "voreen/modules/moduleregistration.h"

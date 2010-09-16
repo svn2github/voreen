@@ -34,6 +34,7 @@
 #include "voreen/core/voreenapplication.h"
 #include "voreen/core/voreenmodule.h"
 #include "voreen/core/utils/cmdparser/commandlineparser.h"
+#include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/processors/processorwidgetfactory.h"
 
 #include "tgt/init.h"
@@ -171,14 +172,16 @@ VoreenApplication::VoreenApplication(const std::string& name, const std::string&
       displayName_(displayName),
       cmdParser_(displayName),
       processorWidgetFactory_(0),
-      logLevel_(tgt::Info)
+      logLevel_(tgt::Info),
+      networkEvaluator_(0),
+      schedulingTimer_(0),
+      eventHandler_()
 {
     app_ = this;
     cmdParser_.setCommandLine(argc, argv);
 }
 
 VoreenApplication::~VoreenApplication() {
-
     // deinitialize and clear modules
     for (size_t i=0; i<modules_.size(); i++) {
         try {
@@ -197,6 +200,9 @@ VoreenApplication::~VoreenApplication() {
     }
     modules_.clear();
 
+    delete schedulingTimer_;
+    schedulingTimer_ = 0;
+
     tgt::deinitGL();
     tgt::deinit();
 }
@@ -211,13 +217,17 @@ void VoreenApplication::init() {
     // tgt initialization
     //
     tgt::InitFeature::Features featureset
-        = tgt::InitFeature::Features(tgt::InitFeature::ALL | tgt::InitFeature::NO_SHADER_CACHING);
+        = tgt::InitFeature::Features(tgt::InitFeature::ALL);
     if (!(appType_ & APP_LOGGING))
         featureset = tgt::InitFeature::Features(featureset & ~tgt::InitFeature::LOG_TO_CONSOLE);
     if (!(appType_ & APP_PYTHON)) {
         featureset = tgt::InitFeature::Features(featureset & ~tgt::InitFeature::SCRIPT_MANAGER);
     }
     tgt::init(featureset);
+
+    // init timer
+    schedulingTimer_ = createTimer(&eventHandler_);
+    eventHandler_.addListenerToFront(this);
 
     //
     // Command line parser
@@ -283,11 +293,7 @@ void VoreenApplication::init() {
 
     LINFO("Voreen base path: " << basePath_);
 
-    // shader path
-    if (appType_ & APP_SHADER) {
-        shaderPath_ = findShaderPath(basePath_);
-    }
-
+    // mac app resources path
 #ifdef __APPLE__
     appBundleResourcesPath_ = findAppBundleResourcesPath();
     if (appBundleResourcesPath_.empty())
@@ -295,6 +301,15 @@ void VoreenApplication::init() {
     else
         LINFO("Application bundle's resources path: " << appBundleResourcesPath_);
 #endif
+
+    // shader path
+    if (appType_ & APP_SHADER) {
+#if defined(__APPLE__) && defined(VRN_DISTRIBUTION)
+        shaderPath_ = appBundleResourcesPath_ + "/glsl";
+#else
+        shaderPath_ = findShaderPath(basePath_);
+#endif
+    }
 
     // data path
     if (appType_ & APP_DATA) {
@@ -359,7 +374,10 @@ VoreenApplication* VoreenApplication::app() {
 
 void VoreenApplication::addModule(VoreenModule* module) {
     tgtAssert(module, "null pointer passed");
-    modules_.push_back(module);
+    if (std::find(modules_.begin(), modules_.end(), module) == modules_.end())
+        modules_.push_back(module);
+    else
+        LWARNING("Module '" << module->getName() << "' has already been registered. Skipping.");
 }
 
 const std::vector<VoreenModule*> VoreenApplication::getModules() const {
@@ -370,7 +388,7 @@ tgt::Timer* VoreenApplication::createTimer(tgt::EventHandler* /*handler*/) const
     return 0;
 }
 
-IOProgress* VoreenApplication::createProgressDialog() const {
+ProgressBar* VoreenApplication::createProgressDialog() const {
     return 0;
 }
 
@@ -455,5 +473,24 @@ std::string VoreenApplication::getAppBundleResourcesPath(const std::string& file
    return appBundleResourcesPath_ + (filename.empty() ? "" : "/" + filename);
 }
 #endif
+
+void VoreenApplication::scheduleNetworkProcessing() {
+    if (schedulingTimer_ && networkEvaluator_ && schedulingTimer_->isStopped()) {
+        schedulingTimer_->start(0, 1);
+    }
+}
+
+void VoreenApplication::timerEvent(tgt::TimeEvent* /*e*/) {
+    if (networkEvaluator_ && !networkEvaluator_->isLocked())
+        networkEvaluator_->process();
+}
+
+void VoreenApplication::setNetworkEvaluator(NetworkEvaluator* evaluator) {
+    networkEvaluator_ = evaluator;
+}
+
+NetworkEvaluator* VoreenApplication::getNetworkEvaluator() const {
+    return networkEvaluator_;
+}
 
 } // namespace

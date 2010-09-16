@@ -189,8 +189,10 @@ vec3 phongShading(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volume
     // transform voxel position to the volume's object space
     vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
     vec3 N = normalize(gradient);
-    vec3 L = lightPosition_ - vpos;
-    vec3 V = normalize(cameraPosition_ - vpos);
+//    vec3 L = lightPosition_ - vpos;
+//    vec3 V = normalize(cameraPosition_ - vpos);
+    vec3 L = volumeParams.lightPositionOBJ_ - vpos;              // using light position in volume object space
+    vec3 V = normalize(volumeParams.cameraPositionOBJ_ - vpos);  // using camera position in volume object space
 
     // get light source distance for attenuation and normalize light vector
     float d = length(L);
@@ -224,8 +226,10 @@ vec3 phongShadingDS(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volu
     // transform voxel position to the volume's object space
     vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
     vec3 N = normalize(gradient);
-    vec3 L = lightPosition_ - vpos;
-    vec3 V = normalize(cameraPosition_ - vpos);
+//    vec3 L = lightPosition_ - vpos;
+//    vec3 V = normalize(cameraPosition_ - vpos);
+    vec3 L = volumeParams.lightPositionOBJ_ - vpos;              // using light position in volume object space
+    vec3 V = normalize(volumeParams.cameraPositionOBJ_ - vpos);  // using camera position in volume object space
 
     // get light source distance for attenuation and normalize light vector
     float d = length(L);
@@ -257,8 +261,10 @@ vec3 phongShadingS(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volum
     // transform voxel position to the volume's object space
     vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
     vec3 N = normalize(gradient);
-    vec3 L = normalize(lightPosition_ - vpos);
-    vec3 V = normalize(cameraPosition_ - vpos);
+//    vec3 L = normalize(lightPosition_ - vpos);
+//    vec3 V = normalize(cameraPosition_ - vpos);
+    vec3 L = volumeParams.lightPositionOBJ_ - vpos;              // using light position in volume object space
+    vec3 V = normalize(volumeParams.cameraPositionOBJ_ - vpos);  // using camera position in volume object space
 
     // get light source distance for attenuation and normalize light vector
     float d = length(L);
@@ -289,7 +295,8 @@ vec3 phongShadingDA(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volu
     // transform voxel position to the volume's object space
     vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
     vec3 N = normalize(gradient);
-    vec3 L = lightPosition_ - vpos;
+//    vec3 L = lightPosition_ - vpos;
+    vec3 L = volumeParams.lightPositionOBJ_ - vpos;    // using light position in volume object space
 
     // get light source distance for attenuation and normalize light vector
     float d = length(L);
@@ -320,7 +327,8 @@ vec3 phongShadingD(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volum
     // transform voxel position to the volume's object space
     vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
     vec3 N = normalize(gradient);
-    vec3 L = lightPosition_ - vpos;
+//    vec3 L = lightPosition_ - vpos;
+    vec3 L = volumeParams.lightPositionOBJ_ - vpos;    // using light position in volume object space
 
     // get light source distance for attenuation and normalize light vector
     float d = length(L);
@@ -348,7 +356,8 @@ vec3 toonShading(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeP
     // transform voxel position to the volume's object space
     vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
     vec3 N = normalize(gradient);
-    vec3 L = normalize(lightPosition_.xyz-vpos.xyz);
+//    vec3 L = normalize(lightPosition_.xyz-vpos.xyz);
+    vec3 L = volumeParams.lightPositionOBJ_ - vpos;    // using light position in volume object space
     float NdotL = max(dot(N,L),0.0);
 
     // diffuse term

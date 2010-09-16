@@ -30,6 +30,9 @@
 
 #include "voreen/core/processors/geometryrendererbase.h"
 
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/cameraproperty.h"
+
 namespace voreen {
 
 class CameraPositionRenderer : public GeometryRendererBase {

@@ -46,7 +46,7 @@ namespace voreen {
 
 const std::string PhilipsUSVolumeReader::loggerCat_ = "voreen.io.VolumeReader.philipsus";
 
-PhilipsUSVolumeReader::PhilipsUSVolumeReader(IOProgress* progress)
+PhilipsUSVolumeReader::PhilipsUSVolumeReader(ProgressBar* progress)
     : VolumeReader(progress)
 {
     //extensions_.push_back("dcm");  //< clash with dicom file ending
@@ -158,7 +158,7 @@ VolumeCollection* PhilipsUSVolumeReader::readSlices(const std::string &url, size
         throw tgt::CorruptedFileException("Unable to extract frames from Philips US file", fileName);
     }
 
-    RawVolumeReader rawReader(getProgress());
+    RawVolumeReader rawReader(getProgressBar());
     VolumeCollection* volumeCollection = 0;
     for (unsigned short curFrame=0; curFrame<numFrames; curFrame++) {
         RawVolumeReader::ReadHints hints(ivec3(columns, rows, depth), // dimensions of the volume
@@ -189,7 +189,7 @@ VolumeCollection* PhilipsUSVolumeReader::readSlices(const std::string &url, size
     return volumeCollection;
 }
 
-VolumeReader* PhilipsUSVolumeReader::create(IOProgress* progress) const {
+VolumeReader* PhilipsUSVolumeReader::create(ProgressBar* progress) const {
     return new PhilipsUSVolumeReader(progress);
 }
 

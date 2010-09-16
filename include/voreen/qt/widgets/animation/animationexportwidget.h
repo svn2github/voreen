@@ -36,7 +36,6 @@
 #endif
 #include "tgt/qt/qtcanvas.h"
 
-#include <QBasicTimer>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QFileDialog>
@@ -74,11 +73,11 @@ private slots:
     void setWidgetState();
 
 private:
-    virtual void timerEvent(QTimerEvent* event);
+    void closeEvent(QCloseEvent* );
     void recordAnimation(bool recordVideo);
     void startRendering();
-    void renderingStep();
     void endRendering();
+    void renderingStep();
     void createWidgets();
     void createConnections();
     void refreshComboBoxes();
@@ -111,7 +110,6 @@ private:
 #endif
 
     CanvasMap allCanvases_;
-    QBasicTimer* renderTimer_;
     QGroupBox* renderBox_;
     QSpinBox* spinRecordingFPS_;
     QSpinBox* spinWidth_;

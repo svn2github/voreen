@@ -68,6 +68,7 @@ TrackballNavigation::TrackballNavigation(tgt::Camera* camera, TrackballNavigatio
     spinit_ = true;
 
     trackballEnabled_ = true;
+    tracking_ = false;
 }
 
 TrackballNavigation::~TrackballNavigation() {
@@ -110,7 +111,7 @@ void TrackballNavigation::mouseMoveEvent(tgt::MouseEvent* e) {
 
     e->ignore();
 
-    if (!trackball_)
+    if (!trackball_ || !tracking_)
         return;
 
     if (trackballEnabled_) {
@@ -141,9 +142,6 @@ void TrackballNavigation::mouseMoveEvent(tgt::MouseEvent* e) {
             trackball_->zoomAbsolute(minDistance_);
         if (trackball_->getCenterDistance() > maxDistance_)
             trackball_->zoomAbsolute(maxDistance_);
-
-        /*if (trackball_->getContinuousSpin())
-            moveCounter_ = 0; */
     }
 }
 
@@ -300,8 +298,8 @@ VoreenTrackball* TrackballNavigation::getTrackball() {
 }
 
 void TrackballNavigation::startMouseDrag(tgt::MouseEvent* e) {
-
-    lastMousePosition_ = scaleMouse( ivec2(e->x(), e->y()), e->viewport() );
+    lastMousePosition_ = scaleMouse(ivec2(e->x(), e->y()), e->viewport());
+    tracking_ = true;
 }
 
 void TrackballNavigation::endMouseDrag(tgt::MouseEvent* /*e*/) {

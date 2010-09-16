@@ -90,4 +90,8 @@ void VolumeSave::saveVolume() {
     serializer_->save(filename_.get(), inport_.getData());
 }
 
+bool VolumeSave::isEndProcessor() const {
+    return true;
+}
+
 }   // namespace

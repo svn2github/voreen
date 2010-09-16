@@ -154,6 +154,8 @@ void FlowSliceRenderer3D::process() {
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+
+    imgOutport_.deactivateTarget();
 }
 
 // protected methods

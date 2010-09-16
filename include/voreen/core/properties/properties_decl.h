@@ -42,12 +42,13 @@ class Property;
 class BoolProperty;
 class ButtonProperty;
 class CameraProperty;
-class ColorProperty;
+class ColorMapProperty;
 class FileDialogProperty;
 class FloatProperty;
 class FloatVec2Property;
 class FloatVec3Property;
 class FloatVec4Property;
+class FontProperty;
 class IntProperty;
 class IntVec2Property;
 class IntVec3Property;
@@ -55,8 +56,11 @@ class IntVec4Property;
 class FloatMat2Property;
 class FloatMat3Property;
 class FloatMat4Property;
-class LightProperty;
+class PlotEntitiesProperty;
 class OptionPropertyBase;
+class PlotPredicateProperty;
+class PlotDataProperty;
+class PlotSelectionProperty;
 class PropertyVector;
 class ShaderProperty;
 class StringProperty;
@@ -64,6 +68,10 @@ class TransFuncProperty;
 class VolumeCollectionProperty;
 class VolumeHandleProperty;
 class VolumeStreamProperty;
+
+// deprecated
+class ColorProperty;
+class LightProperty;
 
 } // namespace
 

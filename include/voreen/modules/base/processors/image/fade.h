@@ -30,6 +30,9 @@
 
 #include "voreen/core/processors/imageprocessordepth.h"
 
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
+
 namespace voreen {
 
 /**
@@ -49,7 +52,7 @@ public:
 
 protected:
     FloatProperty fading_;
-    ColorProperty color_;
+    FloatVec4Property color_;
 
     RenderPort inport_;
     RenderPort outport_;

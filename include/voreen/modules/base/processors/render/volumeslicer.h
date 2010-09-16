@@ -30,6 +30,10 @@
 
 #include "voreen/core/processors/volumerenderer.h"
 
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/transfuncproperty.h"
+#include "voreen/core/properties/cameraproperty.h"
+
 namespace voreen {
 
 /**
@@ -54,7 +58,7 @@ protected:
 
     // variables needed for clipping
     tgt::vec3* cubeVertices_;
-    int* nSeq_; // permutation indices
+    int* nSeq_; // permutation indice°s
     int* v1_; // edge start indices
     int* v2_; // edge end indices
 

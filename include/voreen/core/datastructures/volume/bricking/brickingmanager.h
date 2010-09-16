@@ -28,9 +28,8 @@
 #ifndef VRN_BRICKINGMANAGER_H
 #define VRN_BRICKINGMANAGER_H
 
-
 #include "voreen/core/io/brickedvolumereader.h"
-#include "voreen/core/io/ioprogress.h"
+#include "voreen/core/io/progressbar.h"
 
 #include "voreen/core/datastructures/volume/volumeatomic.h"
 #include "voreen/core/datastructures/volume/volumehandle.h"
@@ -77,10 +76,10 @@ namespace voreen {
         *                               own unique instance of a BrickedVolumeReader.
         * @param brickingInformation    The struct containing all the information necessary for
         *                               bricking.
-        * @param progess       The IOProgress used to update the loading bar in the GUI.
+        * @param progess       The ProgressBar used to update the loading bar in the GUI.
         */
         BrickingManager(VolumeHandle* volumeHandle, BrickedVolumeReader* brickedVolumeReader,
-                        BrickingInformation brickingInformation,IOProgress* progress = 0);
+                        BrickingInformation brickingInformation, ProgressBar* progress = 0);
 
         /**
         * Deletes everything.
@@ -314,9 +313,9 @@ namespace voreen {
         BrickedVolume* brickedVolume_;
 
         /**
-        * The IOPRogress used to update the loading bar in the GUI.
+        * The ProgressBar used to update the loading bar in the GUI.
         */
-        IOProgress* ioProgress_;
+        ProgressBar* progressBar_;
 
         static const std::string loggerCat_;
 
@@ -331,13 +330,13 @@ namespace voreen {
 
     template<class T>
     BrickingManager<T>::BrickingManager(VolumeHandle* volumeHandle, BrickedVolumeReader* brickedVolumeReader,
-                                        BrickingInformation brickingInformation, IOProgress* ioProgress)
+                                        BrickingInformation brickingInformation, ProgressBar* progressBar)
 
         : LargeVolumeManager(volumeHandle, brickedVolumeReader),
           brickedVolumeReader_(brickedVolumeReader),
           brickingInformation_(brickingInformation),
           volumeHandle_(volumeHandle),
-          ioProgress_(ioProgress)
+          progressBar_(progressBar)
     {
 
         packedVolume_ = 0;
@@ -470,8 +469,9 @@ namespace voreen {
                   << gpuMemorySizeInByte / (1024*1024) << " MB");
         }
 
-        int xDim,yDim,zDim;
-        xDim = yDim = zDim = brickSize;
+        int xDim = brickSize;
+        int yDim = brickSize;
+        int zDim = brickSize;
 
         uint64_t memoryUsed = xDim*yDim*zDim * voxelSize;
 
@@ -756,6 +756,7 @@ namespace voreen {
         //The type of the eep volume doesn't matter as no memory will be allocated anyway.
         eepVolume_ = new VolumeAtomic<uint8_t>(brickingInformation_.originalVolumeDimensions,
                                                     brickingInformation_.originalVolumeSpacing,
+                                                    brickingInformation_.originalTransformationMatrix,
                                                     brickingInformation_.originalVolumeBitsStored ,false);
 
         eepVolume_->meta().setBrickSize(brickingInformation_.brickSize);
@@ -769,6 +770,7 @@ namespace voreen {
 
         packedVolume_ = new VolumeAtomic<T>(brickingInformation_.packedVolumeDimensions,
                                             brickingInformation_.originalVolumeSpacing,
+                                            brickingInformation_.originalTransformationMatrix,
                                             brickingInformation_.originalVolumeBitsStored);
 
         createIndexVolume(brickingInformation_.numBricks);
@@ -784,19 +786,15 @@ namespace voreen {
             brickingInformation_.originalVolumeSpacing, brickingInformation_.originalVolumeLLF,
             brickingInformation_.originalVolumeURB, ramManager_);
 
-        if (ioProgress_)
-            ioProgress_->setTotalSteps(static_cast<int>(brickingInformation_.totalNumberOfBricksNeeded*1.5));
         int bricksCreated = 0;
 
         VolumeBrick<T>* newBrick = volumeBrickCreator_->createNextBrick();
         bricksCreated++;
-        if (ioProgress_)
-            ioProgress_->setProgress(bricksCreated);
 
         while (newBrick != 0) {
             bricksCreated++;
-            if (ioProgress_) {
-                ioProgress_->setProgress(bricksCreated);
+            if (progressBar_) {
+                progressBar_->setProgress(static_cast<float>(bricksCreated) / (brickingInformation_.totalNumberOfBricksNeeded * 1.5f));
             }
             if (newBrick->getAllVoxelsEqual() == true) {
                 //If all voxels are equal in the VolumeBrick, assign it a PackingBrick immediately.
@@ -823,8 +821,8 @@ namespace voreen {
 
         brickLodSelector_ = new ErrorLodSelector(brickingInformation_);
         brickLodSelector_->selectLods();
-        if (ioProgress_)
-        ioProgress_->setProgress(static_cast<int>(brickingInformation_.totalNumberOfBricksNeeded*1.5));
+        if (progressBar_)
+            progressBar_->setProgress(1.f);
 
         fillPackingBricks();
 
@@ -882,6 +880,6 @@ namespace voreen {
         brickingInformation_.regionManager->addRegion(boxRegion);
     }
 
-} //namespace voreen
+} // namespace voreen
 
-#endif
+#endif // VRN_BRICKINGMANAGER_H

@@ -31,6 +31,9 @@
 #include "voreen/core/processors/imageprocessordepth.h"
 #include "voreen/core/ports/allports.h"
 
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
+
 namespace voreen {
 
 class Canny : public ImageProcessorDepth {
@@ -48,7 +51,7 @@ protected:
 
     FloatProperty startThreshold_;
     FloatProperty runThreshold_;
-    ColorProperty edgeColor_; ///< The color used for drawing the edges
+    FloatVec4Property edgeColor_; ///< The color used for drawing the edges
 
     RenderPort inport_;
     RenderPort outport_;

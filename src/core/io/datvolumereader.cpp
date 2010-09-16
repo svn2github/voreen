@@ -46,7 +46,7 @@ namespace voreen {
 
 const std::string DatVolumeReader::loggerCat_ = "voreen.io.VolumeReader.dat";
 
-DatVolumeReader::DatVolumeReader(IOProgress* progress)
+DatVolumeReader::DatVolumeReader(ProgressBar* progress)
     : VolumeReader(progress)
 {
     extensions_.push_back("dat");
@@ -202,7 +202,7 @@ VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, siz
     h.spacing_ = sliceThickness;
 
     if (!error) {
-        RawVolumeReader rawReader(getProgress());
+        RawVolumeReader rawReader(getProgressBar());
         rawReader.setReadHints(h);
 
         // do we have a relative path?
@@ -241,7 +241,7 @@ VolumeCollection* DatVolumeReader::readBrick(const std::string& url, tgt::ivec3 
 VolumeCollection* DatVolumeReader::readVolumeFileBrick(const std::string &fileName, const tgt::ivec3& dims,
     tgt::ivec3 brickStartPos, int brickSize) throw (tgt::FileException, std::bad_alloc)
 {
-    RawVolumeReader rawReader(getProgress());
+    RawVolumeReader rawReader(getProgressBar());
 
     rawReader.setReadHints(dims,               // dimensions of the volume
                            ivec3(1, 1, 1),     // thickness of one slice
@@ -357,7 +357,7 @@ VolumeCollection* DatVolumeReader::readMetaFileBrick(const std::string &fileName
     }
 
     if (!error) {
-        RawVolumeReader rawReader(getProgress());
+        RawVolumeReader rawReader(getProgressBar());
         rawReader.setReadHints(h);
 
         // do we have a relative path?
@@ -377,7 +377,7 @@ VolumeCollection* DatVolumeReader::readMetaFileBrick(const std::string &fileName
     }
 }
 
-VolumeReader* DatVolumeReader::create(IOProgress* progress) const {
+VolumeReader* DatVolumeReader::create(ProgressBar* progress) const {
     return new DatVolumeReader(progress);
 }
 

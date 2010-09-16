@@ -32,6 +32,8 @@
 
 #include <QBoxLayout>
 
+class QMenu;
+
 namespace voreen {
 
 template<class WIDGETTYPE, class VECTORPROP, typename ELEMTYPE>
@@ -43,6 +45,10 @@ public:
 
 protected:
     typename VECTORPROP::ElemType setPropertyComponent(QObject* sender, ELEMTYPE value);
+    virtual void mousePressEvent(QMouseEvent*);
+    QMenu* precisionMenu_;
+    QAction* highAction_;
+    QAction* instantValueChangeAction_;
 
 protected:
     const size_t numComponents_;

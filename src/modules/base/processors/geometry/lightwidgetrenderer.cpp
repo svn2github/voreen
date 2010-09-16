@@ -34,9 +34,9 @@ using tgt::vec3;
 
 LightWidgetRenderer::LightWidgetRenderer()
     : GeometryRendererBase()
-    , showLightWidget_("set.showLightWidget", "Show Light Widget?", true)
+    , showLightWidget_("set.showLightWidget", "Show Light Widget", true)
     , isClicked_(false)
-    , lightPosition_("lightPosition", "Light source position", tgt::vec4(2.3f, 1.5f, 1.5f, 1.f),
+    , lightPosition_("lightPosition", "Light Source Position", tgt::vec4(2.3f, 1.5f, 1.5f, 1.f),
                      tgt::vec4(-10), tgt::vec4(10))
 {
 
@@ -49,6 +49,8 @@ LightWidgetRenderer::LightWidgetRenderer()
     addProperty(showLightWidget_);
     addProperty(lightPosition_);
     addEventProperty(moveSphereProp_);
+
+    //lightPosition_.setViews(Property::View(Property::LIGHT_POSITION | Property::DEFAULT));
 
     // light parameters
     light_pos[0] = 0.0f;

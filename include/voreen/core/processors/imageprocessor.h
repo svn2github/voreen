@@ -48,7 +48,6 @@ public:
     ImageProcessor(const std::string& shaderFilename = "");
     virtual ~ImageProcessor();
 
-    virtual std::string getClassName() const { return "ImageProcessor";   }
     virtual std::string getCategory() const  { return "Image Processing"; }
 
 protected:

@@ -61,11 +61,6 @@ void UnaryImageProcessor::initialize() throw (VoreenException) {
     initialized_ = false;           //< prevents warning
     ImageProcessorDepth::initialize();  // initializes the shader property
     loadShader();
-    //if (!program_) {
-        //LERROR("Failed to load shaders!");
-        //initialized_ = false;
-        //throw VoreenException(getClassName() + ": Failed to load shaders!");
-    //}
 }
 
 void UnaryImageProcessor::loadShader() {
@@ -109,6 +104,7 @@ void UnaryImageProcessor::process() {
     glDepthFunc(GL_LESS);
 
     sh->deactivate();
+    outport_.deactivateTarget();
     glActiveTexture(GL_TEXTURE0);
     LGL_ERROR;
 }

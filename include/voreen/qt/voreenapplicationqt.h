@@ -30,7 +30,7 @@
 
 #include "voreen/core/voreenapplication.h"
 
-#include "voreen/qt/ioprogressdialog.h"
+#include "voreen/qt/progressdialog.h"
 
 #include <QString>
 
@@ -64,9 +64,9 @@ public:
     virtual tgt::Timer* createTimer(tgt::EventHandler* handler) const;
 
     /**
-     * Creates a IOProgressDialog.
+     * Creates a ProgressDialog.
      */
-    virtual IOProgressDialog* createProgressDialog() const;
+    virtual ProgressDialog* createProgressDialog() const;
 
     /**
      * Constructs an absolute path consisting of the VoreenQt shader source directory

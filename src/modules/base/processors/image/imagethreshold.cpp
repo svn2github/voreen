@@ -43,6 +43,8 @@ ImageThreshold::ImageThreshold()
     upperMaskColor_("upperMaskColor", "Upper Mask Color", tgt::Color(0.f))
 
 {
+    lowerMaskColor_.setViews(Property::COLOR);
+    upperMaskColor_.setViews(Property::COLOR);
     addPort(inport_);
     addPort(outport_);
 
@@ -64,10 +66,10 @@ std::string ImageThreshold::getProcessorInfo() const {
 
 void ImageThreshold::process() {
     outport_.activateTarget();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    outport_.clearTarget();
 
     TextureUnit shadeUnit, depthUnit;
-    inport_.bindTextures(shadeUnit.getEnum(), depthUnit.getEnum());
+    inport_.bindTextures(shadeUnit, depthUnit);
 
     // initialize shader
     program_->activate();
@@ -83,6 +85,8 @@ void ImageThreshold::process() {
     renderQuad();
 
     program_->deactivate();
+    outport_.deactivateTarget();
+    TextureUnit::setZeroUnit();
     LGL_ERROR;
 }
 

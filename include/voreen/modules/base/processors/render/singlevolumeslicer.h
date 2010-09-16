@@ -31,6 +31,8 @@
 #include "voreen/modules/base/processors/render/volumeslicer.h"
 #include "voreen/core/interaction/camerainteractionhandler.h"
 
+#include "voreen/core/ports/volumeport.h"
+
 namespace voreen {
 
 /**
@@ -39,7 +41,6 @@ namespace voreen {
 class SingleVolumeSlicer : public VolumeSlicer {
 public:
     SingleVolumeSlicer();
-    virtual ~SingleVolumeSlicer();
     virtual Processor* create() const;
 
     virtual std::string getClassName() const { return "SingleVolumeSlicer"; }

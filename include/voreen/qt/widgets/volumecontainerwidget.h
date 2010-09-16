@@ -37,9 +37,9 @@
 #include "voreen/core/datastructures/volume/volumecontainer.h"
 #include "voreen/core/datastructures/volume/volume.h"
 
-#ifdef VRN_WITH_DCMTK
-#include "voreen/core/io/dicomvolumereader.h"
-#include "voreen/qt/dicomdialog.h"
+#ifdef VRN_MODULE_DICOM
+#include "voreen/modules/dicom/dicomvolumereader.h"
+#include "voreen/modules/dicom/qt/dicomdialog.h"
 #endif
 
 class QPixmap;
@@ -60,6 +60,7 @@ signals:
     void exportDat();
 
 protected:
+    void keyPressEvent(QKeyEvent* event);
     void contextMenuEvent(QContextMenuEvent*);
 };
 
@@ -91,6 +92,7 @@ protected:
     void keyPressEvent(QKeyEvent*);
 
     VolumeLoadButton* volumeLoadButton_;
+    QLabel* containerInfo_;
 
 private:
     void update();

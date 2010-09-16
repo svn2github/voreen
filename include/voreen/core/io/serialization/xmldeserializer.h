@@ -29,11 +29,13 @@
 #define VRN_XMLDESERIALIZER_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <deque>
 #include <list>
 #include <map>
 #include <set>
+#include <stack>
 #include <iostream>
 #include <typeinfo>
 
@@ -50,6 +52,7 @@
 #include "voreen/core/io/serialization/abstractserializable.h"
 #include "voreen/core/io/serialization/serializablefactory.h"
 #include "voreen/core/io/serialization/xmlprocessor.h"
+#include "voreen/core/plotting/plotcell.h"
 
 namespace voreen {
 
@@ -514,7 +517,7 @@ public:
     void deserialize(const std::string& key, tgt::Matrix3d& data)
         throw (SerializationException);
 
-        /**
+    /**
      * Deserializes the given @c key/data pair.
      *
      * @param key the XML node key
@@ -525,6 +528,19 @@ public:
      * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
      */
     void deserialize(const std::string& key, tgt::Matrix4d& data)
+        throw (SerializationException);
+
+    /**
+     * Deserializes the given @c key/data pair.
+     *
+     * @param key the XML node key
+     * @param data variable to store deserialized data
+     *
+     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
+     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
+     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
+     */
+    void deserialize(const std::string& key, PlotCellValue& data)
         throw (SerializationException);
 
     /**
@@ -558,6 +574,26 @@ public:
      */
     template<class T>
     void deserialize(const std::string& key, T*& data)
+        throw (SerializationException);
+
+    /**
+     * Deserializes a std::pair.
+     *
+     * @tparam S data type of first pair item
+     * @tparam T data type of second pair item
+     *
+     * @param key the XML node key
+     * @param data variable to store deserialized pair
+     *
+     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
+     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
+     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
+     * @throws XmlSerializationMemoryAllocationException
+     *         in case of trying to allocate memory for an @c AbstractSerializable
+     *         or if there are not enough allocate items if pointer content serialization is enabled
+     */
+    template<class S, class T>
+    void deserialize(const std::string& key, std::pair<S, T>& data)
         throw (SerializationException);
 
     /**
@@ -655,6 +691,29 @@ public:
      */
     template<class T, class C>
     void deserialize(const std::string& key, std::set<T, C>& data, const std::string& itemKey = XmlSerializationConstants::ITEMNODE)
+        throw (SerializationException);
+
+    /**
+     * Deserializes a data stack.
+     *
+     * @tparam T data type of set items
+     *
+     * @param key the XML node key
+     * @param data variable to store deserialized data set
+     * @param itemKey XML node key for each XML child node
+     *
+     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
+     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
+     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
+     * @throws XmlSerializationMemoryAllocationException
+     *         in case of trying to allocate memory for an @c AbstractSerializable
+     *         or if there are not enough allocate items if pointer content serialization is enabled
+     * @throws XmlSerializationInvalidOperationException
+     *         if pointer content serialization is enabled,
+     *         because of possible hash problems on deserialization
+     */
+    template<class T>
+    void deserialize(const std::string& key, std::stack<T>& data, const std::string& itemKey = XmlSerializationConstants::ITEMNODE)
         throw (SerializationException);
 
     /**
@@ -1618,6 +1677,45 @@ void XmlDeserializer::deserialize(const std::string& key, T*& data)
     }
 }
 
+template<class S, class T>
+void XmlDeserializer::deserialize(const std::string& key, std::pair<S, T>& data)
+    throw (SerializationException)
+{
+    // Always deserialize pointer from content?
+    if (usePointerContentSerialization_) {
+        TemporaryUsePointerContentSerializationChanger usePointerContentSerializationChanger(*this, false);
+
+        deserialize(key, data.first);
+        deserialize(key, data.second);
+
+        return;
+    }
+
+    TiXmlElement* element = getNextXmlElement(key);
+
+    TemporaryNodeChanger nodeChanger(*this, element);
+
+    // first item
+    if (useAttributes_ && isPrimitiveType(typeid(S))) {
+        // deserialize primitive type from XML attribute
+        deserializeAttributeFromNode("First", XmlSerializationConstants::VALUEATTRIBUTE, data.first);
+    }
+    else {
+        deserialize("First", data.first);
+    }
+
+    // second item
+    if (useAttributes_ && isPrimitiveType(typeid(T))) {
+        // deserialize primitive type from XML attribute
+        deserializeAttributeFromNode("Second", XmlSerializationConstants::VALUEATTRIBUTE, data.second);
+    }
+    else {
+        deserialize("Second", data.second);
+    }
+
+    addReferenceAddress(element, &data);
+}
+
 template<class T>
 void XmlDeserializer::deserialize(const std::string& key, std::vector<T>& data, const std::string& itemKey)
     throw (SerializationException)
@@ -1656,6 +1754,12 @@ void XmlDeserializer::deserialize(const std::string& key,
     throw (SerializationException)
 {
     deserializeMap(key, data, valueKey, keyKey);
+}
+
+template<class T>
+void XmlDeserializer::deserialize(const std::string& key, std::stack<T>& data, const std::string& itemKey)
+    throw (SerializationException)
+{
 }
 
 template<class T>

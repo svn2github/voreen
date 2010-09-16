@@ -50,7 +50,6 @@ MultiplanarSliceRenderer::MultiplanarSliceRenderer()
     sliceNumberXZ_("sliceNumber.XZ", "XZ Slice Number", 0, 0, 10000),
     sliceNumberYZ_("sliceNumber.YZ", "YZ Slice Number", 0, 0, 10000),
     camProp_("camera", "Camera", new tgt::Camera(tgt::vec3(0.0f, 0.0f, 3.5f), tgt::vec3(0.0f, 0.0f, 0.0f), tgt::vec3(0.0f, 1.0f, 0.0f))),
-    applyDatasetTransformationMatrix_("useDatasetTrafoMatrix", "Apply data set trafo matrix", true, Processor::INVALID_PARAMETERS),
     cameraHandler_(0)
 {
     addProperty(renderXYSlice_);
@@ -60,8 +59,6 @@ MultiplanarSliceRenderer::MultiplanarSliceRenderer()
     addProperty(renderYZSlice_);
     addProperty(sliceNumberYZ_);
     addProperty(camProp_);
-
-    addProperty(applyDatasetTransformationMatrix_);
 
     cameraHandler_ = new CameraInteractionHandler("cameraHandler", "Camera Handler", &camProp_);
     addInteractionHandler(cameraHandler_);
@@ -102,7 +99,7 @@ void MultiplanarSliceRenderer::process() {
     TextureUnit volUnit;
     TextureUnit transferUnit;
 
-    setupShader(volumeGL, &volUnit, &transferUnit); // also binds the volume
+    setupShader(volumeGL, &volUnit, &transferUnit, camProp_.get(), lightPosition_.get()); // also binds the volume
     if (!ready())
         return;
 
@@ -130,11 +127,9 @@ void MultiplanarSliceRenderer::process() {
 
 
     // transform bounding box by dataset transformation matrix
-    if (applyDatasetTransformationMatrix_.get()) {
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        tgt::multMatrix(inport_.getData()->getVolume()->getTransformation());
-    }
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    tgt::multMatrix(inport_.getData()->getVolume()->getTransformation());
 
     if (renderXYSlice_.get()) {
         renderSlice(SLICE_XY, sliceNumberXY_.get());
@@ -147,9 +142,7 @@ void MultiplanarSliceRenderer::process() {
     }
 
     // restore matrix stack
-    if (applyDatasetTransformationMatrix_.get()) {
-        glPopMatrix();
-    }
+    glPopMatrix();
 
     deactivateShader();
 

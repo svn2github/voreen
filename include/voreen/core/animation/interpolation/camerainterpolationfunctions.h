@@ -34,7 +34,6 @@
 namespace voreen {
 
 class CameraLinearInterpolationFunction : public InterpolationFunction<tgt::Camera*> {
-
 public:
     CameraLinearInterpolationFunction();
     InterpolationFunction<tgt::Camera*>* clone() const;
@@ -45,7 +44,6 @@ public:
 };
 
 class CameraSphericalLinearInterpolationFunction : public InterpolationFunction<tgt::Camera*> {
-
 public:
     CameraSphericalLinearInterpolationFunction();
     InterpolationFunction<tgt::Camera*>* clone() const;
@@ -66,7 +64,6 @@ public:
 };
 
 class CameraStartInterpolationFunction : public InterpolationFunction<tgt::Camera*> {
-
 public:
     CameraStartInterpolationFunction();
     InterpolationFunction<tgt::Camera*>* clone() const;
@@ -76,9 +73,7 @@ public:
     std::string getIdentifier() const;
 };
 
-
 class CameraEndInterpolationFunction : public InterpolationFunction<tgt::Camera*> {
-
 public:
     CameraEndInterpolationFunction();
     InterpolationFunction<tgt::Camera*>* clone() const;
@@ -88,9 +83,7 @@ public:
     std::string getIdentifier() const;
 };
 
-
 class CameraStartEndInterpolationFunction : public InterpolationFunction<tgt::Camera*> {
-
 public:
     CameraStartEndInterpolationFunction();
     InterpolationFunction<tgt::Camera*>* clone() const;
@@ -101,7 +94,6 @@ public:
 };
 
 class CameraCatmullRomInterpolationFunction : public MultiPointInterpolationFunction<tgt::Camera*>{
-
 public:
     CameraCatmullRomInterpolationFunction();
     MultiPointInterpolationFunction<tgt::Camera*>* clone() const;
@@ -113,7 +105,6 @@ public:
 };
 
 class CameraSquadInterpolationFunction : public MultiPointInterpolationFunction<tgt::Camera*>{
-
 public:
     CameraSquadInterpolationFunction();
     MultiPointInterpolationFunction<tgt::Camera*>* clone() const;
@@ -123,7 +114,6 @@ public:
     std::string getMode() const;
     std::string getIdentifier() const;
 };
-
 
 }
 

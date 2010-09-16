@@ -62,8 +62,9 @@ CoordinateTransformation::CoordinateTransformation()
 
     targetCoordinateSystem_.addOption("voxel-coordinates", "Voxel Coordinates");
     targetCoordinateSystem_.addOption("volume-coordinates", "Volume Coordinates");
+    targetCoordinateSystem_.addOption("world-coordinates", "World Coordinates");
     targetCoordinateSystem_.addOption("texture-coordinates", "Texture Coordinates");
-    targetCoordinateSystem_.select("volume-coordinates");
+    targetCoordinateSystem_.select("world-coordinates");
     targetCoordinateSystem_.onChange(CallMemberAction<CoordinateTransformation>(this, &CoordinateTransformation::forceUpdate));
     addProperty(targetCoordinateSystem_);
 
@@ -124,7 +125,7 @@ void CoordinateTransformation::process() {
     //
 
     // voxel coordinates (no transformation necessary)
-    if (targetCoordinateSystem_.get() == "voxel-coordinates") {
+    if (targetCoordinateSystem_.isSelected("voxel-coordinates")) {
         // pointlist
         if (geometrySrc) {
             std::vector<tgt::vec3> geomPointsConv = std::vector<tgt::vec3>(geometrySrc->getData());
@@ -137,7 +138,7 @@ void CoordinateTransformation::process() {
         }
     }
     // volume coordinates
-    else if (targetCoordinateSystem_.get() == "volume-coordinates") {
+    else if (targetCoordinateSystem_.isSelected("volume-coordinates")) {
         tgt::vec3 dims(volumeHandle->getVolume()->getDimensions());
         tgt::vec3 cubeSize = volumeHandle->getVolume()->getCubeSize();
         // pointlist
@@ -158,8 +159,29 @@ void CoordinateTransformation::process() {
             }
         }
     }
+    // world coordinates
+    else if (targetCoordinateSystem_.isSelected("world-coordinates")) {
+        tgt::mat4 voxelToWorldTrafo = volumeHandle->getVolume()->getVoxelToWorldMatrix();
+        // pointlist
+        if (geometrySrc) {
+            std::vector<tgt::vec3> geomPointsConv = std::vector<tgt::vec3>(geometrySrc->getData());
+            for (size_t i=0; i<geomPointsConv.size(); i++)
+                geomPointsConv[i] = voxelToWorldTrafo * geomPointsConv[i];
+            geometryConv->setData(geomPointsConv);
+        }
+        // segmentlist
+        else if (geometrySegmentSrc) {
+            std::vector< std::vector<tgt::vec3> >geomPointsConv = std::vector< std::vector<tgt::vec3> >(geometrySegmentSrc->getData());
+            for (size_t i=0; i<geomPointsConv.size(); ++i) {
+                for (size_t j=0; j<geomPointsConv[i].size(); ++j) {
+                    geomPointsConv[i][j] = voxelToWorldTrafo * geomPointsConv[i][j];
+                }
+                geometrySegmentConv->addSegment(geomPointsConv[i]);
+            }
+        }
+    }
     // texture coordinates: [0:1.0]^3
-    else if (targetCoordinateSystem_.get() == "texture-coordinates") {
+    else if (targetCoordinateSystem_.isSelected("texture-coordinates")) {
         tgt::vec3 dims(volumeHandle->getVolume()->getDimensions());
         // pointlist
         if (geometrySrc) {

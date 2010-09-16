@@ -40,6 +40,7 @@ Fade::Fade()
       inport_(Port::INPORT, "image.inport"),
       outport_(Port::OUTPORT, "image.outport")
 {
+    color_.setViews(Property::COLOR);
     addProperty(fading_);
     addProperty(color_);
 
@@ -71,6 +72,7 @@ void Fade::process() {
     renderQuad();
 
     program_->deactivate();
+    outport_.deactivateTarget();
     LGL_ERROR;
 }
 

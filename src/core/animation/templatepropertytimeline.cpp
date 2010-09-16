@@ -41,34 +41,33 @@ namespace voreen {
 
 ////////////////// special case TransFunc*
 template <>
-TemplatePropertyTimeline<TransFunc*>::TemplatePropertyTimeline(TemplateProperty<TransFunc*>* prop) :
-    property_(prop),
-    activeOnRendering_(true),
-    timelineChanged_(false) {
-    duration_ = 60*15;
+TemplatePropertyTimeline<TransFunc*>::TemplatePropertyTimeline(TemplateProperty<TransFunc*>* prop)
+    : property_(prop)
+    , activeOnRendering_(true)
+    , timelineChanged_(false)
+{
+    duration_ = 60.f * 15.f;
     TransFunc* func = property_->get();
-    if (func) {
+    if (func)
         func = func->clone();
-    }
     else {
-        func = new TransFuncIntensity(256);
+        func = new TransFuncIntensity();
         property_->set(func->clone());
     }
     timeline_ = new TransFuncPropertyTimelineState(new PropertyKeyValue<TransFunc*>(func,0));
 }
 
 template <>
-void TemplatePropertyTimeline<TransFunc*>::resetTimeline(){
+void TemplatePropertyTimeline<TransFunc*>::resetTimeline() {
     timelineChanged_ = true;
     lastChanges_.push_back(timeline_);
     undoObserver_->animationChanged(this);
 
     TransFunc* func = property_->get();
-    if (func) {
+    if (func)
         func = func->clone();
-    }
     else {
-        func = new TransFuncIntensity(256);
+        func = new TransFuncIntensity();
         property_->set(func->clone());
     }
     timeline_ = new TransFuncPropertyTimelineState(new PropertyKeyValue<TransFunc*>(func,0));
@@ -89,19 +88,20 @@ TransFunc* TemplatePropertyTimeline<TransFunc*>::privateGetPropertyAt(float time
 
 template <>
 void TemplatePropertyTimeline<TransFunc*>::renderAt(float time) {
-    if (!activeOnRendering_) {
+    if (!activeOnRendering_)
         return;
-    }
+
     property_->set(getPropertyAt(time));
 }
 
 ////////////////// special case Camera*
 template <>
-TemplatePropertyTimeline<Camera*>::TemplatePropertyTimeline(TemplateProperty<Camera*>* prop) :
-    property_(prop),
-    activeOnRendering_(true),
-    timelineChanged_(false) {
-    duration_ = 60*15;
+TemplatePropertyTimeline<Camera*>::TemplatePropertyTimeline(TemplateProperty<Camera*>* prop)
+    : property_(prop)
+    , activeOnRendering_(true)
+    , timelineChanged_(false)
+{
+    duration_ = 60.f * 15.f;
 
     tgt::Camera* cam = property_->get();
     if (!cam) {
@@ -116,7 +116,7 @@ TemplatePropertyTimeline<Camera*>::TemplatePropertyTimeline(TemplateProperty<Cam
 }
 
 template <>
-void TemplatePropertyTimeline<Camera*>::resetTimeline(){
+void TemplatePropertyTimeline<Camera*>::resetTimeline() {
     timelineChanged_ = true;
     lastChanges_.push_back(timeline_);
     undoObserver_->animationChanged(this);
@@ -141,10 +141,10 @@ void TemplatePropertyTimeline<Camera*>::resetTimeline(){
 }
 
 template <>
-const PropertyKeyValue<Camera*>* TemplatePropertyTimeline<Camera*>::newKeyValue(float time){
-    time = floor(time*10000)/10000;
+const PropertyKeyValue<Camera*>* TemplatePropertyTimeline<Camera*>::newKeyValue(float time) {
+    time = floor(time * 10000.f) / 10000.f;
 
-    if (time>duration_) {
+    if (time > duration_) {
         timelineChanged_ = false;
         return 0;
     }
@@ -172,12 +172,11 @@ Camera* TemplatePropertyTimeline<Camera*>::privateGetPropertyAt(float time) {
 
 template <>
 void TemplatePropertyTimeline<Camera*>::renderAt(float time) {
-    if (!activeOnRendering_) {
+    if (!activeOnRendering_)
         return;
-    }
 
     Camera* camera = getPropertyAt(time);
-    property_->set(camera);
+    static_cast<CameraProperty*>(property_)->set(*camera);
 }
 
 template <>
@@ -190,18 +189,20 @@ bool TemplatePropertyTimeline<Camera*>::changeValueOfKeyValue(Camera* value, con
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 
     return temp;
 }
 
-template <>
-bool TemplatePropertyTimeline<Camera*>::propertyIsLinked() const {
-    tgtAssert(property_, "No property");
-    return (property_->getLinks().size()>0);
-}
+//template <>
+//bool TemplatePropertyTimeline<Camera*>::propertyIsLinked() const {
+//    tgtAssert(property_, "No property");
+//    if (property_->getLinks().size() > 0)
+//        return true;
+//    else
+//        return false;
+//}
 
 template <>
 const TemplateProperty<Camera*>* TemplatePropertyTimeline<Camera*>::getCorrespondingProperty() const {
@@ -215,13 +216,13 @@ std::string TemplatePropertyTimeline<Camera*>::getPropertyName() const {
 }
 
 template <>
-void TemplatePropertyTimeline<Camera*>::setInteractionMode(bool interactionmode,void* source) {
+void TemplatePropertyTimeline<Camera*>::setInteractionMode(bool interactionmode, void* source) {
     tgtAssert(property_, "No property");
     property_->toggleInteractionMode(interactionmode, source);
 }
 
 template <>
-DeleteKeyValueReturn TemplatePropertyTimeline<Camera*>::deleteKeyValue(const PropertyKeyValue<Camera*>* keyvalue){
+DeleteKeyValueReturn TemplatePropertyTimeline<Camera*>::deleteKeyValue(const PropertyKeyValue<Camera*>* keyvalue) {
     timelineChanged_ = true;
     lastChanges_.push_back(timeline_->clone());
     undoObserver_->animationChanged(this);
@@ -230,9 +231,9 @@ DeleteKeyValueReturn TemplatePropertyTimeline<Camera*>::deleteKeyValue(const Pro
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
+
     return temp;
 }
 
@@ -254,7 +255,7 @@ void TemplatePropertyTimeline<Camera*>::deserialize(XmlDeserializer& s) {
     std::string propertyId;
     s.deserialize("propertyId", propertyId);
     if (propertyOwner)
-        property_ = dynamic_cast<CameraProperty*>(propertyOwner->getPropertyByID(propertyId));
+        property_ = dynamic_cast<CameraProperty*>(propertyOwner->getProperty(propertyId));
     else
         LERRORC("TemplatePropertyTimeline<Camera*>", "deserialize(): no property owner");
     s.deserialize("duration", duration_);
@@ -262,48 +263,52 @@ void TemplatePropertyTimeline<Camera*>::deserialize(XmlDeserializer& s) {
 }
 
 template <>
-void TemplatePropertyTimeline<Camera*>::undo(){
+void TemplatePropertyTimeline<Camera*>::undo() {
     lastUndos_.push_back(timeline_);
     timeline_ = new CameraPropertyTimelineState(lastChanges_.back()->getKeyValues());
     lastChanges_.pop_back();
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <>
-void TemplatePropertyTimeline<Camera*>::redo(){
+void TemplatePropertyTimeline<Camera*>::redo() {
     lastChanges_.push_back(timeline_);
     timeline_ = new CameraPropertyTimelineState(lastUndos_.back()->getKeyValues());
     lastUndos_.pop_back();
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 
 ////////////////// special case ShaderSource
 template <>
 void TemplatePropertyTimeline<ShaderSource>::renderAt(float time) {
-    if (!activeOnRendering_) {
+    if (!activeOnRendering_)
         return;
-    }
+
     // changing the shadersource only if it was changed otherwise the shader has to be rebuild everytime
     ShaderSource sh = property_->get();
     ShaderSource newsh = getPropertyAt(time);
     bool changed = false;
-    if (sh.geometryFilename_ != newsh.geometryFilename_) changed = true;
-    if (sh.vertexFilename_ != newsh.vertexFilename_) changed = true;
-    if (sh.fragmentFilename_ != newsh.fragmentFilename_) changed = true;
-    if (sh.geometrySource_ != newsh.geometrySource_) changed = true;
-    if (sh.vertexSource_ != newsh.vertexSource_) changed = true;
-    if (sh.fragmentSource_ != newsh.fragmentSource_) changed = true;
+    if (sh.geometryFilename_ != newsh.geometryFilename_)
+        changed = true;
+    if (sh.vertexFilename_ != newsh.vertexFilename_)
+        changed = true;
+    if (sh.fragmentFilename_ != newsh.fragmentFilename_)
+        changed = true;
+    if (sh.geometrySource_ != newsh.geometrySource_)
+        changed = true;
+    if (sh.vertexSource_ != newsh.vertexSource_)
+        changed = true;
+    if (sh.fragmentSource_ != newsh.fragmentSource_)
+        changed = true;
 
     if (changed)
         property_->set(newsh);
@@ -311,21 +316,21 @@ void TemplatePropertyTimeline<ShaderSource>::renderAt(float time) {
 
 // standard implementation
 template <class T>
-TemplatePropertyTimeline<T>::TemplatePropertyTimeline(TemplateProperty<T>* prop) :
-    property_(prop),
-    activeOnRendering_(true),
-    timelineChanged_(false) {
-    duration_ = 60*15;
+TemplatePropertyTimeline<T>::TemplatePropertyTimeline(TemplateProperty<T>* prop)
+    : property_(prop)
+    , activeOnRendering_(true)
+    , timelineChanged_(false)
+{
+    duration_ = 60.f * 15.f;
 
     timeline_ = new TemplatePropertyTimelineState<T>(new PropertyKeyValue<T>(property_->get(),0));
 }
 
 template <class T>
-TemplatePropertyTimeline<T>::TemplatePropertyTimeline() {
-}
+TemplatePropertyTimeline<T>::TemplatePropertyTimeline() {}
 
 template <class T>
-TemplatePropertyTimeline<T>::~TemplatePropertyTimeline(){
+TemplatePropertyTimeline<T>::~TemplatePropertyTimeline() {
     delete timeline_;
 
     TemplatePropertyTimelineState<T>* temp;
@@ -342,15 +347,15 @@ TemplatePropertyTimeline<T>::~TemplatePropertyTimeline(){
 }
 
 template <class T>
-bool TemplatePropertyTimeline<T>::empty() {
-    if(timeline_->getKeyValues().size() > 1)
+bool TemplatePropertyTimeline<T>::isEmpty() {
+    if (timeline_->getKeyValues().size() > 1)
         return false;
     else
         return true;
 }
 
 template <class T>
-void TemplatePropertyTimeline<T>::resetTimeline(){
+void TemplatePropertyTimeline<T>::resetTimeline() {
     timelineChanged_ = true;
     lastChanges_.push_back(timeline_);
     undoObserver_->animationChanged(this);
@@ -359,9 +364,8 @@ void TemplatePropertyTimeline<T>::resetTimeline(){
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <class T>
@@ -380,10 +384,10 @@ const std::map<float,PropertyKeyValue<T>*> TemplatePropertyTimeline<T>::getKeyVa
 }
 
 template <class T>
-const PropertyKeyValue<T>* TemplatePropertyTimeline<T>::newKeyValue(float time){
-    time = floor(time*10000)/10000;
+const PropertyKeyValue<T>* TemplatePropertyTimeline<T>::newKeyValue(float time) {
+    time = floor(time * 10000.f) / 10000.f;
 
-    if (time>duration_) {
+    if (time > duration_) {
         timelineChanged_ = false;
         return 0;
     }
@@ -395,15 +399,14 @@ const PropertyKeyValue<T>* TemplatePropertyTimeline<T>::newKeyValue(float time){
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 
     return kv;
 }
 
 template <class T>
-bool TemplatePropertyTimeline<T>::changeValueOfKeyValue(T value, const PropertyKeyValue<T>* keyvalue){
+bool TemplatePropertyTimeline<T>::changeValueOfKeyValue(T value, const PropertyKeyValue<T>* keyvalue) {
     timelineChanged_ = true;
     if (!(property_->isValidValue(value)))
         return false;
@@ -411,50 +414,47 @@ bool TemplatePropertyTimeline<T>::changeValueOfKeyValue(T value, const PropertyK
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 
     return temp;
 }
 
 template <class T>
-bool TemplatePropertyTimeline<T>::changeSmoothnessOfKeyValue(bool smooth, const PropertyKeyValue<T>* keyvalue){
+bool TemplatePropertyTimeline<T>::changeSmoothnessOfKeyValue(bool smooth, const PropertyKeyValue<T>* keyvalue) {
     timelineChanged_ = true;
     bool temp = timeline_->changeSmoothnessOfKeyValue(smooth, keyvalue);
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 
     return temp;
 }
 
 template <class T>
-ChangeTimeOfKeyValueReturn TemplatePropertyTimeline<T>::changeTimeOfKeyValue(float time, const PropertyKeyValue<T>* keyvalue){
-
-    if (time>duration_) {
+ChangeTimeOfKeyValueReturn TemplatePropertyTimeline<T>::changeTimeOfKeyValue(float time, const PropertyKeyValue<T>* keyvalue) {
+    if (time > duration_) {
         timelineChanged_ = false;
         return KV_TIME_AFTER_DURATION;
     }
 
-    time = floor(time*10000)/10000;
+    time = floor(time * 10000.f) / 10000.f;
     timelineChanged_ = true;
 
     ChangeTimeOfKeyValueReturn temp = timeline_->changeTimeOfKeyValue(time,keyvalue);
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
+
     return temp;
 }
 
 template <class T>
-DeleteKeyValueReturn TemplatePropertyTimeline<T>::deleteKeyValue(const PropertyKeyValue<T>* keyvalue){
+DeleteKeyValueReturn TemplatePropertyTimeline<T>::deleteKeyValue(const PropertyKeyValue<T>* keyvalue) {
     timelineChanged_ = true;
     lastChanges_.push_back(timeline_->clone());
     undoObserver_->animationChanged(this);
@@ -463,9 +463,9 @@ DeleteKeyValueReturn TemplatePropertyTimeline<T>::deleteKeyValue(const PropertyK
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
+
     return temp;
 }
 
@@ -479,9 +479,8 @@ void TemplatePropertyTimeline<T>::setInterpolationFunctionBefore(InterpolationFu
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <class T>
@@ -494,22 +493,24 @@ void TemplatePropertyTimeline<T>::setInterpolationFunctionAfter(InterpolationFun
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <class T>
 void TemplatePropertyTimeline<T>::renderAt(float time) {
-    if (!activeOnRendering_) {
+    if (!activeOnRendering_)
         return;
-    }
+
     property_->set(getPropertyAt(time));
 }
 
 template <class T>
 bool TemplatePropertyTimeline<T>::propertyIsLinked() const {
-    return (property_->getLinks().size()>0);
+    if (property_->getLinks().size() > 0)
+        return true;
+    else
+        return false;
 }
 
 template <class T>
@@ -518,7 +519,7 @@ const TemplateProperty<T>* TemplatePropertyTimeline<T>::getCorrespondingProperty
 }
 
 template <class T>
-void TemplatePropertyTimeline<T>::registerUndoObserver(Animation* observer){
+void TemplatePropertyTimeline<T>::registerUndoObserver(Animation* observer) {
     undoObserver_ = observer;
 }
 
@@ -528,35 +529,33 @@ std::string TemplatePropertyTimeline<T>::getPropertyName() const {
 }
 
 template <class T>
-void TemplatePropertyTimeline<T>::undo(){
+void TemplatePropertyTimeline<T>::undo() {
     lastUndos_.push_back(timeline_);
     timeline_ = lastChanges_.back();
     lastChanges_.pop_back();
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <class T>
-void TemplatePropertyTimeline<T>::redo(){
+void TemplatePropertyTimeline<T>::redo() {
     lastChanges_.push_back(timeline_);
     timeline_ = lastUndos_.back();
     lastUndos_.pop_back();
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <class T>
 void TemplatePropertyTimeline<T>::clearRedoStates() {
     TemplatePropertyTimelineState<T>* temp;
-    while (lastUndos_.size()>0) {
+    while (lastUndos_.size() > 0) {
         temp = lastUndos_.back();
         lastUndos_.pop_back();
         delete temp;
@@ -566,12 +565,12 @@ void TemplatePropertyTimeline<T>::clearRedoStates() {
 template <class T>
 void TemplatePropertyTimeline<T>::clearAllStates() {
     TemplatePropertyTimelineState<T>* temp;
-    while (lastUndos_.size()>0) {
+    while (lastUndos_.size() > 0) {
         temp = lastUndos_.back();
         lastUndos_.pop_back();
         delete temp;
     }
-    while (lastChanges_.size()>0) {
+    while (lastChanges_.size() > 0) {
         temp = lastChanges_.back();
         lastChanges_.pop_back();
         delete temp;
@@ -604,7 +603,7 @@ bool TemplatePropertyTimeline<T>::getActiveOnRendering() const {
 
 template <class T>
 void TemplatePropertyTimeline<T>::setActiveOnRendering(bool activeOnRendering) {
-    this->activeOnRendering_ = activeOnRendering;
+    activeOnRendering_ = activeOnRendering;
 }
 
 template <class T>
@@ -628,9 +627,8 @@ void TemplatePropertyTimeline<T>::setCurrentTimelineState(TemplatePropertyTimeli
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 template <class T>
@@ -641,86 +639,69 @@ void TemplatePropertyTimeline<T>::setDuration(float duration) {
 
     const std::vector<TimelineObserver*> timelineObservers = getObservers();
     std::vector<TimelineObserver*>::const_iterator it;
-    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it) {
+    for (it = timelineObservers.begin(); it != timelineObservers.end(); ++it)
         (*it)->timelineChanged();
-    }
 }
 
 /////////////////// special implementation of the function 'setCurrentSettingAsKeyvalue' for all possible templates
 template <>
 void TemplatePropertyTimeline<float>::setCurrentSettingAsKeyvalue(float time, bool forceKeyValue) {
-    time = floor(time*10000)/10000;
+    time = floor(time * 10000.f) / 10000.f;
     float value = property_->get();
     float animatedValue = getPropertyAt(time);
     if (value != animatedValue) {
         const PropertyKeyValue<float>* kv = timeline_->newKeyValue(time);
-        if (!kv) {
+        if (!kv)
             kv = new PropertyKeyValue<float>(value,time);
-        }
-        this->changeValueOfKeyValue(value,kv);
+        changeValueOfKeyValue(value,kv);
     }
-    else {
-        if (forceKeyValue){
-            newKeyValue(time);
-        }
-    }
+    else if (forceKeyValue)
+        newKeyValue(time);
 }
 
 template <>
 void TemplatePropertyTimeline<int>::setCurrentSettingAsKeyvalue(float time, bool forceKeyValue) {
-    time = floor(time*10000)/10000;
+    time = floor(time * 10000.f) / 10000.f;
     int value = property_->get();
     int animatedValue = getPropertyAt(time);
     if (value != animatedValue) {
         const PropertyKeyValue<int>* kv = timeline_->newKeyValue(time);
-        if (!kv) {
+        if (!kv)
             kv = new PropertyKeyValue<int>(value,time);
-        }
-        this->changeValueOfKeyValue(value,kv);
+        changeValueOfKeyValue(value,kv);
     }
-    else {
-        if (forceKeyValue){
-            newKeyValue(time);
-        }
-    }
+    else if (forceKeyValue)
+        newKeyValue(time);
 }
 
 template <>
 void TemplatePropertyTimeline<bool>::setCurrentSettingAsKeyvalue(float time, bool forceKeyValue) {
-    time = floor(time*10000)/10000;
+    time = floor(time * 10000.f) / 10000.f;
     bool value = property_->get();
     bool animatedValue = getPropertyAt(time);
     if (value != animatedValue) {
         const PropertyKeyValue<bool>* kv = timeline_->newKeyValue(time);
-        if (!kv) {
+        if (!kv)
             kv = new PropertyKeyValue<bool>(value,time);
-        }
-        this->changeValueOfKeyValue(value,kv);
+        changeValueOfKeyValue(value,kv);
     }
-    else {
-        if (forceKeyValue){
-            newKeyValue(time);
-        }
-    }
+    else if (forceKeyValue)
+        newKeyValue(time);
 }
 
 template <>
 void TemplatePropertyTimeline<tgt::ivec2>::setCurrentSettingAsKeyvalue(float time, bool forceKeyValue) {
-    time = floor(time*10000)/10000;
+    time = floor(time * 10000.f) / 10000.f;
     tgt::ivec2 value = property_->get();
     tgt::ivec2 animatedValue = getPropertyAt(time);
     if ((value.elem[0] != animatedValue.elem[0]) || (value.elem[1] != animatedValue.elem[1])) {
         const PropertyKeyValue<tgt::ivec2>* kv = timeline_->newKeyValue(time);
-        if (!kv) {
+        if (!kv)
             kv = new PropertyKeyValue<tgt::ivec2>(value,time);
-        }
-        this->changeValueOfKeyValue(value,kv);
+        changeValueOfKeyValue(value,kv);
     }
-    else {
-        if (forceKeyValue){
-            newKeyValue(time);
-        }
-    }
+    else if (forceKeyValue)
+        newKeyValue(time);
 }
 
 template <>
@@ -1069,11 +1050,11 @@ void TemplatePropertyTimeline<T>::deserialize(XmlDeserializer& s) {
     s.deserialize("propertyOwner", propertyOwner);
     std::string propertyId;
     s.deserialize("propertyId", propertyId);
-    property_ = dynamic_cast<TemplateProperty<T>*>(propertyOwner->getPropertyByID(propertyId));
+    property_ = dynamic_cast<TemplateProperty<T>*>(propertyOwner->getProperty(propertyId));
     if (!property_)
         LWARNINGC("TemplatePropertyTimeline", "Property defined in animation timeline does not exist: "
                   << propertyOwner->getName() << "::" << propertyId);
-    
+
     s.deserialize("duration", duration_);
     s.deserialize("timeline", timeline_);
     s.deserialize("tlchanged", timelineChanged_);

@@ -34,9 +34,9 @@
 
 namespace voreen {
 
-voreen::ProcessorWidget::ProcessorWidget(Processor* processor) :
-    processor_(processor),
-    initialized_(false)
+voreen::ProcessorWidget::ProcessorWidget(Processor* processor)
+    : processor_(processor)
+    , initialized_(false)
 {
     tgtAssert(processor, "Null pointer passed as processor");
 }

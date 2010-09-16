@@ -30,6 +30,9 @@
 
 #include "voreen/core/processors/imageprocessor.h"
 
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/optionproperty.h"
+
 namespace voreen {
 
 /**

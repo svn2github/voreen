@@ -98,6 +98,8 @@ public:
 
     ~ShaderProperty();
 
+    virtual std::string getTypeString() const;
+
     void initialize() throw (VoreenException);
     void deinitialize() throw (VoreenException);
 
@@ -112,7 +114,6 @@ public:
     virtual void deserialize(XmlDeserializer& s);
 
     PropertyWidget* createWidget(PropertyWidgetFactory* f);
-    virtual std::string toString() const;
 
     void setHeader(std::string header);
     std::string getHeader() const;

@@ -101,7 +101,7 @@ void VolumeSource::setVolumeHandle(VolumeHandle* handle) {
         handle->addObserver(this);
 }
 
-const VolumeHandle* VolumeSource::getVolumeHandle() const {
+VolumeHandle* VolumeSource::getVolumeHandle() const {
     return volumeHandle_.get();
 }
 

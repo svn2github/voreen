@@ -52,6 +52,9 @@ signals:
 protected:
     IntProperty* property_;
     SliderSpinBoxWidget* widget_;
+    virtual void mousePressEvent(QMouseEvent*);
+    QMenu* instantValueChangeMenu_;
+    QAction* instantValueChangeAction_;
 };
 
 } // namespace

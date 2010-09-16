@@ -67,6 +67,7 @@ void Median::process() {
     renderQuad();
 
     program_->deactivate();
+    outport_.deactivateTarget();
     LGL_ERROR;
 }
 

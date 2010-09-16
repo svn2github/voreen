@@ -48,9 +48,9 @@ class Animation;
 /**
  * This class organizes all animationsettings of one property of the type T.
  */
-template <class T> class TemplatePropertyTimeline : public PropertyTimeline, public Observable<TimelineObserver> {
+template <class T>
+class TemplatePropertyTimeline : public PropertyTimeline, public Observable<TimelineObserver> {
 public:
-
     /**
      * Constructor of the class.
      * Parameter is the property object which should be animated.
@@ -63,7 +63,7 @@ public:
     ~TemplatePropertyTimeline();
 
     /// returns true if the timeline is empty
-    bool empty();
+    bool isEmpty();
 
     /**
      * Returns a sorted vector of all keyvalues of the timeline.
@@ -214,9 +214,8 @@ public:
     virtual void deserialize(XmlDeserializer& s);
 
     virtual Property* getProperty() const;
-    
-protected:
 
+protected:
     friend class PropertyTimelineFactory;
     friend class XmlDeserializer;
     friend class TimelineObserver;

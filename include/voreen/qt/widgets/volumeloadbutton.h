@@ -30,9 +30,9 @@
 
 #include <QToolButton>
 
-#ifdef VRN_WITH_DCMTK
-#include "voreen/core/io/dicomvolumereader.h"
-#include "voreen/qt/dicomdialog.h"
+#ifdef VRN_MODULE_DICOM
+#include "voreen/modules/dicom/dicomvolumereader.h"
+#include "voreen/modules/dicom/qt/dicomdialog.h"
 #endif
 
 namespace voreen {
@@ -60,7 +60,7 @@ protected:
     QAction* loadDatAction_;
     QAction* loadRawAction_;
 
-#ifdef VRN_WITH_DCMTK
+#ifdef VRN_MODULE_DICOM
     QAction* loadDicomAction_;
 #endif
     VolumeContainer* volumeContainer_;
@@ -74,7 +74,7 @@ protected:
     // currently selected filter
     QString selectedFilter_;
 
-#ifdef VRN_WITH_DCMTK
+#ifdef VRN_MODULE_DICOM
     DicomDirDialog* dicomDirDialog_;
 #endif
 

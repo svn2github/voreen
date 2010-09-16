@@ -30,6 +30,10 @@
 
 #include "voreen/modules/base/processors/render/slicerendererbase.h"
 #include "voreen/core/properties/eventproperty.h"
+#include "voreen/core/properties/optionproperty.h"
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/intproperty.h"
+#include "voreen/core/properties/matrixproperty.h"
 #include "voreen/core/interaction/mwheelnumpropinteractionhandler.h"
 
 namespace voreen {
@@ -131,7 +135,7 @@ protected:
     IntProperty numSlicesPerCol_;           ///< Property containing the currently displayed number of slices per Column
 
     BoolProperty renderSliceBoundaries_;    ///< Determines whether to render the slice boundaries
-    ColorProperty boundaryColor_;           ///< Color to be used for rendering of the slice boundary
+    FloatVec4Property boundaryColor_;           ///< Color to be used for rendering of the slice boundary
     StringOptionProperty showCursorInfos_;  ///< Determines whether information about the cursor position is to be shown
     BoolProperty showSliceNumber_;          ///< Determines whether the slice number is to displayed on each slice
     IntProperty fontSize_;                  ///< Font size to be used for info texts

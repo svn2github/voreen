@@ -29,8 +29,11 @@
 #define VRN_VOLUMESAVE_H
 
 #include <string>
-#include "voreen/modules/base/processors/volume/volumeprocessor.h"
-#include "voreen/core/properties/allproperties.h"
+#include "voreen/core/processors/volumeprocessor.h"
+
+#include "voreen/core/properties/filedialogproperty.h"
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/buttonproperty.h"
 
 namespace voreen {
 
@@ -48,6 +51,7 @@ public:
     virtual std::string getCategory() const   { return "Volume Processing"; }
     virtual CodeState getCodeState() const    { return CODE_STATE_STABLE;   }
     virtual std::string getProcessorInfo() const;
+    bool isEndProcessor() const;
 
     virtual void saveVolume();
 

@@ -37,7 +37,6 @@ namespace voreen {
  * This class offers an interpolation function for volumehandles. Interpolation: focus on startvalue.
  */
 class VolumeHandleStartInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
-
 public:
     VolumeHandleStartInterpolationFunction();
     InterpolationFunction<VolumeHandle*>* clone() const;
@@ -51,7 +50,6 @@ public:
  * This class offers an interpolation function for volumehandles. Interpolation: focus on endvalue.
  */
 class VolumeHandleEndInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
-
 public:
     VolumeHandleEndInterpolationFunction();
     InterpolationFunction<VolumeHandle*>* clone() const;
@@ -65,7 +63,6 @@ public:
  * This class offers an interpolation function for volumehandles. Interpolation: bisection.
  */
 class VolumeHandleStartEndInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
-
 public:
     VolumeHandleStartEndInterpolationFunction();
     InterpolationFunction<VolumeHandle*>* clone() const;

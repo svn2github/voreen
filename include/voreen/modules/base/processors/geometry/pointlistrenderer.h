@@ -31,6 +31,12 @@
 #include "voreen/core/processors/geometryrendererbase.h"
 #include "voreen/core/properties/propertyvector.h"
 
+#include "voreen/core/properties/optionproperty.h"
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/intproperty.h"
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
+
 namespace voreen {
 
 class Geometry;
@@ -81,7 +87,7 @@ protected:
     // properties
     StringOptionProperty coordinateSystem_;
     StringOptionProperty renderingPrimitiveProp_;
-    ColorProperty color_;
+    FloatVec4Property color_;
     BoolProperty depthTest_;
     FloatProperty pointSize_;
     BoolProperty pointSmooth_;

@@ -86,9 +86,8 @@ void Gaussian::process() {
         blurAlpha_.get() ? 0.f : 1.f);
     program_->setUniform("blurDepth_", blurDepth_.get());
     renderQuad();
-
     program_->deactivate();
-
+    privatePort_.deactivateTarget();
 
     outport_.activateTarget();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -115,6 +114,7 @@ void Gaussian::process() {
     renderQuad();
 
     program_->deactivate();
+    outport_.deactivateTarget();
     LGL_ERROR;
 }
 

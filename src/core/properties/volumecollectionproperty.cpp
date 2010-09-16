@@ -69,4 +69,8 @@ void VolumeCollectionProperty::deserialize(XmlDeserializer& s) {
     invalidate();
 }
 
+std::string VolumeCollectionProperty::getTypeString() const {
+    return "VolumeCollection";
+}
+
 } // namespace voreen

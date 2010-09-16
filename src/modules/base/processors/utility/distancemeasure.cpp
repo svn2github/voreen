@@ -70,7 +70,7 @@ DistanceMeasure::DistanceMeasure()
     mouseStartPos2D_ = tgt::ivec2(0, 0);
     mouseStartPos3D_ = tgt::vec4(0.0f);
 
-    font_ = new tgt::Font(VoreenApplication::app()->getFontPath("VeraMono.ttf"), 11, tgt::BitmapFont);
+    font_ = new tgt::Font(VoreenApplication::app()->getFontPath("VeraMono.ttf"), 11, tgt::Font::BitmapFont);
 }
 
 DistanceMeasure::~DistanceMeasure() {
@@ -120,6 +120,7 @@ void DistanceMeasure::measure(tgt::MouseEvent* e) {
                 mouseStartPos3D_ = fhp;
                 e->accept();
             }
+            fhpInport_.deactivateTarget();
         }
     }
     if (e->action() & tgt::MouseEvent::MOTION) {
@@ -137,6 +138,7 @@ void DistanceMeasure::measure(tgt::MouseEvent* e) {
                 invalidate();
             } else mouseCurPos2D_ = oldMouseCurPos2D_;
             e->accept();
+            fhpInport_.deactivateTarget();
         }
     }
     if (e->action() & tgt::MouseEvent::RELEASED) {
@@ -155,7 +157,7 @@ void DistanceMeasure::process() {
         compile();
 
     outport_.activateTarget();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    outport_.clearTarget();
 
     TextureUnit shadeUnit, depthUnit;
     imgInport_.bindTextures(shadeUnit.getEnum(), depthUnit.getEnum());
@@ -168,8 +170,6 @@ void DistanceMeasure::process() {
     imgInport_.setTextureParameters(program_, "textureParameters_");
 
     renderQuad();
-
-    outport_.deactivateTarget();
 
     program_->deactivate();
     TextureUnit::setZeroUnit();
@@ -193,12 +193,9 @@ void DistanceMeasure::process() {
         float scaleFactorY = 2.0f / static_cast<float>(imgInport_.getSize().y);
         glScalef(scaleFactorX, scaleFactorY, 1);
         glColor3f(0.0f, 0.0f, 0.0f);
-        font_->renderWithLayout(tgt::vec3(static_cast<float>(mouseCurPos2D_.x+11), static_cast<float>(mouseCurPos2D_.y+11), 0.0f), label);
+        font_->render(tgt::vec3(static_cast<float>(mouseCurPos2D_.x+11), static_cast<float>(mouseCurPos2D_.y+11), 0.0f), label);
         glColor3f(1.0f, 1.0f, 1.0f);
-        font_->renderWithLayout(tgt::vec3(static_cast<float>(mouseCurPos2D_.x+10), static_cast<float>(mouseCurPos2D_.y+10), 0.0f), label);
-
-        std::cout << "start" << mouseStartPos2D_ << std::endl;
-        std::cout << " cur " << mouseCurPos2D_ << std::endl;
+        font_->render(tgt::vec3(static_cast<float>(mouseCurPos2D_.x+10), static_cast<float>(mouseCurPos2D_.y+10), 0.0f), label);
 
         glBegin(GL_LINES);
             glColor3f(0.0f, 0.0f, 0.0f);
@@ -236,10 +233,10 @@ void DistanceMeasure::process() {
 
         glPushMatrix();
             glTranslatef(mouseStartPos3D_.x, mouseStartPos3D_.y, mouseStartPos3D_.z);
-            gluSphere(quadric, 0.03f, 20, 20);
+            gluSphere(quadric, 0.02f, 20, 20);
         glPopMatrix();
         glTranslatef(mouseCurPos3D_.x, mouseCurPos3D_.y, mouseCurPos3D_.z);
-        gluSphere(quadric, 0.03f, 20, 20);
+        gluSphere(quadric, 0.02f, 20, 20);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
@@ -247,6 +244,10 @@ void DistanceMeasure::process() {
         gluDeleteQuadric(quadric);
         glPopAttrib();
     }
+
+    outport_.deactivateTarget();
+    LGL_ERROR;
+
 }
 
 } // namespace voreen

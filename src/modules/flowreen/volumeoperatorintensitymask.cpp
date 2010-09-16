@@ -35,7 +35,7 @@ VolumeOperatorIntensityMask::VolumeOperatorIntensityMask(const tgt::vec2& thresh
 {
 }
 
-template<typename T>
+/*template<typename T>
 VolumeAtomic<bool>* VolumeOperatorIntensityMask::apply_internal(const voreen::VolumeAtomic<T>* const volume) const
 {
     if (volume == 0)
@@ -57,6 +57,6 @@ VolumeAtomic<bool>* VolumeOperatorIntensityMask::apply_internal(const voreen::Vo
     return subVolume;
 }
 
-template class VolumeOperatorUnary<VolumeOperatorIntensityMask>;
+template class VolumeOperatorUnary<VolumeOperatorIntensityMask>; */
 
 }   // namespace

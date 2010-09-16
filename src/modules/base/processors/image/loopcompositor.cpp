@@ -61,7 +61,7 @@ void LoopCompositor::initialize() throw (VoreenException) {
     RenderProcessor::initialize();
 
     shaderPrg_ = ShdrMgr.loadSeparate("passthrough.vert", "copyimage.frag",
-        generateHeader(), false, false);
+        generateHeader(), false);
 
     if (!shaderPrg_) {
         LERROR("Failed to load shaders!");

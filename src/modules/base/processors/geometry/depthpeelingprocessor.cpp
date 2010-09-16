@@ -94,7 +94,7 @@ void DepthPeelingProcessor::initialize() throw (VoreenException) {
     RenderProcessor::initialize();
 
     shaderPrg_ = ShdrMgr.loadSeparate("pp_depthpeeling.vert", "pp_depthpeeling.frag",
-        generateHeader(), false, false);
+        generateHeader(), false);
 
     if (!shaderPrg_) {
         LERROR("Failed to load shaders!");
@@ -151,6 +151,7 @@ void DepthPeelingProcessor::process() {
     }
 
     shaderPrg_->deactivate();
+    outport_.deactivateTarget();
 
     // restore matrices
     glMatrixMode(GL_PROJECTION);

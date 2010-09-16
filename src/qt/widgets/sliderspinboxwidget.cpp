@@ -35,10 +35,12 @@
 
 namespace voreen {
 
-SliderSpinBoxWidget::SliderSpinBoxWidget(QWidget* parent ) :
-    QWidget(parent)
+SliderSpinBoxWidget::SliderSpinBoxWidget(QWidget* parent)
+    : QWidget(parent)
+    , sliderTracking_(true)
+    , spinboxTracking_(false)
 {
-    setObjectName(QString::fromUtf8("SliderSpinBoxWidget"));
+    setObjectName("SliderSpinBoxWidget");
     resize(QSize(156, 86).expandedTo(minimumSizeHint()));
     QSizePolicy sizePolicy(static_cast<QSizePolicy::Policy>(7), static_cast<QSizePolicy::Policy>(0));
     sizePolicy.setHorizontalStretch(0);
@@ -48,13 +50,13 @@ SliderSpinBoxWidget::SliderSpinBoxWidget(QWidget* parent ) :
     vboxLayout = new QVBoxLayout(this);
     vboxLayout->setSpacing(6);
     vboxLayout->setMargin(0);
-    vboxLayout->setObjectName(QString::fromUtf8("vboxLayout"));
+    vboxLayout->setObjectName("vboxLayout");
     hboxLayout = new QHBoxLayout();
     hboxLayout->setSpacing(6);
     hboxLayout->setMargin(0);
-    hboxLayout->setObjectName(QString::fromUtf8("hboxLayout"));
+    hboxLayout->setObjectName("hboxLayout");
     sliderSLD = new QSlider(this);
-    sliderSLD->setObjectName(QString::fromUtf8("sliderSLD"));
+    sliderSLD->setObjectName("sliderSLD");
     sliderSLD->setOrientation(Qt::Horizontal);
     sliderSLD->setTickPosition(QSlider::NoTicks);
     sliderSLD->setTickInterval(5);
@@ -62,24 +64,31 @@ SliderSpinBoxWidget::SliderSpinBoxWidget(QWidget* parent ) :
     hboxLayout->addWidget(sliderSLD);
 
     spinBoxSPB = new QSpinBox(this);
-    spinBoxSPB->setObjectName(QString::fromUtf8("spinBoxSPB"));
+    spinBoxSPB->setObjectName("spinBoxSPB");
 
     hboxLayout->addWidget(spinBoxSPB);
-
     vboxLayout->addLayout(hboxLayout);
 
-    //spacerItem = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    setWindowTitle("SliderSpinBoxWidget");
 
-    //vboxLayout->addItem(spacerItem);
-
-    setWindowTitle(QApplication::translate("SliderSpinBoxWidget", "SliderSpinBoxWidget", 0, QApplication::UnicodeUTF8));
     // signals and slots connections
     connect( sliderSLD, SIGNAL( valueChanged(int) ), this, SLOT( setValue(int) ) );
     connect( sliderSLD, SIGNAL( sliderPressed() ), this, SLOT( sliderPressed() ) );
     connect( sliderSLD, SIGNAL( sliderReleased() ), this, SLOT( sliderReleased() ) );
     connect( spinBoxSPB, SIGNAL( valueChanged(int) ), this, SLOT( setValue(int) ) );
     connect( spinBoxSPB, SIGNAL( editingFinished() ), this, SLOT( spinEditingFinished() ) );
+
     value_ = getValue();
+
+    setSliderTracking(sliderTracking_);
+    setSpinboxTracking(spinboxTracking_);
+}
+
+void SliderSpinBoxWidget::setView(Property::View view) {
+    if(view == Property::SLIDER)
+        spinBoxSPB->hide();
+    else if(view == Property::SPINBOX)
+        sliderSLD->hide();
 }
 
 QSize SliderSpinBoxWidget::sizeHint () const {
@@ -96,7 +105,8 @@ void SliderSpinBoxWidget::setValue(int value) {
         value_ = value;
         sliderSLD->setValue(value_);
         spinBoxSPB->setValue(value_);
-        emit valueChanged(value_);
+        if (sliderTracking_ || !sliderSLD->isSliderDown())
+            emit valueChanged(value_);
     }
 }
 
@@ -131,6 +141,8 @@ void SliderSpinBoxWidget::sliderPressed() {
 void SliderSpinBoxWidget::sliderReleased() {
     emit sliderPressedChanged(false);
     emit editingFinished();
+    if (!sliderTracking_)
+        emit valueChanged(value_);
 }
 
 void SliderSpinBoxWidget::spinEditingFinished() {
@@ -147,13 +159,34 @@ void SliderSpinBoxWidget::setFocusPolicy(Qt::FocusPolicy policy) {
     spinBoxSPB->setFocusPolicy(policy);
 }
 
+void SliderSpinBoxWidget::setSliderTracking(bool tracking) {
+    sliderTracking_ = tracking;
+    // do not disable tracking of the slider, since we want
+    // to keep the spinbox in sync anyway.
+}
+
+void SliderSpinBoxWidget::setSpinboxTracking(bool tracking) {
+    spinboxTracking_ = tracking;
+    spinBoxSPB->setKeyboardTracking(tracking);
+}
+
+bool SliderSpinBoxWidget::hasSliderTracking() const {
+    return sliderTracking_;
+}
+
+bool SliderSpinBoxWidget::hasSpinboxTracking() const {
+    return spinboxTracking_;
+}
+
 // ---------------------------------------------------------------------------
 
 
-DoubleSliderSpinBoxWidget::DoubleSliderSpinBoxWidget(QWidget* parent ) :
-    QWidget(parent)
+DoubleSliderSpinBoxWidget::DoubleSliderSpinBoxWidget(QWidget* parent )
+    : QWidget(parent)
+    , sliderTracking_(true)
+    , spinboxTracking_(false)
 {
-    setObjectName(QString::fromUtf8("DoubleSliderSpinBoxWidget"));
+    setObjectName("DoubleSliderSpinBoxWidget");
     resize(QSize(156, 86).expandedTo(minimumSizeHint()));
     QSizePolicy sizePolicy(static_cast<QSizePolicy::Policy>(7), static_cast<QSizePolicy::Policy>(0));
     sizePolicy.setHorizontalStretch(0);
@@ -163,25 +196,26 @@ DoubleSliderSpinBoxWidget::DoubleSliderSpinBoxWidget(QWidget* parent ) :
     vboxLayout = new QVBoxLayout(this);
     vboxLayout->setSpacing(6);
     vboxLayout->setMargin(0);
-    vboxLayout->setObjectName(QString::fromUtf8("vboxLayout"));
+    vboxLayout->setObjectName("vboxLayout");
     hboxLayout = new QHBoxLayout();
     hboxLayout->setSpacing(6);
     hboxLayout->setMargin(0);
-    hboxLayout->setObjectName(QString::fromUtf8("hboxLayout"));
+    hboxLayout->setObjectName("hboxLayout");
     sliderSLD = new QSlider(this);
-    sliderSLD->setObjectName(QString::fromUtf8("sliderSLD"));
+    sliderSLD->setObjectName("sliderSLD");
     sliderSLD->setOrientation(Qt::Horizontal);
     sliderSLD->setTickPosition(QSlider::NoTicks);
     sliderSLD->setTickInterval(5);
     hboxLayout->addWidget(sliderSLD);
 
     spinBoxSPB = new QDoubleSpinBox(this);
-    spinBoxSPB->setObjectName(QString::fromUtf8("spinBoxSPB"));
+    spinBoxSPB->setObjectName("spinBoxSPB");
 
     hboxLayout->addWidget(spinBoxSPB);
     vboxLayout->addLayout(hboxLayout);
 
-    setWindowTitle(QApplication::translate("DoubleSliderSpinBoxWidget", "DoubleSliderSpinBoxWidget", 0, QApplication::UnicodeUTF8));
+    setWindowTitle("DoubleSliderSpinBoxWidget");
+
     // signals and slots connections
     connect( sliderSLD, SIGNAL( valueChanged(int) ), this, SLOT( sliderValueChanged(int) ) );
     connect( sliderSLD, SIGNAL( sliderPressed() ), this, SLOT( sliderPressed() ) );
@@ -191,6 +225,16 @@ DoubleSliderSpinBoxWidget::DoubleSliderSpinBoxWidget(QWidget* parent ) :
 
     value_ = getValue();
     adjustSliderScale();
+
+    setSliderTracking(sliderTracking_);
+    setSpinboxTracking(spinboxTracking_);
+}
+
+void DoubleSliderSpinBoxWidget::setView(Property::View view) {
+    if (!(view & Property::SLIDER))
+        spinBoxSPB->hide();
+    if (!(view & Property::SPINBOX))
+        sliderSLD->hide();
 }
 
 QSize DoubleSliderSpinBoxWidget::sizeHint () const {
@@ -205,7 +249,8 @@ void DoubleSliderSpinBoxWidget::setValue(double value) {
         sliderSLD->setValue( static_cast<int>((spinBoxSPB->value() - spinBoxSPB->minimum()) /
                                    (spinBoxSPB->maximum() - spinBoxSPB->minimum()) * sliderSLD->maximum()) );
         sliderSLD->blockSignals(false);
-        emit valueChanged(value_);
+        if (sliderTracking_ || !sliderSLD->isSliderDown())
+            emit valueChanged(value_);
     }
 }
 
@@ -257,6 +302,8 @@ void DoubleSliderSpinBoxWidget::sliderPressed() {
 void DoubleSliderSpinBoxWidget::sliderReleased() {
     emit sliderPressedChanged(false);
     emit editingFinished();
+    if (!sliderTracking_)
+        emit valueChanged(value_);
 }
 
 void DoubleSliderSpinBoxWidget::spinEditingFinished() {
@@ -286,6 +333,25 @@ void DoubleSliderSpinBoxWidget::adjustSliderScale() {
 
 void DoubleSliderSpinBoxWidget::sliderValueChanged(int value) {
     setValue( spinBoxSPB->minimum() + ((double)value / sliderSLD->maximum()) * (spinBoxSPB->maximum() - spinBoxSPB->minimum()) );
+}
+
+void DoubleSliderSpinBoxWidget::setSliderTracking(bool tracking) {
+    sliderTracking_ = tracking;
+    // do not disable tracking of the slider, since we want
+    // to keep the spinbox in sync anyway.
+}
+
+void DoubleSliderSpinBoxWidget::setSpinboxTracking(bool tracking) {
+    spinboxTracking_ = tracking;
+    spinBoxSPB->setKeyboardTracking(tracking);
+}
+
+bool DoubleSliderSpinBoxWidget::hasSliderTracking() const {
+    return sliderTracking_;
+}
+
+bool DoubleSliderSpinBoxWidget::hasSpinboxTracking() const {
+    return spinboxTracking_;
 }
 
 } // namespace voreen

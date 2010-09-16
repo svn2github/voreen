@@ -29,7 +29,6 @@
 #define VRN_MODULEREGISTRATION_H
 
 #include "voreen/core/voreenapplication.h"
-#include "voreen/modules/moduleregistration.h"  // todo: does this make any sense? (jsp)
 
 // module includes
 #ifdef VRN_MODULE_BASE
@@ -38,6 +37,10 @@
 
 #ifdef VRN_MODULE_CONNECTEDCOMPONENTS
 #include "voreen/modules/connectedcomponents/connectedcomponentsmodule.h"
+#endif
+
+#ifdef VRN_MODULE_DICOM
+#include "voreen/modules/dicom/dicommodule.h"
 #endif
 
 #ifdef VRN_MODULE_FLOWREEN
@@ -67,6 +70,10 @@ void addAllModules(VoreenApplication* vapp) {
 
     #ifdef VRN_MODULE_CONNECTEDCOMPONENTS
         vapp->addModule(new ConnectedComponentsModule());
+    #endif
+
+    #ifdef VRN_MODULE_DICOM
+        vapp->addModule(new DicomModule());
     #endif
 
     #ifdef VRN_MODULE_FLOWREEN

@@ -128,6 +128,14 @@ void InteractionHandler::setEnabled(bool enabled) {
         eventProperties_[i]->setEnabled(enabled);
 }
 
+void InteractionHandler::setVisible(bool state) {
+    if (eventProperties_.empty()) {
+        LWARNINGC("InteractionHandler", "No event property assigned");
+    }
+    for (size_t i=0; i<eventProperties_.size(); i++)
+        eventProperties_[i]->setVisible(state);
+}
+
 void InteractionHandler::setSharing(bool sharing) {
     if (eventProperties_.empty()) {
         LWARNINGC("InteractionHandler", "No event property assigned");
@@ -135,7 +143,6 @@ void InteractionHandler::setSharing(bool sharing) {
     for (size_t i=0; i<eventProperties_.size(); i++)
         eventProperties_[i]->setSharing(sharing);
 }
-
 
 bool InteractionHandler::accepts(tgt::Event* e) const {
     for (size_t i=0; i<eventProperties_.size(); i++)

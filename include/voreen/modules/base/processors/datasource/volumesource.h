@@ -77,7 +77,7 @@ public:
     /**
      * Returns a reference to the handle of the loaded volume. May be null.
      */
-    const VolumeHandle* getVolumeHandle() const;
+    VolumeHandle* getVolumeHandle() const;
 
     /**
      * Assigns the null pointer to its VolumeHandleProperty and its outport.

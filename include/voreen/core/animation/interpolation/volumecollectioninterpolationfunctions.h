@@ -37,7 +37,6 @@ namespace voreen {
  * This class offers an interpolation function for volumecollections. Interpolation: focus on startvalue.
  */
 class VolumeCollectionStartInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
-
 public:
     VolumeCollectionStartInterpolationFunction();
     InterpolationFunction<VolumeCollection*>* clone() const;
@@ -51,7 +50,6 @@ public:
  * This class offers an interpolation function for volumecollections. Interpolation: focus on endvalue.
  */
 class VolumeCollectionEndInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
-
 public:
     VolumeCollectionEndInterpolationFunction();
     InterpolationFunction<VolumeCollection*>* clone() const;
@@ -65,7 +63,6 @@ public:
  * This class offers an interpolation function for volumecollections. Interpolation: bisection.
  */
 class VolumeCollectionStartEndInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
-
 public:
     VolumeCollectionStartEndInterpolationFunction();
     InterpolationFunction<VolumeCollection*>* clone() const;
