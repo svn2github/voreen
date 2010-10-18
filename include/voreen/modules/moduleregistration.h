@@ -30,7 +30,7 @@
 
 #include "voreen/core/voreenapplication.h"
 
-// module includes
+// standard modules
 #ifdef VRN_MODULE_BASE
 #include "voreen/modules/base/basemodule.h"
 #endif
@@ -58,6 +58,15 @@
 #ifdef VRN_MODULE_PVM
 #include "voreen/modules/pvm/pvmmodule.h"
 #endif
+
+#ifdef VRN_MODULE_PYTHON
+#include "voreen/modules/python/pythonmodule.h"
+#endif
+
+#ifdef VRN_MODULE_TIFF
+#include "voreen/modules/tiff/tiffmodule.h"
+#endif
+
 
 
 
@@ -91,6 +100,16 @@ void addAllModules(VoreenApplication* vapp) {
     #ifdef VRN_MODULE_PVM
         vapp->addModule(new PVMModule());
     #endif
+
+    #ifdef VRN_MODULE_PYTHON
+        vapp->addModule(new PythonModule());
+    #endif
+
+    #ifdef VRN_MODULE_TIFF
+        vapp->addModule(new TiffModule());
+    #endif
+
+
 }
 
 } // namespace

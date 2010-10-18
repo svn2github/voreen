@@ -49,7 +49,7 @@ MultiplanarSliceRenderer::MultiplanarSliceRenderer()
     sliceNumberXY_("sliceNumber.XY", "XY Slice Number", 0, 0, 10000),
     sliceNumberXZ_("sliceNumber.XZ", "XZ Slice Number", 0, 0, 10000),
     sliceNumberYZ_("sliceNumber.YZ", "YZ Slice Number", 0, 0, 10000),
-    camProp_("camera", "Camera", new tgt::Camera(tgt::vec3(0.0f, 0.0f, 3.5f), tgt::vec3(0.0f, 0.0f, 0.0f), tgt::vec3(0.0f, 1.0f, 0.0f))),
+    camProp_("camera", "Camera", tgt::Camera(tgt::vec3(0.0f, 0.0f, 3.5f), tgt::vec3(0.0f, 0.0f, 0.0f), tgt::vec3(0.0f, 1.0f, 0.0f))),
     cameraHandler_(0)
 {
     addProperty(renderXYSlice_);
@@ -99,7 +99,8 @@ void MultiplanarSliceRenderer::process() {
     TextureUnit volUnit;
     TextureUnit transferUnit;
 
-    setupShader(volumeGL, &volUnit, &transferUnit, camProp_.get(), lightPosition_.get()); // also binds the volume
+    tgt::Camera cam = camProp_.get();
+    setupShader(volumeGL, &volUnit, &transferUnit, &cam, lightPosition_.get()); // also binds the volume
     if (!ready())
         return;
 
@@ -123,8 +124,7 @@ void MultiplanarSliceRenderer::process() {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
-    camProp_.get()->look();
-
+    camProp_.look();
 
     // transform bounding box by dataset transformation matrix
     glMatrixMode(GL_MODELVIEW);

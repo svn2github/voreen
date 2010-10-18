@@ -44,6 +44,7 @@ class Port {
     friend class Processor;
     friend class ProcessorNetwork;
     friend class NetworkEvaluator;
+    friend class DynamicGLSLProcessor;
 
 public:
     enum PortDirection {

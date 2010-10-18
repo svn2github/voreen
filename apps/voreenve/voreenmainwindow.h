@@ -51,8 +51,10 @@ class VoreenToolWindow;
 class VoreenToolDockWindow;
 class InputMappingDialog;
 class RenderTargetViewer;
-class LinkingScriptManager;
 class AnimationEditor;
+#ifdef VRN_MODULE_PYTHON
+class PythonEditor;
+#endif
 
 
 //---------------------------------------------------------------------------
@@ -99,6 +101,7 @@ public:
     ~VoreenMainWindow();
 
     void init(VoreenSplashScreen* splash = 0);
+    void deinit();
 
 signals:
     void closeMainWindow();
@@ -131,7 +134,6 @@ public slots:
     // action menu
     void adaptWidgetsToNetwork();
     void rebuildShaders();
-    void runScript();
     void runScript(const QString& filename);
 
     // option menu
@@ -146,6 +148,8 @@ public slots:
 
     // further slots
     void guiModeChanged();
+
+    void resetQSettings();
 
 protected:
     void changeEvent(QEvent* event);
@@ -231,7 +235,9 @@ private:
     NetworkEditor* networkEditorWidget_;
     InputMappingDialog* inputMappingDialog_;
     RenderTargetViewer* renderTargetViewer_;
-    LinkingScriptManager* linkingScriptManager_;
+#ifdef VRN_MODULE_PYTHON
+    PythonEditor* pythonEditor_;
+#endif
 
     VoreenVisualization* vis_;
 
@@ -286,7 +292,7 @@ private:
 
     QAction* rebuildShadersAction_;
     QAction* loadLastWorkspaceAct_;
-    QAction* scriptAction_;
+    QAction* pythonAction_;
 
     QAction* modeApplicationAction_;
     QAction* modeDevelopmentAction_;
@@ -299,6 +305,7 @@ private:
     ConsolePlugin* consolePlugin_;
 
     bool resetSettings_;
+    bool resetQSettings_;
     bool loadLastWorkspace_;
     QString lastWorkspace_;
 

@@ -42,6 +42,8 @@ class Camera;
 
 namespace voreen {
 
+class CameraProperty;
+
 /**
  * A class that makes it possible to use a trackball-metaphor to rotate, zoom, shift, roll a dataset.
  */
@@ -62,7 +64,7 @@ public:
      * @param minDist the minimum allowed orthogonal distance to the center of the trackball
      * @param maxDist the maximum allowed orthogonal distance to the center of the trackball
      */
-    TrackballNavigation(tgt::Camera* camera, Mode mode = ROTATE_MODE, float minDist = 0.01f, float maxDist = 50.f);
+    TrackballNavigation(CameraProperty* camera, Mode mode = ROTATE_MODE, float minDist = 0.01f, float maxDist = 50.f);
     virtual ~TrackballNavigation();
 
     void setMode(Mode mode);

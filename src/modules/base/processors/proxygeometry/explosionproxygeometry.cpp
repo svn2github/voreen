@@ -64,7 +64,7 @@ ExplosionProxyGeometry::ExplosionProxyGeometry()
     , undo_("Undo", "Undo")
     , takeForCustom_("takeForCustomMode", "Take this for custom mode")
     , translation_("translation", "Translation", tgt::vec3(0.f, 0.f, 0.f), tgt::vec3(-10.f), tgt::vec3(10.f))
-    , camera_("camera", "Camera", new tgt::Camera())
+    , camera_("camera", "Camera", tgt::Camera())
     , selectingOneBrickEvent_("mouseEvent.selectingOneBrick", "Select one brick", this,
                                &ExplosionProxyGeometry::onSelectingOneBrickEvent,
                                tgt::MouseEvent::MOUSE_BUTTON_LEFT, tgt::MouseEvent::PRESSED, tgt::Event::CTRL)
@@ -1171,7 +1171,7 @@ std::vector<ExplosionProxyGeometry::Brick> ExplosionProxyGeometry::sortBricklist
         else{
             inserted = false;
             currentMiddle = findMiddle(help);
-            currentDistance = getCameraDistance(camera_.get()->getPosition(), currentMiddle);
+            currentDistance = getCameraDistance(camera_.get().getPosition(), currentMiddle);
             i = 0;
 
             while (i < it && !inserted) {
@@ -1179,7 +1179,7 @@ std::vector<ExplosionProxyGeometry::Brick> ExplosionProxyGeometry::sortBricklist
                 help.clear();
                 help.insert(help.begin(), compare);
                 compareMiddle = findMiddle(help);
-                compareDistance = getCameraDistance(camera_.get()->getPosition(), compareMiddle);
+                compareDistance = getCameraDistance(camera_.get().getPosition(), compareMiddle);
 
                 if (currentDistance > compareDistance) {
                     sortedBricklist.insert(sortedBricklist.begin() + i, current);
@@ -1350,9 +1350,9 @@ void ExplosionProxyGeometry::registerForSelecting(std::vector<Brick> bricklist) 
 
     // set modelview and projection matrices
     glMatrixMode(GL_PROJECTION);
-    tgt::loadMatrix(camera_.get()->getProjectionMatrix());
+    tgt::loadMatrix(camera_.get().getProjectionMatrix());
     glMatrixMode(GL_MODELVIEW);
-    tgt::loadMatrix(camera_.get()->getViewMatrix());
+    tgt::loadMatrix(camera_.get().getViewMatrix());
     LGL_ERROR;
 
     for (i = 0; i < bricklist.size(); ++i) {
@@ -1531,8 +1531,8 @@ void ExplosionProxyGeometry::onTranslateSelectedBricksEvent(tgt::MouseEvent * e)
             deltaX = e->coord().x - startCoord_.x;
             deltaY = startCoord_.y - e->coord().y;
 
-            tgt::mat4 projection_tgt = camera_.get()->getProjectionMatrix();
-            tgt::mat4 modelview_tgt = camera_.get()->getViewMatrix();
+            tgt::mat4 projection_tgt = camera_.get().getProjectionMatrix();
+            tgt::mat4 modelview_tgt = camera_.get().getViewMatrix();
             for (int i = 0; i < 4; ++i) {
                 modelview[i+0]   = modelview_tgt[i].x;
                 modelview[i+4]   = modelview_tgt[i].y;

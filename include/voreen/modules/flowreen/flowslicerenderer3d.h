@@ -25,7 +25,6 @@
  *                                                                    *
  **********************************************************************/
 
-#ifdef VRN_MODULE_FLOWREEN
 #ifndef VRN_FLOWSLICERENDERER3D_H
 #define VRN_FLOWSLICERENDERER3D_H
 
@@ -53,7 +52,7 @@ public:
     virtual void process();
 
 protected:
-    virtual std::string generateShaderHeader() const;
+    virtual std::string generateShaderHeader();
 
 private:
     inline void invalidateXYTexture() { rebuildTextureXY_ = true; }
@@ -91,4 +90,3 @@ private:
 }   // namespace
 
 #endif  // VRN_FLOWSLICERENDERER3D_H
-#endif  // VRN_MODULE_FLOWREEN

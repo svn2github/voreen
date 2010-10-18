@@ -25,11 +25,11 @@
  *                                                                    *
  **********************************************************************/
 
-#ifdef VRN_WITH_PYTHON
+#ifdef VRN_MODULE_PYTHON
 // Must come first!
-#include "tgt/scriptmanager.h"
-#include "voreen/core/utils/pyvoreen.h"
-#endif // VRN_WITH_PYTHON
+#include "voreen/modules/python/pythonmodule.h"
+#include "voreen/modules/python/qt/pythoneditor.h"
+#endif
 
 #include "voreenmainwindow.h"
 
@@ -52,7 +52,6 @@
 #include "voreen/qt/helpbrowser.h"
 
 #include "voreen/qt/widgets/consoleplugin.h"
-#include "voreen/qt/widgets/linkingscriptmanager.h"
 #include "voreen/qt/widgets/inputmappingdialog.h"
 #include "voreen/qt/widgets/rendertargetviewer.h"
 #include "voreen/qt/widgets/volumecontainerwidget.h"
@@ -78,7 +77,7 @@ const int MAX_RECENT_FILES = 8;
 
 // Version number of restoring state of the main window.
 // Increase when incompatible changes happen.
-const int WINDOW_STATE_VERSION = 12;  // V2.55
+const int WINDOW_STATE_VERSION = 13;  // V2.6
 
 } // namespace
 
@@ -228,9 +227,11 @@ VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::stri
     , guiMode_(MODE_NONE)
     , animationEditor_(0)
     , resetSettings_(false)
+    , resetQSettings_(false)
     , canvasPos_(0, 0)
     , canvasSize_(0, 0)
 {
+
 
     setDockOptions(QMainWindow::AnimatedDocks); // disallow tabbed docks
 
@@ -260,11 +261,7 @@ VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::stri
 }
 
 VoreenMainWindow::~VoreenMainWindow() {
-    ProcessorFactory::getInstance()->destroy();
-
-    delete propertyListWidget_;             // needs to be deleted before properties and thus processors
-    delete vis_;
-    delete consolePlugin_;
+    VoreenApplication::app()->deinit();
 }
 
 void VoreenMainWindow::init(VoreenSplashScreen* splash) {
@@ -275,21 +272,30 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
     sharedContext_ = new tgt::QtCanvas("Init Canvas", tgt::ivec2(32, 32), tgt::GLCanvas::RGBADD, this, true);
     sharedContext_->init(); //neccessary?
 
-    VoreenApplication::app()->initGL();
+    // initialize OpenGL
+    try {
+        VoreenApplication::app()->initGL();
+    }
+    catch(VoreenException& e) {
+        if (tgt::Singleton<tgt::LogManager>::isInited())
+            LFATALC("voreenve.MainWindow", "OpenGL initialization failed: " << e.what());
+        else
+            std::cerr << "OpenGL initialization failed: " << e.what();
+
+        if (splash)
+            splash->close();
+        qApp->processEvents();
+        QMessageBox::critical(this, tr("Initialization Error"), tr("OpenGL initialization failed. Quit."));
+
+        exit(EXIT_FAILURE);
+    }
 
     sharedContext_->hide();
 
     // some hardware/driver checks
-    if (GpuCaps.getVendor() != GpuCaps.GPU_VENDOR_NVIDIA && GpuCaps.getVendor() != GpuCaps.GPU_VENDOR_ATI) {
-        qApp->processEvents();
-        QMessageBox::warning(this, tr("Unsupported Video Card Vendor"),
-                             tr("Voreen has only been tested with video cards from NVIDIA and ATI. "
-                                "The card in this system (reported vendor: '%1') is not supported and the application "
-                                "might not work properly.").arg(GpuCaps.getVendorAsString().c_str()));
-        qApp->processEvents();
-    }
-
     if (!GpuCaps.isOpenGlVersionSupported(tgt::GpuCapabilities::GlVersion::TGT_GL_VERSION_2_0)) {
+        if (splash)
+            splash->close();
         qApp->processEvents();
         std::ostringstream glVersion;
         glVersion << GpuCaps.getGlVersion();
@@ -299,14 +305,9 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
                                  "will most likely not work properly.").arg(glVersion.str().c_str()));
         qApp->processEvents();
     }
-    else if (!GpuCaps.areFramebufferObjectsSupported()) {
-        qApp->processEvents();
-        QMessageBox::critical(this, tr("Framebuffer Objects Missing"),
-                              tr("Voreen uses OpenGL framebuffer objects, which do not seem be supported "
-                                 "on this system. Therefore, the application will most likely not work properly."));
-        qApp->processEvents();
-    }
     else if (!GpuCaps.isShaderModelSupported(tgt::GpuCapabilities::SHADER_MODEL_3)) {
+        if (splash)
+            splash->close();
         qApp->processEvents();
         QMessageBox::critical(this, tr("Incompatible Shader Model"),
                               tr("Voreen requires Shader Model 3 or higher, which does not seem be "
@@ -314,15 +315,13 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
                                  "work properly."));
         qApp->processEvents();
     }
-    else if (GpuCaps.getShaderVersion() < tgt::GpuCapabilities::GlVersion::SHADER_VERSION_110) {
+    else if (!GpuCaps.areFramebufferObjectsSupported()) {
+        if (splash)
+            splash->close();
         qApp->processEvents();
-        std::ostringstream glslVersion;
-        glslVersion << GpuCaps.getShaderVersion();
-        QMessageBox::critical(this, tr("Incompatible Shader Language Version"),
-                              tr("Voreen requires OpenGL shader language (GLSL) version 1.10, which does not "
-                                 "seem to be supported on this system (reported version: %1)."
-                                 "Therefore, the application will most likely not work properly.")
-                              .arg(QString::fromStdString(glslVersion.str())));
+        QMessageBox::critical(this, tr("Framebuffer Objects Missing"),
+                              tr("Voreen uses OpenGL framebuffer objects, which do not seem be supported "
+                                 "on this system. Therefore, the application will most likely not work properly."));
         qApp->processEvents();
     }
 
@@ -353,6 +352,7 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
 
     loadWindowSettings();
 
+
     setGuiMode(guiMode_);
 
     if (splash)
@@ -378,6 +378,35 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
     // load an initial dataset
     if (!defaultDataset_.isEmpty())
         loadDataset(defaultDataset_.toStdString());
+}
+
+void VoreenMainWindow::deinit() {
+
+    // save widget settings first
+    saveSettings();
+
+    // render target viewer is an OpenGL widget,
+    // so destruct before OpenGL deinitialization
+    delete renderTargetViewer_;
+    renderTargetViewer_ = 0;
+
+#ifdef VRN_MODULE_PYTHON
+    // accesses the PythonModule singleton
+    pythonEditor_->clearScript();
+#endif
+
+    // free workspace, unregister network/volumecontainer from widgets
+    delete vis_;
+    vis_ = 0;
+
+    // finalize OpenGL
+    VoreenApplication::app()->deinitGL();
+    delete sharedContext_;
+    sharedContext_ = 0;
+
+    // also deletes stored processor instances
+    // (processor destructors must not have OpenGL dependencies!)
+    ProcessorFactory::getInstance()->destroy();
 }
 
 ////////// GUI setup ///////////////////////////////////////////////////////////////////
@@ -422,7 +451,6 @@ void VoreenMainWindow::createMenus() {
 
     openRawDatasetAction_ = new QAction(QIcon(":/voreenve/icons/open-volume.png"), tr("Load &Raw Volume..."), this);
     openRawDatasetAction_->setStatusTip(tr("Load a raw volume data set"));
-    openRawDatasetAction_->setShortcut(tr("Ctrl+R"));
     connect(openRawDatasetAction_, SIGNAL(triggered()), this, SLOT(openRawDataset()));
     fileMenu_->addAction(openRawDatasetAction_);
 
@@ -478,12 +506,12 @@ void VoreenMainWindow::createMenus() {
     modeDevelopmentAction_ = new QAction(QIcon(":/voreenve/icons/development-mode.png"),
                                      tr("&Development Mode"), this);
     modeDevelopmentAction_->setCheckable(true);
-    modeDevelopmentAction_->setShortcut(tr("F2"));
+    modeDevelopmentAction_->setShortcut(tr("F3"));
 
     modeApplicationAction_ = new QAction(QIcon(":/voreenve/icons/visualization-mode.png"),
                                            tr("&Application Mode"), this);
     modeApplicationAction_->setCheckable(true);
-    modeApplicationAction_->setShortcut(tr("F3"));
+    modeApplicationAction_->setShortcut(tr("F4"));
 
     QActionGroup* guiModeGroup = new QActionGroup(this);
     guiModeGroup->addAction(modeApplicationAction_);
@@ -508,7 +536,6 @@ void VoreenMainWindow::createMenus() {
     connect(snapshotAction_, SIGNAL(triggered(bool)), this, SLOT(snapshotActionTriggered(bool)));
     toolsMenu_->addAction(snapshotAction_);
 
-
     //
     // Action menu
     //
@@ -520,14 +547,9 @@ void VoreenMainWindow::createMenus() {
     connect(rebuildShadersAction_, SIGNAL(triggered()), this, SLOT(rebuildShaders()));
     actionMenu_->addAction(rebuildShadersAction_);
 
-#ifdef VRN_WITH_PYTHON
-    scriptAction_ = new QAction(QIcon(":/voreenve/icons/python.png"), tr("Run &Python Script..."), this);
-    scriptAction_->setShortcut(tr("F7"));
-    scriptAction_->setStatusTip(tr("Select and run a python script"));
-    scriptAction_->setToolTip(tr("Run Python script"));
-    connect(scriptAction_, SIGNAL(triggered()), this, SLOT(runScript()));
-    actionMenu_->addAction(scriptAction_);
-#endif
+    QAction* resetQSettingsAction = new QAction("Reset Settings", this);
+    connect(resetQSettingsAction, SIGNAL(triggered()), this, SLOT(resetQSettings()));
+    actionMenu_->addAction(resetQSettingsAction);
 
     //
     // Options menu
@@ -637,9 +659,6 @@ void VoreenMainWindow::createToolBars() {
     label->setObjectName("toolBarLabel");
     actionToolBar_->addWidget(label);
     actionToolBar_->addAction(rebuildShadersAction_);
-    #ifdef VRN_WITH_PYTHON
-        actionToolBar_->addAction(scriptAction_);
-    #endif
 
 #ifdef __APPLE__ // we are on a mac system
     // HACK (Workaround) for Qt Mac Bug, makes MainWindow reappear
@@ -737,7 +756,8 @@ void VoreenMainWindow::createToolWindows() {
     inputMappingDialog_ =  new InputMappingDialog(this, vis_->getWorkspace()->getProcessorNetwork());
     QAction* inputMappingAction = new QAction(QIcon(":/voreenve/icons/show-keymapping.png"), tr("&Input Mapping"), this);
     inputMappingAction->setShortcut(tr("Ctrl+I"));
-    addToolWindow(inputMappingAction, inputMappingDialog_, tr("Show shortcut preferences"), true);
+    VoreenToolWindow* inputWindow = addToolWindow(inputMappingAction, inputMappingDialog_, tr("Show shortcut preferences"), true);
+    inputWindow->resize(520, 400);
     vis_->setInputMappingDialog(inputMappingDialog_);
 
     // console
@@ -746,7 +766,7 @@ void VoreenMainWindow::createToolWindows() {
     consoleTool_ = addToolDockWindow(consoleAction, consolePlugin_, "Console", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea);
     consoleTool_->setAllowedAreas(Qt::BottomDockWidgetArea);
     consoleTool_->setFloating(false);
-    consoleTool_->resize(700, 250);
+    consoleTool_->resize(700, 180);
     consoleTool_->setMinimumHeight(100);
 
     // render target debug window
@@ -762,15 +782,18 @@ void VoreenMainWindow::createToolWindows() {
 
     // animation editor
     animationEditor_ = new AnimationEditor(vis_->getEvaluator(), vis_->getWorkspace(), this);
-    addToolDockWindow(new QAction(QIcon(":/icons/video.png"), tr("&Animation"), this), animationEditor_, "Animation",
+    VoreenToolWindow* animationWindow = addToolDockWindow(new QAction(QIcon(":/icons/video.png"), tr("&Animation"), this), animationEditor_, "Animation",
                       Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, false);
+    animationWindow->setFloating(true);
+    animationWindow->resize(925, 400);
+    toolWindows_.append(animationWindow);
 
-
-    // scripts
-#ifdef VRN_WITH_PYTHON
-    linkingScriptManager_ = new LinkingScriptManager(this);
-    connect(vis_, SIGNAL(newNetwork(ProcessorNetwork*)), linkingScriptManager_, SLOT(rebuildScriptList()));
-    addToolWindow(new QAction(QIcon(":/voreenve/icons/python_2.png"), tr("&Linking Scripts"), this), linkingScriptManager_, tr("Linking scripts"), false);
+#ifdef VRN_MODULE_PYTHON
+    pythonEditor_ = new PythonEditor(this);
+    pythonAction_ = new QAction(QIcon(":/voreenve/icons/python.png"), tr("Python Script Editor"), this);
+    VoreenToolWindow* pythonWindow = addToolWindow(pythonAction_, pythonEditor_, tr("Python Script Editor"), false);
+    pythonWindow->setMinimumSize(300, 400);
+    pythonWindow->resize(600, 650);
 #endif
 
     // connections between tool widgets
@@ -807,7 +830,7 @@ void VoreenMainWindow::loadSettings() {
         windowPosition = settings_.value("pos", windowPosition).toPoint();
         windowMaximized = settings_.value("maximized", windowMaximized).toBool();
         lastWorkspace_ = settings_.value("workspace", "").toString();
-        loadLastWorkspace_ = settings_.value("loadLastWorkspace", false).toBool();
+        loadLastWorkspace_ = settings_.value("loadLastWorkspace", true).toBool();
         applicationModeState_ = settings_.value("visualizationModeState").toByteArray();
         developmentModeState_ = settings_.value("networkModeState").toByteArray();
         networkEditorWindowState_ = settings_.value("networkEditorWindowState").toByteArray();
@@ -851,9 +874,33 @@ void VoreenMainWindow::loadSettings() {
         setWindowState(windowState() | Qt::WindowMaximized);
 }
 
+void VoreenMainWindow::resetQSettings() {
+    QMessageBox msgBox;
+    msgBox.setText("This will erase all settings.");
+    msgBox.setInformativeText("Do you want to proceed?");
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    int ret = msgBox.exec();
+    if(ret == QMessageBox::Ok) {
+        settings_.clear();
+        resetQSettings_ = true;
+        loadWindowSettings();
+        processorListWidget_->loadSettings();
+    }
+}
+
 void VoreenMainWindow::loadWindowSettings() {
     // Restore visibility, position and size of tool windows from settings
     if (!resetSettings_) {
+        if(resetQSettings_) {
+            for (int i=0; i < toolWindows_.size(); ++i) {
+                if (!toolWindows_[i]->objectName().isEmpty()) {
+                        toolWindows_[i]->setVisible(false);
+                }
+            }
+            resetQSettings_ = false;
+            return;
+        }
         settings_.beginGroup("Windows");
         for (int i=0; i < toolWindows_.size(); ++i) {
             if (!toolWindows_[i]->objectName().isEmpty()) {
@@ -947,7 +994,7 @@ void VoreenMainWindow::openNetwork() {
                            "Voreen network files (*.vnw)");
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getNetworkPath().c_str());
-#ifndef VRN_DISTRIBUTION
+#ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     fileDialog.setSidebarUrls(urls);
@@ -1001,7 +1048,7 @@ bool VoreenMainWindow::saveNetworkAs() {
 
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getNetworkPath().c_str());
-#ifndef VRN_DISTRIBUTION
+#ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     fileDialog.setSidebarUrls(urls);
@@ -1029,7 +1076,7 @@ bool VoreenMainWindow::saveNetworkAs() {
 }
 
 bool VoreenMainWindow::askSave() {
-    if (vis_->isModified()) {
+    if (vis_ && vis_->isModified()) {
         switch (QMessageBox::question(this, tr("Modified Workspace"), tr("Save the current workspace?"),
                                       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes))
         {
@@ -1054,7 +1101,7 @@ void VoreenMainWindow::exportWorkspace() {
 
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getWorkspacePath().c_str());
-#ifndef VRN_DISTRIBUTION
+#ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
@@ -1085,7 +1132,7 @@ void VoreenMainWindow::extractWorkspaceArchive() {
 
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getWorkspacePath().c_str());
-#ifndef VRN_DISTRIBUTION
+#ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
@@ -1206,6 +1253,7 @@ void VoreenMainWindow::openWorkspace(const QString& filename) {
     renderTargetViewer_->setEvaluator(vis_->getEvaluator());
     QApplication::restoreOverrideCursor();
 
+
     if (animationEditor_)
         animationEditor_->setWorkspace(vis_->getWorkspace());
 
@@ -1227,7 +1275,7 @@ void VoreenMainWindow::openWorkspace() {
 
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getWorkspacePath().c_str());
-#ifndef VRN_DISTRIBUTION
+#ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
@@ -1291,7 +1339,7 @@ bool VoreenMainWindow::saveWorkspaceAs() {
     fileDialog.setNameFilters(filters);
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getWorkspacePath().c_str());
-#ifndef VRN_DISTRIBUTION
+#ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
@@ -1445,6 +1493,7 @@ void VoreenMainWindow::showWorkspaceErrors() {
 }
 
 void VoreenMainWindow::adaptWidgetsToNetwork() {
+
 }
 
 ////////// actions /////////////////////////////////////////////////////////////////////
@@ -1464,7 +1513,7 @@ void VoreenMainWindow::closeEvent(QCloseEvent *event) {
         }
     }
 
-    saveSettings();
+    deinit();
 }
 
 void VoreenMainWindow::dragEnterEvent(QDragEnterEvent* event) {
@@ -1482,36 +1531,43 @@ void VoreenMainWindow::dropEvent(QDropEvent* event) {
 // Action menu
 //
 
-void VoreenMainWindow::runScript() {
-#ifdef VRN_WITH_PYTHON
-    QString filename = QFileDialog::getOpenFileName(this, tr("Run Python Script..."),
-                                                    VoreenApplication::app()->getScriptPath().c_str(),
-                                                    "Python scripts (*.py)");
-    if (!filename.isEmpty())
-        runScript(filename);
-#else
-    QMessageBox::warning(this, "Voreen", tr("Voreen has been compiled without Python support"));
-#endif // VRN_WITH_PYTHON
-}
-
 void VoreenMainWindow::runScript(const QString& filename) {
-#ifdef VRN_WITH_PYTHON
+#ifdef VRN_MODULE_PYTHON
 
-    tgt::Singleton<VoreenPython>::getRef().setEvaluator(vis_->getEvaluator());
-
-    tgt::Script* script = ScriptMgr.load(filename.toStdString(), false);
-    if (script->compile()) {
-        if (!script->run())
-            QMessageBox::warning(this, "Voreen", tr("Python runtime error (see stdout)"));
-
-    } else {
-        QMessageBox::warning(this, "Voreen", tr("Python compile error (see stdout)"));
+    if (!PythonModule::getInstance()) {
+        LERRORC("voreenve.VoreenMainWindow", "PythonModule not instantiated");
+        return;
     }
-    ScriptMgr.dispose(script);
+
+    if (!PythonModule::getInstance()->isInitialized()) {
+        LERRORC("voreenve.VoreenMainWindow", "PythonModule not initialized");
+        return;
+    }
+
+    PythonScript* script = PythonModule::getInstance()->load(filename.toStdString(), false);
+    if (!script) {
+        LERRORC("voreenve.VoreenMainWindow", "Failed to load Python script '" << filename.toStdString() << "'");
+        //QMessageBox::warning(this, tr("Python Error"), tr("Python script '%1' could not be loaded.").arg(filename));
+        return;
+    }
+
+    if (script->compile()) {
+        LINFOC("voreenve.VoreenMainWindow", "Running Python script '" << filename.toStdString() << "' ...");
+        if (script->run())
+            LINFOC("voreenve.VoreenMainWindow", "Python script finished");
+        else
+            LERRORC("voreenve.VoreenMainWindow", "Python runtime error:\n" << script->getLog());
+            //QMessageBox::warning(this, tr("Python Error"), tr("Python runtime error (see Debug Console)."));
+    }
+    else {
+        LERRORC("voreenve.VoreenMainWindow", "Python compile error:\n" << script->getLog());
+        //QMessageBox::warning(this, tr("Python Error"), tr("Python compile error (see Debug Console)."));
+    }
+    PythonModule::getInstance()->dispose(script);
 #else
     QMessageBox::warning(this, "Voreen", tr("Voreen has been compiled without Python support, "
                                             "can not run '%1'").arg(filename));
-#endif // VRN_WITH_PYTHON
+#endif // VRN_MODULE_PYTHON
 }
 
 void VoreenMainWindow::rebuildShaders() {
@@ -1639,6 +1695,7 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
                 propertyListTool_->show();
             if (volumeContainerTool_->isEnabled())
                 volumeContainerTool_->show();
+            consoleTool_->hide();
         }
         setUpdatesEnabled(true);
 
@@ -1659,6 +1716,7 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
             processorListTool_->show();
             propertyListTool_->show();
             volumeContainerTool_->show();
+            consoleTool_->show();
         }
 
         setUpdatesEnabled(false);
@@ -1789,5 +1847,6 @@ void VoreenMainWindow::snapshotActionTriggered(bool /*triggered*/) {
         }
     }
 }
+
 
 } // namespace

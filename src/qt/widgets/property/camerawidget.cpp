@@ -26,6 +26,8 @@
  **********************************************************************/
 
 #include "voreen/qt/widgets/property/camerawidget.h"
+#include "voreen/qt/widgets/property/floatvec3propertywidget.h"
+#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
 
 #include "voreen/core/voreenapplication.h"
 #include "voreen/core/properties/cameraproperty.h"
@@ -43,6 +45,7 @@
 #include <QFileDialog>
 #include <QComboBox>
 #include <QApplication>
+#include <QTabWidget>
 
 #include "tinyxml/tinyxml.h"
 
@@ -68,9 +71,8 @@ CameraWidget::CameraWidget(CameraProperty* cameraProp, float minDist, float maxD
     setObjectName("CameraWidget");
 
     tgtAssert(cameraProp_, "No camera property");
-    tgtAssert(cameraProp_->get(), "No camera");
 
-    track_ = new VoreenTrackball(cameraProp_->get());
+    track_ = new VoreenTrackball(cameraProp_);
 
     minDist_ = tgt::iround(minDist * CAM_DIST_SCALE_FACTOR);
     maxDist_ = tgt::iround(maxDist * CAM_DIST_SCALE_FACTOR);
@@ -87,7 +89,18 @@ CameraWidget::~CameraWidget() {
 }
 
 void CameraWidget::createWidgets() {
-    QVBoxLayout* mainLayout = new QVBoxLayout();
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    QTabWidget* tab = new QTabWidget(this);
+    mainLayout->addWidget(tab);
+    QWidget* cameraTab = new QWidget();
+    QWidget* positionTab = new QWidget();
+
+    tab->addTab(cameraTab, tr("Trackball"));
+    tab->addTab(positionTab, tr("Tripod"));
+    QVBoxLayout* cameraLayout = new QVBoxLayout(cameraTab);
+    QVBoxLayout* posLayout = new QVBoxLayout(positionTab);
+    cameraTab->setLayout(cameraLayout);
+    positionTab->setLayout(posLayout);
 
     // Group box for orientation
     orientationBox_ = new QGroupBox(tr("Orientation and Distance"));
@@ -107,6 +120,46 @@ void CameraWidget::createWidgets() {
     comboOrientation_->addItem(tr("sagittal (left)"));
     gridLayout->addWidget(comboOrientation_, 1, 1);
 
+    QGridLayout* positionLayout = new QGridLayout();
+    QGroupBox* positionBox = new QGroupBox(tr("Position"));
+    positionBox->setLayout(positionLayout);
+
+    QGridLayout* focusLayout = new QGridLayout();
+    QGroupBox* focusBox = new QGroupBox(tr("Focus"));
+    focusBox->setLayout(focusLayout);
+
+    QGridLayout* upLayout = new QGridLayout();
+    QGroupBox* upBox = new QGroupBox(tr("Up Vector"));
+    upBox->setLayout(upLayout);
+
+    cameraPosition_ = new FloatVec3Property("Position", "Position", tgt::vec3(0.0f),
+        tgt::vec3(-45.0f), tgt::vec3(45.0f));
+    cameraPosition_->set(cameraProp_->get().getPosition());
+
+    focusVector_ = new FloatVec3Property("Focus", "Focus", tgt::vec3(0.0f),
+        tgt::vec3(-10.0f), tgt::vec3(10.0f));
+    focusVector_->set(cameraProp_->get().getFocus());
+
+    upVector_ = new FloatVec3Property("Upvector", "Upvector", tgt::vec3(0.0f),
+        tgt::vec3(-1.0f), tgt::vec3(1.0f));
+    upVector_->set(cameraProp_->get().getUpVector());
+
+    QPropertyWidgetFactory* wf = new QPropertyWidgetFactory();
+
+    FloatVec3PropertyWidget* pos = dynamic_cast<FloatVec3PropertyWidget*>(cameraPosition_->createWidget(wf));
+    FloatVec3PropertyWidget* focus = dynamic_cast<FloatVec3PropertyWidget*>(focusVector_->createWidget(wf));
+    FloatVec3PropertyWidget* up = dynamic_cast<FloatVec3PropertyWidget*>(upVector_->createWidget(wf));
+    connect(pos, SIGNAL(valueChanged(FloatVec3Property::ElemType)), this, SLOT(positionChange(FloatVec3Property::ElemType)));
+    connect(focus, SIGNAL(valueChanged(FloatVec3Property::ElemType)), this, SLOT(focusChange(FloatVec3Property::ElemType)));
+    connect(up, SIGNAL(valueChanged(FloatVec3Property::ElemType)), this, SLOT(upChange(FloatVec3Property::ElemType)));
+
+    positionLayout->addWidget(pos);
+    cameraPosition_->addWidget(pos);
+    focusLayout->addWidget(focus);
+    focusVector_->addWidget(focus);
+    upLayout->addWidget(up);
+    upVector_->addWidget(up);
+    delete wf;
     gridLayout->addWidget(new QLabel(tr("Distance: ")), 2, 0);
     gridLayout->addWidget(slDistance_ = new QSlider(Qt::Horizontal, 0), 2, 1);
     slDistance_->setRange(minDist_, maxDist_);
@@ -114,7 +167,10 @@ void CameraWidget::createWidgets() {
     slDistance_->setToolTip(tr("Adjust distance of point of view"));
 
     orientationBox_->setLayout(gridLayout);
-    mainLayout->addWidget(orientationBox_);
+    cameraLayout->addWidget(orientationBox_);
+    posLayout->addWidget(positionBox);
+    posLayout->addWidget(focusBox);
+    posLayout->addWidget(upBox);
 
     // Group box for motion settings
     motionBox_ = new QGroupBox(tr("Continuous Motion"));
@@ -130,7 +186,7 @@ void CameraWidget::createWidgets() {
     vboxLayout->addWidget(rotateAroundZ_);
 //    vboxLayout->addWidget(continueSpin_);
     motionBox_->setLayout(vboxLayout);
-    mainLayout->addWidget(motionBox_);
+    cameraLayout->addWidget(motionBox_);
 
     // Group box for trackball
     trackballBox_ = new QGroupBox(tr("Load/Save Camera Settings"));
@@ -147,12 +203,24 @@ void CameraWidget::createWidgets() {
     hboxLayout2->addStretch();
 
     trackballBox_->setLayout(hboxLayout2);
-    mainLayout->addWidget(trackballBox_);
+    cameraLayout->addWidget(trackballBox_);
 
-    mainLayout->addStretch();
+    cameraLayout->addStretch();
 
     setLayout(mainLayout);
 
+}
+
+void CameraWidget::positionChange(FloatVec3Property::ElemType pos) {
+    cameraProp_->setPosition(pos);
+}
+
+void CameraWidget::focusChange(FloatVec3Property::ElemType pos) {
+    cameraProp_->setFocus(pos);
+}
+
+void CameraWidget::upChange(FloatVec3Property::ElemType pos) {
+    cameraProp_->setUpVector(pos);
 }
 
 void CameraWidget::createConnections() {
@@ -227,6 +295,10 @@ void CameraWidget::updateDistance() {
 }
 
 void CameraWidget::orientationChanged(int index) {
+    cameraPosition_->set(cameraProp_->get().getPosition());
+    focusVector_->set(cameraProp_->get().getFocus());
+    upVector_->set(cameraProp_->get().getUpVector());
+    cameraPosition_->updateWidgets();
     switch (index) {
     case 1:
         // axial (top to bottom)
@@ -306,8 +378,8 @@ void CameraWidget::checkCameraState() {
 
     if (track_) {
 
-        if (track_->getCamera() != cameraProp_->get())
-            track_->setCamera(cameraProp_->get());
+        if (track_->getCamera() != cameraProp_)
+            track_->setCamera(cameraProp_);
 
         if (!track_->getCamera())
             return;
@@ -319,7 +391,7 @@ void CameraWidget::checkCameraState() {
 
         // update orientation box
         const float MAX_DEVIATION = 1.0e-4f;
-        tgt::vec3 look = track_->getCamera()->getLook();
+        tgt::vec3 look = track_->getCamera()->get().getLook();
         comboOrientation_->blockSignals(true);
         if (abs(tgt::dot(AXIAL_VIEW, look) - 1.0f) < MAX_DEVIATION)
             comboOrientation_->setCurrentIndex(1);
@@ -337,12 +409,13 @@ void CameraWidget::checkCameraState() {
             comboOrientation_->setCurrentIndex(0);
         comboOrientation_->blockSignals(false);
 
+        cameraPosition_->set(cameraProp_->get().getPosition());
     }
 }
 
 void CameraWidget::applyOrientationAndDistanceAnimated(std::vector<float> keyframe) {
     tgtAssert(track_, "No trackball");
-    tgt::Camera* camera = track_->getCamera();
+    CameraProperty* camera = track_->getCamera();
 
     tgt::quat newQuat;
     newQuat.x = keyframe[0];
@@ -353,10 +426,10 @@ void CameraWidget::applyOrientationAndDistanceAnimated(std::vector<float> keyfra
 
     float t = 0.1f;
 
-    tgt::quat oldQuat = camera->getQuat();
-    float oldDist = camera->getFocalLength();
+    tgt::quat oldQuat = camera->get().getQuat();
+    float oldDist = camera->get().getFocalLength();
     resetCameraPosition();
-    tgt::quat initQuat = camera->getQuat();
+    tgt::quat initQuat = camera->get().getQuat();
     initQuat.invert();
 
     cameraProp_->toggleInteractionMode(true, comboOrientation_);
@@ -482,15 +555,18 @@ void CameraWidget::setTimerState() {
 
 void CameraWidget::updateFromCamera() {
     checkCameraState();
+    cameraPosition_->set(cameraProp_->get().getPosition());
+    focusVector_->set(cameraProp_->get().getFocus());
+    upVector_->set(cameraProp_->get().getUpVector());
 }
 
 void CameraWidget::resetCameraPosition() {
     // all trackball operations assume an initial view along the negative z-axis with the
     // y-axis as up vector
-    cameraProp_->get()->positionCamera(vec3(0.f, 0.f, 1.f),
-                                       vec3(0.f, 0.f, 0.f),
-                                       vec3(0.f, 1.f, 0.f));
-    cameraProp_->notifyChange();
+    cameraProp_->set(tgt::Camera(vec3(0.f, 0.f, 1.f),
+                                 vec3(0.f, 0.f, 0.f),
+                                 vec3(0.f, 1.f, 0.f)));
+    cameraPosition_->set(cameraProp_->get().getPosition());
 }
 
 } // namespace voreen

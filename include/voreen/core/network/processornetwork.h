@@ -46,7 +46,7 @@ class Port;
 /**
  * Manages a network of processors.
  */
-class ProcessorNetwork : public Serializable, public Observable<ProcessorNetworkObserver> {
+class ProcessorNetwork : public Serializable, public PropertyOwnerObserver, public Observable<ProcessorNetworkObserver> {
 public:
     ProcessorNetwork();
     ~ProcessorNetwork();
@@ -378,6 +378,18 @@ public:
      * Serialization helper function: Sets serialization error messages.
      */
     void setErrors(const std::vector<std::string>& errorList);
+
+    /**
+     * This callback is called before a property is removed. It takes care, that all links
+     * for this property are removed.
+     *
+     * \param property The property which shall be prepared for removal
+     */
+    void preparePropertyRemoval(Property* property);
+
+    void processorWidgetCreated(const Processor* processor);
+    void processorWidgetDeleted(const Processor* processor);
+    void portsAndPropertiesChanged(const Processor*);
 
 private:
     /// Calls networkChanged() on the registered observers.

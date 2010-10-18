@@ -71,8 +71,11 @@ VoreenVisualization::VoreenVisualization(tgt::GLCanvas* sharedContext)
 }
 
 VoreenVisualization::~VoreenVisualization() {
-    evaluator_->setProcessorNetwork(0, true);
+
+    propagateVolumeContainer(0);
+    propagateNetwork(0);
     delete evaluator_;
+
     workspace_->clear();
     delete workspace_;
 }
@@ -116,10 +119,11 @@ void VoreenVisualization::importNetwork(const QString& filename)
 {
     NetworkSerializer networkSerializer;
     ProcessorNetwork* net = networkSerializer.readNetworkFromFile(filename.toStdString());
+    propagateNetwork(0);
     delete workspace_->getProcessorNetwork();
     workspace_->setProcessorNetwork(net);
-    propagateVolumeContainer();
-    propagateNetwork();
+    propagateVolumeContainer(workspace_->getVolumeContainer());
+    propagateNetwork(workspace_->getProcessorNetwork());
 }
 
 void VoreenVisualization::exportNetwork(const QString& filename)
@@ -239,7 +243,8 @@ void VoreenVisualization::newWorkspace() {
 
     // clear workspace resources
     evaluator_->unlock();
-    evaluator_->setProcessorNetwork(0, true);
+    propagateVolumeContainer(0);
+    propagateNetwork(0);
     workspace_->clear();
 
     // generate new resources
@@ -249,8 +254,8 @@ void VoreenVisualization::newWorkspace() {
     blockSignals(false);
 
     // propagate resources
-    propagateVolumeContainer();
-    propagateNetwork();
+    propagateVolumeContainer(workspace_->getVolumeContainer());
+    propagateNetwork(workspace_->getProcessorNetwork());
 }
 
 void VoreenVisualization::openWorkspace(const QString& filename) throw (SerializationException) {
@@ -263,7 +268,8 @@ void VoreenVisualization::openWorkspace(const QString& filename) throw (Serializ
 
     // clear workspace resources
     evaluator_->unlock();
-    evaluator_->setProcessorNetwork(0, true);
+    propagateVolumeContainer(0);
+    propagateNetwork(0);
     workspace_->clear();
 
     blockSignals(false);
@@ -279,8 +285,8 @@ void VoreenVisualization::openWorkspace(const QString& filename) throw (Serializ
     workspaceErrors_ = workspace_->getErrors();
     readOnlyWorkspace_ = workspace_->readOnly();
 
-    propagateVolumeContainer();
-    propagateNetwork();
+    propagateVolumeContainer(workspace_->getVolumeContainer());
+    propagateNetwork(workspace_->getProcessorNetwork());
 }
 
 void VoreenVisualization::saveWorkspace(const QString& filename, bool overwrite) throw (SerializationException) {
@@ -341,49 +347,47 @@ void VoreenVisualization::cleanupTempFiles(std::vector<std::string> tmpFiles, st
     }   // while (
 }
 
-void VoreenVisualization::propagateNetwork() {
+void VoreenVisualization::propagateNetwork(ProcessorNetwork* network) {
 
-    tgtAssert(workspace_, "No workspace");
-
-    if (workspace_->getProcessorNetwork()) {
-        workspace_->getProcessorNetwork()->addObserver(this);
+    if (network) {
+        network->addObserver(this);
     }
 
     if (propertyListWidget_) {
-        propertyListWidget_->setProcessorNetwork(workspace_->getProcessorNetwork());
+        propertyListWidget_->setProcessorNetwork(network);
         qApp->processEvents();
     }
 
     if (networkEditorWidget_) {
-        networkEditorWidget_->setProcessorNetwork(workspace_->getProcessorNetwork());
+        networkEditorWidget_->setProcessorNetwork(network);
         qApp->processEvents();
     }
 
     // assign network to evaluator, also initializes the network
-    evaluator_->setProcessorNetwork(workspace_->getProcessorNetwork());
+    evaluator_->setProcessorNetwork(network);
     qApp->processEvents();
 
-    if (networkEditorWidget_) {
+    if (networkEditorWidget_ && network) {
         networkEditorWidget_->selectPreviouslySelectedProcessors();
         qApp->processEvents();
     }
 
     // assign network to input mapping dialog
     if (inputMappingDialog_) {
-        inputMappingDialog_->setProcessorNetwork(workspace_->getProcessorNetwork());
+        inputMappingDialog_->setProcessorNetwork(network);
         qApp->processEvents();
     }
 
     sharedContext_->getGLFocus();
-    emit(newNetwork(workspace_->getProcessorNetwork()));
+    emit(newNetwork(network));
 }
 
-void VoreenVisualization::propagateVolumeContainer() {
+void VoreenVisualization::propagateVolumeContainer(VolumeContainer* container) {
     if (volumeContainerWidget_)
-        volumeContainerWidget_->setVolumeContainer(workspace_->getVolumeContainer());
+        volumeContainerWidget_->setVolumeContainer(container);
 
     if (propertyListWidget_)
-        propertyListWidget_->setVolumeContainer(workspace_->getVolumeContainer());
+        propertyListWidget_->setVolumeContainer(container);
 }
 
 std::vector<std::string> VoreenVisualization::getNetworkErrors() {

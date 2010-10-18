@@ -52,6 +52,9 @@
 
 namespace voreen {
 
+// forward declaration
+struct PlotSelectionEntry;
+
 /**
  * @c XmlSerializer is responsible for serializing memory data to XML documents.
  *
@@ -455,6 +458,15 @@ public:
      * @param data the data
      */
     void serialize(const std::string& key, const PlotCellValue& data)
+        throw (SerializationException);
+
+    /**
+     * Serializes the given @c key/data pair.
+     *
+     * @param key the XML node key
+     * @param data the data
+     */
+    void serialize(const std::string& key, const PlotSelectionEntry& data)
         throw (SerializationException);
 
     /**

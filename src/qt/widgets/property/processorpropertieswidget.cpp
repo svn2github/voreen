@@ -70,10 +70,13 @@ ProcessorPropertiesWidget::ProcessorPropertiesWidget(QWidget* parent, const Proc
     header_ = new ExpandableHeaderButton(processor_->getName().c_str(), this,
             expanded_, userExpandable_);
     connect(header_, SIGNAL(toggled(bool)), this, SLOT(updateState()));
+    connect(header_, SIGNAL(toggled(bool)), this, SLOT(widgetInstantiation()));
     connect(header_, SIGNAL(setLODHidden()), this, SLOT(setLODHidden()));
     connect(header_, SIGNAL(setLODVisible()), this, SLOT(setLODVisible()));
     header_->showLODControls();
     mainLayout_->addWidget(header_);
+
+    dynamic_cast<const Observable<ProcessorObserver>* >(processor_)->addObserver(dynamic_cast<ProcessorObserver*>(this));
 }
 
 void ProcessorPropertiesWidget::setLevelOfDetail(Property::LODSetting lod) {
@@ -131,8 +134,9 @@ void ProcessorPropertiesWidget::setVolumeContainer(VolumeContainer* volCon) {
 }
 
 void ProcessorPropertiesWidget::updateState() {
-    if(propertyWidget_!=0)
+    if(propertyWidget_!=0) {
         propertyWidget_->setVisible(header_->isExpanded());
+    }
     updateGeometry();  // prevent flicker when hiding property widgets
 }
 
@@ -208,6 +212,10 @@ void ProcessorPropertiesWidget::propertyModified() {
     emit modified();
 }
 
+void ProcessorPropertiesWidget::widgetInstantiation() {
+    instantiateWidgets();
+}
+
 void ProcessorPropertiesWidget::instantiateWidgets() {
 setUpdatesEnabled(false);
 if(widgetInstantiationState_ == NONE) {
@@ -231,7 +239,7 @@ if(widgetInstantiationState_ == NONE) {
                     if (w != 0) {
                         widgets_.push_back(w);
                         connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));
-                        QLabel* nameLabel = const_cast<QLabel*>(w->getNameLabel());
+                        CustomLabel* nameLabel = w->getNameLabel();
                         gridLayout->addWidget(w, rows, 1, 1, 1);
                         gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
                     }
@@ -275,13 +283,13 @@ else if(widgetInstantiationState_ == ONLY_TF) {
                                     propertyGroupsMap_[(*iter)->getGroupID()]->setVisible(false);
                                 }
                             }
-                            propertyGroupsMap_[(*iter)->getGroupID()]->addWidget(w, const_cast<QLabel*>(w->getNameLabel()), QString::fromStdString(w->getPropertyGuiName()));
-                            const_cast<QLabel*>(w->getNameLabel())->setMinimumWidth(60);
+                            propertyGroupsMap_[(*iter)->getGroupID()]->addWidget(w, w->getNameLabel(), QString::fromStdString(w->getPropertyGuiName()));
+                            w->getNameLabel()->setMinimumWidth(60);
                             gridLayout->addWidget(propertyGroupsMap_[(*iter)->getGroupID()], rows, 0, 1, 2);
                             propertyGroupsMap_[(*iter)->getGroupID()]->setVisible((*iter)->getOwner()->isPropertyGroupVisible((*iter)->getGroupID()));
                         }
                         else {
-                            QLabel* nameLabel = const_cast<QLabel*>(w->getNameLabel());
+                            CustomLabel* nameLabel = w->getNameLabel();
 
                             if(dynamic_cast<LightPropertyWidget*>(w)) {     // HACK: this prevents a cut off gui element e.g. seen in the clipping plane widget
                                 gridLayout->setRowStretch(rows, 1);
@@ -320,7 +328,7 @@ else if(widgetInstantiationState_ == ONLY_TF) {
         delete widgetFactory_;
         widgetFactory_ = 0;
         setUpdatesEnabled(true);
-        updateState();
+        //updateState();
         widgetInstantiationState_ = ALL;
     }
     setUpdatesEnabled(true);
@@ -329,6 +337,30 @@ else if(widgetInstantiationState_ == ONLY_TF) {
 void ProcessorPropertiesWidget::showEvent(QShowEvent* event) {
     instantiateWidgets();
     QWidget::showEvent(event);
+}
+
+void ProcessorPropertiesWidget::processorWidgetCreated(const Processor*) {}
+void ProcessorPropertiesWidget::processorWidgetDeleted(const Processor*) {}
+
+void ProcessorPropertiesWidget::portsAndPropertiesChanged(const Processor*) {
+    widgetFactory_ = new QPropertyWidgetFactory();
+    QGridLayout* gridLayout = dynamic_cast<QGridLayout*>(propertyWidget_->layout());
+    std::vector<Property*> properties = processor_->getProperties();
+    for (unsigned int i=0; i<properties.size(); i++) {
+        const std::set<PropertyWidget*> propWidgets = properties[i]->getPropertyWidgets();
+        if (propWidgets.size() == 0) {
+            QPropertyWidget* w =
+                dynamic_cast<QPropertyWidget*>(properties[i]->createAndAddWidget(widgetFactory_));
+            if (w) {
+                widgets_.push_back(w);
+                connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));
+                CustomLabel* nameLabel = w->getNameLabel();
+                int curRow = gridLayout->rowCount();
+                gridLayout->addWidget(nameLabel, curRow, 0, 1, 1);
+                gridLayout->addWidget(w, curRow, 1, 1, 2);
+            }
+        }
+    }
 }
 
 } // namespace

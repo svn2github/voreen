@@ -26,14 +26,19 @@
  **********************************************************************/
 
 #include "voreen/core/properties/link/linkevaluatoridnormalized.h"
+#include "voreen/core/properties/boolproperty.h"
 #include "voreen/core/properties/intproperty.h"
 #include "voreen/core/properties/floatproperty.h"
 #include "voreen/core/properties/vectorproperty.h"
 
+#include "voreen/core/properties/link/boxobjecthelper.h"
+
 namespace voreen {
 
-BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const BoxObject& sourceNew, const BoxObject& targetOld, Property* src, Property* dest) {
+void LinkEvaluatorIdNormalized::eval(Property* src, Property* dst) throw (VoreenException) {
     BoxObject targetNew;
+    BoxObject sourceNew = BoxObjectHelper::createBoxObjectFromProperty(src);
+    BoxObject targetOld = BoxObjectHelper::createBoxObjectFromProperty(dst);
     switch (sourceNew.getType()) {
     case BoxObject::BOOL:
         {
@@ -46,13 +51,13 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::INTEGER:
                     {
-                        IntProperty* d = ((IntProperty*)dest);
+                        IntProperty* d = ((IntProperty*)dst);
                         targetNew = BoxObject((sourceNew.getBool() ? d->getMaxValue() : d->getMinValue()));
                     }
                     break;
                 case BoxObject::FLOAT:
                     {
-                        FloatProperty* d = ((FloatProperty*)dest);
+                        FloatProperty* d = ((FloatProperty*)dst);
                         targetNew = BoxObject((sourceNew.getBool() ? d->getMaxValue() : d->getMinValue()));
                     }
                     break;
@@ -75,14 +80,14 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::INTEGER:
                     {
-                        IntProperty* d = ((IntProperty*)dest);
+                        IntProperty* d = ((IntProperty*)dst);
                         int diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject((int)(d->getMinValue() + (s->get() - s->getMinValue()) * (float)diff_d / (float)diff_s));
                     }
                     break;
                 case BoxObject::FLOAT:
                     {
-                        FloatProperty* d = ((FloatProperty*)dest);
+                        FloatProperty* d = ((FloatProperty*)dst);
                         float diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject((float)(d->getMinValue() + (s->get() - s->getMinValue()) * (float)diff_d / (float)diff_s));
                     }
@@ -106,14 +111,14 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::INTEGER:
                     {
-                        IntProperty* d = ((IntProperty*)dest);
+                        IntProperty* d = ((IntProperty*)dst);
                         int diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject((int)(d->getMinValue() + (s->get() - s->getMinValue()) * (float)diff_d / diff_s));
                     }
                     break;
                 case BoxObject::FLOAT:
                     {
-                        FloatProperty* d = ((FloatProperty*)dest);
+                        FloatProperty* d = ((FloatProperty*)dst);
                         float diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject((float)(d->getMinValue() + (s->get() - s->getMinValue()) * diff_d / diff_s));
                     }
@@ -132,7 +137,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
             {
                 case BoxObject::IVEC2:
                     {
-                        IntVec2Property* d = ((IntVec2Property*)dest);
+                        IntVec2Property* d = ((IntVec2Property*)dst);
                         tgt::ivec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec2(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / (float)diff_s.x),
@@ -142,7 +147,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC2:
                     {
-                        FloatVec2Property* d = ((FloatVec2Property*)dest);
+                        FloatVec2Property* d = ((FloatVec2Property*)dst);
                         tgt::vec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec2(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / (float)diff_s.x,
@@ -164,7 +169,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
             {
                 case BoxObject::IVEC2:
                     {
-                        IntVec2Property* d = ((IntVec2Property*)dest);
+                        IntVec2Property* d = ((IntVec2Property*)dst);
                         tgt::ivec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec2(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / (float)diff_s.x),
@@ -174,7 +179,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::IVEC3:
                     {
-                        IntVec3Property* d = ((IntVec3Property*)dest);
+                        IntVec3Property* d = ((IntVec3Property*)dst);
                         tgt::ivec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec3(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / (float)diff_s.x),
@@ -185,7 +190,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC2:
                     {
-                        FloatVec2Property* d = ((FloatVec2Property*)dest);
+                        FloatVec2Property* d = ((FloatVec2Property*)dst);
                         tgt::vec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec2(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / (float)diff_s.x,
@@ -195,7 +200,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC3:
                     {
-                        FloatVec3Property* d = ((FloatVec3Property*)dest);
+                        FloatVec3Property* d = ((FloatVec3Property*)dst);
                         tgt::vec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec3(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / (float)diff_s.x,
@@ -218,7 +223,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
             {
                 case BoxObject::IVEC2:
                     {
-                        IntVec2Property* d = ((IntVec2Property*)dest);
+                        IntVec2Property* d = ((IntVec2Property*)dst);
                         tgt::ivec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec2(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / (float)diff_s.x),
@@ -228,7 +233,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::IVEC3:
                     {
-                        IntVec3Property* d = ((IntVec3Property*)dest);
+                        IntVec3Property* d = ((IntVec3Property*)dst);
                         tgt::ivec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec3(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / (float)diff_s.x),
@@ -239,7 +244,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::IVEC4:
                     {
-                        IntVec4Property* d = ((IntVec4Property*)dest);
+                        IntVec4Property* d = ((IntVec4Property*)dst);
                         tgt::ivec4 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec4(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / (float)diff_s.x),
@@ -251,7 +256,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC2:
                     {
-                        FloatVec2Property* d = ((FloatVec2Property*)dest);
+                        FloatVec2Property* d = ((FloatVec2Property*)dst);
                         tgt::vec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec2(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / (float)diff_s.x,
@@ -261,7 +266,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC3:
                     {
-                        FloatVec3Property* d = ((FloatVec3Property*)dest);
+                        FloatVec3Property* d = ((FloatVec3Property*)dst);
                         tgt::vec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec3(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / (float)diff_s.x,
@@ -272,7 +277,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC4:
                     {
-                        FloatVec4Property* d = ((FloatVec4Property*)dest);
+                        FloatVec4Property* d = ((FloatVec4Property*)dst);
                         tgt::vec4 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec4(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / (float)diff_s.x,
@@ -296,7 +301,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
             {
                 case BoxObject::IVEC2:
                     {
-                        IntVec2Property* d = ((IntVec2Property*)dest);
+                        IntVec2Property* d = ((IntVec2Property*)dst);
                         tgt::ivec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec2(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / diff_s.x),
@@ -306,7 +311,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC2:
                     {
-                        FloatVec2Property* d = ((FloatVec2Property*)dest);
+                        FloatVec2Property* d = ((FloatVec2Property*)dst);
                         tgt::vec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec2(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / diff_s.x,
@@ -328,7 +333,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
             {
                 case BoxObject::IVEC2:
                     {
-                        IntVec2Property* d = ((IntVec2Property*)dest);
+                        IntVec2Property* d = ((IntVec2Property*)dst);
                         tgt::ivec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec2(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / diff_s.x),
@@ -338,7 +343,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::IVEC3:
                     {
-                        IntVec3Property* d = ((IntVec3Property*)dest);
+                        IntVec3Property* d = ((IntVec3Property*)dst);
                         tgt::ivec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec3(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / diff_s.x),
@@ -349,7 +354,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC2:
                     {
-                        FloatVec2Property* d = ((FloatVec2Property*)dest);
+                        FloatVec2Property* d = ((FloatVec2Property*)dst);
                         tgt::vec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec2(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / diff_s.x,
@@ -359,7 +364,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC3:
                     {
-                        FloatVec3Property* d = ((FloatVec3Property*)dest);
+                        FloatVec3Property* d = ((FloatVec3Property*)dst);
                         tgt::vec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec3(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / diff_s.x,
@@ -382,7 +387,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
             {
                 case BoxObject::IVEC2:
                     {
-                        IntVec2Property* d = ((IntVec2Property*)dest);
+                        IntVec2Property* d = ((IntVec2Property*)dst);
                         tgt::ivec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec2(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / diff_s.x),
@@ -392,7 +397,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::IVEC3:
                     {
-                        IntVec3Property* d = ((IntVec3Property*)dest);
+                        IntVec3Property* d = ((IntVec3Property*)dst);
                         tgt::ivec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec3(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / diff_s.x),
@@ -403,7 +408,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::IVEC4:
                     {
-                        IntVec4Property* d = ((IntVec4Property*)dest);
+                        IntVec4Property* d = ((IntVec4Property*)dst);
                         tgt::ivec4 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::ivec4(
                             (int)(d->getMinValue().x + (s->get().x - s->getMinValue().x) * (float)diff_d.x / diff_s.x),
@@ -415,7 +420,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC2:
                     {
-                        FloatVec2Property* d = ((FloatVec2Property*)dest);
+                        FloatVec2Property* d = ((FloatVec2Property*)dst);
                         tgt::vec2 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec2(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / diff_s.x,
@@ -425,7 +430,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC3:
                     {
-                        FloatVec3Property* d = ((FloatVec3Property*)dest);
+                        FloatVec3Property* d = ((FloatVec3Property*)dst);
                         tgt::vec3 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec3(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / diff_s.x,
@@ -436,7 +441,7 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
                     break;
                 case BoxObject::VEC4:
                     {
-                        FloatVec4Property* d = ((FloatVec4Property*)dest);
+                        FloatVec4Property* d = ((FloatVec4Property*)dst);
                         tgt::vec4 diff_d = d->getMaxValue() - d->getMinValue();
                         targetNew = BoxObject(tgt::vec4(
                             d->getMinValue().x + (s->get().x - s->getMinValue().x) * diff_d.x / diff_s.x,
@@ -455,11 +460,47 @@ BoxObject LinkEvaluatorIdNormalized::eval(const BoxObject& /*sourceOld*/, const 
     default:
         throw VoreenException("LinkEvaluatorIdNormalized: Unsupported property type");
     }
-    return targetNew;
+    BoxObjectHelper::setPropertyFromBoxObject(dst, targetNew);
 }
 
 std::string LinkEvaluatorIdNormalized::name() const {
     return "idNormalized";
+}
+
+bool LinkEvaluatorIdNormalized::arePropertiesLinkable(const Property* p1, const Property* p2) const {
+    if( (dynamic_cast<const BoolProperty*>(p1)
+    ||   dynamic_cast<const FloatProperty*>(p1)
+    ||   dynamic_cast<const IntProperty*>(p1) ) &&
+        (dynamic_cast<const BoolProperty*>(p2)
+    ||   dynamic_cast<const FloatProperty*>(p2)
+    ||   dynamic_cast<const IntProperty*>(p2) ) )
+        return true;
+
+    if( (dynamic_cast<const FloatVec2Property*>(p1)
+    ||   dynamic_cast<const IntVec2Property*>(p1) ) &&
+        (dynamic_cast<const FloatVec2Property*>(p2)
+    ||   dynamic_cast<const IntVec2Property*>(p2) ) )
+        return true;
+
+    if( (dynamic_cast<const FloatVec3Property*>(p1)
+    ||   dynamic_cast<const IntVec3Property*>(p1) ) &&
+        (dynamic_cast<const FloatVec2Property*>(p2)
+    ||   dynamic_cast<const IntVec2Property*>(p2)
+    ||   dynamic_cast<const IntVec3Property*>(p2)
+    ||   dynamic_cast<const FloatVec3Property*>(p2) ) )
+        return true;
+
+    if( (dynamic_cast<const FloatVec4Property*>(p1)
+    ||   dynamic_cast<const IntVec4Property*>(p1) ) &&
+        (dynamic_cast<const FloatVec2Property*>(p2)
+    ||   dynamic_cast<const IntVec2Property*>(p2)
+    ||   dynamic_cast<const IntVec3Property*>(p2)
+    ||   dynamic_cast<const FloatVec3Property*>(p2)
+    ||   dynamic_cast<const IntVec4Property*>(p2)
+    ||   dynamic_cast<const FloatVec4Property*>(p2) ) )
+        return true;
+
+    return false;
 }
 
 } // namespace

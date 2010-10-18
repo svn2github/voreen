@@ -25,7 +25,6 @@
  *                                                                    *
  **********************************************************************/
 
-#ifdef VRN_MODULE_FLOWREEN
 #ifndef VRN_FLOWVOLUME_H
 #define VRN_FLOWVOLUME_H
 
@@ -55,4 +54,3 @@ private:
 }   // namespace
 
 #endif  // VRN_FLOWVOLUME_H
-#endif  // VRN_MODULES_FLOWREEN

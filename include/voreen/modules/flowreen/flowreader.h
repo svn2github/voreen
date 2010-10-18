@@ -25,8 +25,6 @@
  *                                                                    *
  **********************************************************************/
 
-#ifdef VRN_MODULE_FLOWREEN
-
 #ifndef VRN_FLOWREADER_H
 #define VRN_FLOWREADER_H
 
@@ -66,4 +64,3 @@ private:
 }   // namespace
 
 #endif  // VRN_FLOWREADER_H
-#endif  // VRN_MODULE_FLOWREEN

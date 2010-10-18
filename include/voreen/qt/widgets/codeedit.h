@@ -47,6 +47,10 @@ public:
     void statusAreaPaintEvent(QPaintEvent *event);
     int statusAreaWidth();
 
+public slots:
+    void moveCursorToPosition(int line, int col = -1);
+    void updateHighlight();
+
 protected:
     void resizeEvent(QResizeEvent *event);
 

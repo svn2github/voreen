@@ -46,7 +46,7 @@ class GroupPropertyWidget;
  * Widget containing each processor's property widgets. The title bar contains the name of the
  * processor and an +/- icon allowing to expand the properties.
  */
-class ProcessorPropertiesWidget : public QWidget {
+class ProcessorPropertiesWidget : public QWidget, public ProcessorObserver {
 Q_OBJECT
 public:
 
@@ -65,6 +65,10 @@ public:
     void setLevelOfDetail(Property::LODSetting lod);
     void setVolumeContainer(VolumeContainer*);
 
+    void processorWidgetCreated(const Processor* processor);
+    void processorWidgetDeleted(const Processor* processor);
+    void portsAndPropertiesChanged(const Processor*);
+
 signals:
     void modified();
 
@@ -81,6 +85,7 @@ protected slots:
     void propertyModified();
     void setLODHidden();
     void setLODVisible();
+    void widgetInstantiation();
 
 protected:
     ExpandableHeaderButton* header_;

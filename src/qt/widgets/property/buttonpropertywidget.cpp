@@ -28,6 +28,7 @@
 #include "voreen/qt/widgets/property/buttonpropertywidget.h"
 
 #include "voreen/core/properties/buttonproperty.h"
+#include "voreen/qt/widgets/customlabel.h"
 
 #include <QPushButton>
 #include <QLabel>
@@ -52,10 +53,11 @@ void ButtonPropertyWidget::clicked() {
         property_->clicked();
 }
 
-const QLabel* ButtonPropertyWidget::getNameLabel() const {
+CustomLabel* ButtonPropertyWidget::getNameLabel() const {
     if (!nameLabel_)
-        nameLabel_ = new QLabel();
+        nameLabel_ = new CustomLabel("", const_cast<ButtonPropertyWidget*>(this));
     return nameLabel_;
+    //return QPropertyWidget::getNameLabel();
 }
 
 } // namespace

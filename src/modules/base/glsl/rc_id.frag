@@ -91,6 +91,6 @@ void main() {
         gl_FragDepth = 1.0;
     }
 
-    gl_FragColor = result;
+    FragData0 = result;
 
 }

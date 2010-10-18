@@ -35,12 +35,12 @@
 #include "tgt/shadermanager.h"
 #include "tgt/glut/glutcanvas.h"
 
+#include "voreen/core/voreenapplication.h"
 #include "voreen/core/utils/voreenpainter.h"
 #include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/network/workspace.h"
 #include "voreen/core/network/processornetwork.h"
 #include "voreen/core/processors/canvasrenderer.h"
-#include "voreen/modules/moduleregistration.h"
 
 using namespace voreen;
 
@@ -76,15 +76,24 @@ void initialize() {
 
 void finalize() {
     delete painter;
+    painter = 0;
     delete network;
+    network = 0;
     delete networkEvaluator;
+    networkEvaluator = 0;
+
+    if (app) {
+        app->deinitGL();
+        app->deinit();
+    }
+    delete app;
+    app = 0;
 }
 
 void keyPressed(unsigned char key, int /*x*/, int /*y*/) {
     switch (key) {
         case '\033': // = ESC
             finalize();
-            delete app;
             exit(0);
             break;
         case '1':
@@ -103,9 +112,9 @@ void keyPressed(unsigned char key, int /*x*/, int /*y*/) {
 }
 
 int main(int argc, char** argv) {
-    app = new VoreenApplication("simple-GLUT", "simple-GLUT", argc, argv);
+    VoreenApplication* app = new VoreenApplication("simple-GLUT", "simple-GLUT", argc, argv,
+        VoreenApplication::APP_ALL);
     app->init();
-    addAllModules(app);
 
     glutInit(&argc, argv);
 
@@ -120,6 +129,5 @@ int main(int argc, char** argv) {
     initialize();
 
     glutMainLoop();
-
     return 0; // will never be reached for standard GLUT
 }

@@ -33,7 +33,7 @@ using tgt::vec2;
 using tgt::ivec2;
 
 ScalingProcessor::ScalingProcessor()
-    : ImageProcessor("pp_scale"),
+    : ImageProcessor("image/scale"),
       distributeEvents_("distributeEvents", "Distribute Events", true, Processor::VALID),
       inport_(Port::INPORT, "image.inport")
 {
@@ -189,9 +189,9 @@ void SingleScale::process() {
 
     // initialize shader
     program_->activate();
-    program_->setUniform("shadeTex_", 0);
+    program_->setUniform("colorTex_", 0);
     program_->setUniform("depthTex_", 1);
-    inport_.setTextureParameters(program_, "shadeTexParameters_");
+    inport_.setTextureParameters(program_, "colorTexParameters_");
     inport_.setTextureParameters(program_, "depthTexParameters_");
 
     glMatrixMode(GL_MODELVIEW);

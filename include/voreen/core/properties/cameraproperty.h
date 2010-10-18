@@ -30,17 +30,14 @@
 
 #include "voreen/core/properties/templateproperty.h"
 #include "voreen/core/properties/condition.h"
-
-namespace tgt {
-    class Camera;
-}
+#include "tgt/camera.h"
 
 namespace voreen {
 
 /**
  * Property encapsulating a tgt::Camera object.
  */
-class CameraProperty : public TemplateProperty<tgt::Camera*> {
+class CameraProperty : public TemplateProperty<tgt::Camera> {
 
 public:
 
@@ -51,7 +48,7 @@ public:
      *        is adjusted automatically to viewport changes. This is especially necessary to
      *        reflect the viewport's aspect ratio.
      */
-    CameraProperty(const std::string& id, const std::string& guiText, tgt::Camera* const value,
+    CameraProperty(const std::string& id, const std::string& guiText, tgt::Camera const value,
                bool adjustProjectionToViewport = true,
                Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
 
@@ -63,6 +60,9 @@ public:
      * Assigns the passed camera object to the property.
      */
     void set(const tgt::Camera& camera);
+    void setPosition(const tgt::vec3& pos);
+    void setFocus(const tgt::vec3& focus);
+    void setUpVector(const tgt::vec3& up);
 
     /**
      * When set to true, the camera's projection matrix is adjusted automatically
@@ -99,6 +99,7 @@ public:
      */
     virtual void deserialize(XmlDeserializer& s);
 
+    virtual void look();
 private:
     bool adjustProjectionToViewport_;
 };

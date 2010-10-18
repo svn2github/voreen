@@ -59,7 +59,7 @@ PathlineRenderer3D::PathlineRenderer3D()
     segmentLengthProp_("lineSegmentLengthProp_", "max. segment length: ", 5, 1, 1000),
     integrationStepProp_("integrationStepProp", "integration stepwidth:", 0.25f, 0.1f, 1.0f),
     timestepProp_("timeStepProp", "timestep:", 0.0f, 0.0f, std::numeric_limits<float>::max()),
-    camProp_( "camera", "Camera", new tgt::Camera(tgt::vec3(0.0f, 0.0f, 3.5f),
+    camProp_( "camera", "Camera", tgt::Camera(tgt::vec3(0.0f, 0.0f, 3.5f),
         tgt::vec3(0.0f, 0.0f, 0.0f), tgt::vec3(0.0f, 1.0f, 0.0f)) ),
     cameraHandler_(0),
     flows_(),
@@ -248,7 +248,7 @@ void PathlineRenderer3D::process() {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
-    camProp_.get()->look();
+    camProp_.look();
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -641,8 +641,8 @@ void PathlineRenderer3D::onThresholdingChange() {
 
 void PathlineRenderer3D::renderAsArrows(const tgt::vec4& lineColor) {
     if (setupShader() == true) {
-        shader_->setUniform("camPos_", camProp_.get()->getPosition());
-        shader_->setUniform("lightDir_", camProp_.get()->getLook());
+        shader_->setUniform("camPos_", camProp_.get().getPosition());
+        shader_->setUniform("lightDir_", camProp_.get().getLook());
     }
 
     const float arrowSize = static_cast<float>(objectSizeProp_.get());
@@ -677,8 +677,8 @@ void PathlineRenderer3D::renderAsArrows(const tgt::vec4& lineColor) {
 
 void PathlineRenderer3D::renderAsLines(const tgt::vec4& lineColor) {
     if (setupShader() == true) {
-        shader_->setUniform("camPos_", camProp_.get()->getPosition());
-        shader_->setUniform("lightDir_", camProp_.get()->getLook());
+        shader_->setUniform("camPos_", camProp_.get().getPosition());
+        shader_->setUniform("lightDir_", camProp_.get().getLook());
     }
 
     const float deltaT = integrationStepProp_.get();
@@ -715,8 +715,8 @@ void PathlineRenderer3D::renderAsLines(const tgt::vec4& lineColor) {
 
 void PathlineRenderer3D::renderAsLineSegments(const tgt::vec4& lineColor) {
     if (setupShader() == true) {
-        shader_->setUniform("camPos_", camProp_.get()->getPosition());
-        shader_->setUniform("lightDir_", camProp_.get()->getLook());
+        shader_->setUniform("camPos_", camProp_.get().getPosition());
+        shader_->setUniform("lightDir_", camProp_.get().getLook());
     }
 
     const float deltaT = integrationStepProp_.get();
@@ -806,8 +806,8 @@ void PathlineRenderer3D::renderAsPoints(const tgt::vec4& lineColor) {
 
 void PathlineRenderer3D::renderAsTubes(const tgt::vec4& lineColor) {
     if (setupShader() == true) {
-        shader_->setUniform("camPos_", camProp_.get()->getPosition());
-        shader_->setUniform("lightDir_", camProp_.get()->getLook());
+        shader_->setUniform("camPos_", camProp_.get().getPosition());
+        shader_->setUniform("lightDir_", camProp_.get().getLook());
     }
 
     const size_t stepwidth = 1;
@@ -872,7 +872,7 @@ void PathlineRenderer3D::renderAsTubes(const tgt::vec4& lineColor) {
 
 bool PathlineRenderer3D::setupShader() {
     if (shader_ == 0)
-        shader_ = ShdrMgr.load("phong", "", false);
+        shader_ = ShdrMgr.load("phong", generateHeader(), false);
 
     // activate the shader if everything went fine and set the needed uniforms
     if (shader_ != 0) {

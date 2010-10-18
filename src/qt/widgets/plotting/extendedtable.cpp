@@ -43,7 +43,7 @@ ExtendedTable::~ExtendedTable() {
 
 
 std::pair<QPoint,QPoint> ExtendedTable::selectedArea() const {
-    QModelIndexList list = selectedIndexes();
+    QModelIndexList list = QTableView::selectedIndexes();
     int x1 = -1;
     int y1 = -1;
     int y2 = -1;
@@ -60,14 +60,14 @@ std::pair<QPoint,QPoint> ExtendedTable::selectedArea() const {
         x2 = std::max<int>(x2,list.at(i).column());
         y2 = std::max<int>(y2,list.at(i).row());
     }
-    std::pair<QPoint,QPoint> ergebnis;
-    ergebnis.first = QPoint(x1,y1);
-    ergebnis.second = QPoint(x2,y2);
-    return ergebnis;
+    std::pair<QPoint,QPoint> result;
+    result.first = QPoint(x1,y1);
+    result.second = QPoint(x2,y2);
+    return result;
 }
 
 std::vector<int> ExtendedTable::selectedColumns() const {
-    QModelIndexList list = selectedIndexes();
+    QModelIndexList list = QTableView::selectedIndexes();
     std::vector<int> result;
     bool match;
     for (int i = 0; i < list.size(); ++i) {
@@ -86,7 +86,7 @@ std::vector<int> ExtendedTable::selectedColumns() const {
 }
 
 std::vector<int> ExtendedTable::selectedRows() const {
-    QModelIndexList list = selectedIndexes();
+    QModelIndexList list = QTableView::selectedIndexes();
     std::vector<int> result;
     bool match;
     for (int i = 0; i < list.size(); ++i) {
@@ -102,6 +102,10 @@ std::vector<int> ExtendedTable::selectedRows() const {
         }
     }
     return result;
+}
+
+QModelIndexList ExtendedTable::selectedIndexes() const {
+    return QTableView::selectedIndexes();
 }
 
 } // namespace voreen

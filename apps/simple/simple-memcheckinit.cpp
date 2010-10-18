@@ -33,7 +33,6 @@
 #include "voreen/core/processors/processorfactory.h"
 #include "voreen/core/network/processornetwork.h"
 #include "voreen/core/network/networkevaluator.h"
-#include "voreen/modules/moduleregistration.h"
 
 #include "tgt/init.h"
 #include "tgt/shadermanager.h"
@@ -82,12 +81,9 @@ tgt::GLUTCanvas* canvas_ = 0;
 //---------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
-    VoreenApplication app("simple-memcheckinit", "simple-memcheckinit", argc, argv,
-                          (VoreenApplication::ApplicationType) (VoreenApplication::APP_DEFAULT & ~VoreenApplication::APP_PYTHON));
+    VoreenApplication app("simple-memcheckinit", "simple-memcheckinit", argc, argv, VoreenApplication::APP_ALL);
     app.init();
     LogMgr.getConsoleLog()->enableColors(false);
-
-    addAllModules(&app);
 
     glutInit(&argc, argv);
 
@@ -176,6 +172,11 @@ int main(int argc, char** argv) {
         }
         tmpOut << "\t</testcase>\n";
 
+        if (p->isInitialized()) {
+            LINFOC("simple-memcheckinit", "Deinitializing class " << knownClasses[i].second);
+            networkEvaluator->deinitializeNetwork();
+        }
+
         LINFOC("simple-memcheckinit", "Deleting class " << knownClasses[i].second);
         network->removeProcessor(p);
     }
@@ -200,10 +201,12 @@ int main(int argc, char** argv) {
     ProcessorFactory::destroy();
     delete networkEvaluator;
     delete network;
+
+    app.deinitGL();
     delete canvas_;
 
-    tgt::deinitGL();
-    tgt::deinit();
+    app.deinit();
+
     if (numFailed == 0)
         return 0;
     else

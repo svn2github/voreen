@@ -308,6 +308,11 @@ public:
     /// @see Serializable::deserialize
     virtual void deserialize(XmlDeserializer& s);
 
+    ///Serialize the value of the property without the meta data/LOD/guiName
+    virtual void serializeValue(XmlSerializer& s);
+
+    ///Deserialize the value of the property without the meta data/LOD/guiName
+    virtual void deserializeValue(XmlDeserializer& s);
  protected:
 
     /**
@@ -376,6 +381,9 @@ private:
 
     /// Used for cycle prevention during interaction mode propagation
     bool interactionModeVisited_;
+
+    /// Used for (de-)serializeValue methods
+    bool serializeValue_;
 
     /// Used for cycle prevention during check whether two props are linked
     mutable bool linkCheckVisited_;

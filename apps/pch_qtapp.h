@@ -6,11 +6,9 @@
  *
  */
 
-#include "../pch.h"
+#include "../src/qt/pch_qt.h"
 
 #if defined __cplusplus
 /* Add C++ includes here */
-
-#include <QtGui>
 
 #endif

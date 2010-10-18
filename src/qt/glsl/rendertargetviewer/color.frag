@@ -25,10 +25,15 @@
  *                                                                    *
  **********************************************************************/
 
-#include "../modules/mod_sampler2d.frag"
+#version 130
+
+#include "modules/mod_sampler2d.frag"
+
+out vec4 FragData0;
 
 uniform SAMPLER2D_TYPE tex_;
 uniform TEXTURE_PARAMETERS texParameters_;
+
 uniform bool enableColorR_;
 uniform bool enableColorG_;
 uniform bool enableColorB_;
@@ -105,5 +110,5 @@ void main() {
         color = mix(vec4(backgroundColorR_, backgroundColorG_, backgroundColorB_, 1.0), color, color.a);
     }
 
-    gl_FragColor = color;
+    FragData0 = color;
 }

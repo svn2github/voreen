@@ -151,7 +151,7 @@ private slots:
     void toggleNetworkEvaluator();
 
     // clears the history of the selected PropertyLink
-    void clearDependencyHistory();
+    void clearDependancyHistory();
 
 signals:
     /**
@@ -250,7 +250,7 @@ private:
     QAction* editLinkAction_;
     QAction* aggregateAction_;
     QAction* deaggregateAction_;
-    QAction* clearDependencyHistoryAction_;
+    QAction* clearDependancyHistoryAction_;
 
     QMap<LinkArrowGraphicsItem*, ArrowLinkInformation> linkMap_;
 

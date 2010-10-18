@@ -25,7 +25,6 @@
  *                                                                    *
  **********************************************************************/
 
-#ifdef VRN_MODULE_FLOWREEN
 #ifndef VRN_FLOWSLICERENDERER2D_H
 #define VRN_FLOWSLICERENDERER2D_H
 
@@ -48,7 +47,7 @@ public:
     virtual void process();
 
 protected:
-    virtual std::string generateShaderHeader() const;
+    virtual std::string generateShaderHeader();
 
 private:
     float getTextureScalingFactor(const tgt::vec2& viewportSize, const tgt::vec2& textureSize);
@@ -75,5 +74,4 @@ private:
 }   // namespace
 
 #endif  // VRN_FLOWSLICERENDERER2D_H
-#endif  // VRN_MODULE_FLOWREEN
 

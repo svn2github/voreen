@@ -25,8 +25,8 @@
  *                                                                    *
  **********************************************************************/
 
-varying vec3 position;
-varying vec3 normal;
+out vec3 position;
+out vec3 normal;
 
 void main() {
     position = gl_Vertex.xyz;

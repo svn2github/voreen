@@ -125,6 +125,8 @@ public:
 public slots:
     void processorsSelected(const QList<Processor*>& processors);
     void setInfo(Processor* processor);
+    void setInfo(std::string);
+    void loadSettings();
 
 protected:
     ProcessorListTreeWidget* tree_;
@@ -150,7 +152,6 @@ protected slots:
     void sortMenu();
     void setModuleNameVisibility(std::string, bool);
     void saveSettings();
-    void loadSettings();
 
 signals:
     void sort(int);

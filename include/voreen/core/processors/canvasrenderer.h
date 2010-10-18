@@ -31,6 +31,7 @@
 #include "voreen/core/processors/renderprocessor.h"
 #include "voreen/core/utils/exception.h"
 #include "voreen/core/properties/vectorproperty.h"
+#include "voreen/core/properties/boolproperty.h"
 
 namespace tgt {
 class GLCanvas;  // forward declaration
@@ -181,6 +182,8 @@ protected:
     /// Stores thee current canvas size and may be used for adjusting it.
     IntVec2Property canvasSize_;
 
+    BoolProperty showCursor_;
+
     /// Pointer to the associated OpenGL canvas
     tgt::GLCanvas* canvas_;
 
@@ -205,6 +208,8 @@ protected:
 private:
     /// Calls resizeCanvasWidget() with the value currently assigned to the size property.
     void sizePropChanged();
+
+    void cursorVisibilityChanged();
 
     static const std::string loggerCat_; ///< category used in logging
 

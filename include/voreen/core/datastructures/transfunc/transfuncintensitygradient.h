@@ -30,6 +30,10 @@
 
 #include "voreen/core/datastructures/transfunc/transfunc.h"
 
+namespace tgt {
+    class FramebufferObject;
+}
+
 namespace voreen {
 
 class TransFuncPrimitive;
@@ -41,7 +45,8 @@ class TransFuncPrimitive;
  * - y-axis: gradient magnitude
  *
  * The transfer function is defined by primitives that can be added and edited with TransFuncEditorIntensityGradient.
- * Internally, the transfer function is represented by a two-dimensional RGBA texture of type GL_FLOAT.
+ * Internally, the transfer function is represented by a two-dimensional RGBA texture of type GL_FLOAT,
+ * which is updated through a framebuffer object.
  */
 class TransFuncIntensityGradient : public TransFunc {
 public:
@@ -189,6 +194,11 @@ public:
 
 protected:
     /**
+     * Attaches the texture that has been created by the base class to a framebuffer object.
+     */
+    virtual void createTex();
+
+    /**
      * Saves the transfer function to a XML file. Returns true if the operation
      * was successful and false otherwise.
      *
@@ -217,6 +227,8 @@ protected:
     std::vector<TransFuncPrimitive*> primitives_; ///< primitives the transfer function consists of
 
 private:
+    tgt::FramebufferObject* fbo_;        ///< used for rendering the primitives to the texture
+
     static const std::string loggerCat_; ///< the logger category
 };
 

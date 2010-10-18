@@ -30,6 +30,7 @@
 #include "voreen/core/properties/cameraproperty.h"
 
 #include "tgt/event/mouseevent.h"
+#include "tgt/camera.h"
 #include "tgt/matrix.h"
 #include "voreen/core/properties/eventproperty.h"
 
@@ -45,7 +46,6 @@ PlotCameraInteractionHandler::PlotCameraInteractionHandler(const std::string& id
     , cameraProp_(cameraProp)
 {
     tgtAssert(cameraProp, "No camera property");
-    tgtAssert(cameraProp->get(), "No camera");
     cameraProp_ = cameraProp;
 
     // event property
@@ -90,7 +90,7 @@ void PlotCameraInteractionHandler::rotate(float horAngle, float vertAngle) {
     horAngle = tgt::deg2rad(horAngle);
 
     //first we get the old camera position
-    tgt::vec3 pos = cameraProp_->get()->getPosition();
+    tgt::vec3 pos = cameraProp_->get().getPosition();
 
     // only rotate vertically when camera z position is in [-0.9, 0.9] to avoid flipping phenomenon
     double z = pos.z;
@@ -104,7 +104,12 @@ void PlotCameraInteractionHandler::rotate(float horAngle, float vertAngle) {
     //world coordinate system)
     pos = tgt::Matrix::createRotationZ(horAngle) * pos;
 
-    cameraProp_->get()->positionCamera(pos, tgt::vec3(0,0,0), tgt::vec3(0,0,1));
+    tgt::Camera cam = cameraProp_->get();
+    cam.setPosition(pos);
+    cam.setFocus(tgt::vec3(0,0,0));
+    cam.setUpVector(tgt::vec3(0,0,1));
+    //cameraProp_->setPosition(pos);
+    cameraProp_->set(cam);
 }
 
 void PlotCameraInteractionHandler::onEvent(tgt::Event* eve) {

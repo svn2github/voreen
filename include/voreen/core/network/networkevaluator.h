@@ -292,6 +292,8 @@ private:
 
     bool locked_;
 
+    bool processPending_;
+
     /// Used for performance profiling (experimental).
     PerformanceRecord performanceRecord_;
 };

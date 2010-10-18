@@ -88,6 +88,7 @@ int main(int argc, char** argv) {
     cmdparser.addCommand(new CommandBrick());
 
 
+
     //cmdparser.addCommand(new CommandStretchHisto());
 
 #ifdef _OPENMP

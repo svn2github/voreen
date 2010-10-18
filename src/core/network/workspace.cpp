@@ -29,7 +29,6 @@
 
 #include "voreen/core/network/processornetwork.h"
 #include "voreen/core/datastructures/volume/volumecontainer.h"
-#include "voreen/core/properties/link/scriptmanagerlinking.h"
 #include "voreen/core/animation/animation.h"
 
 #include "voreen/core/io/datvolumereader.h"
@@ -65,9 +64,7 @@ Workspace::Workspace(tgt::GLCanvas* sharedContext)
     , filename_("")
     , readOnly_(false)
     , sharedContext_(sharedContext)
-    , scriptManagerLinking_(new ScriptManagerLinking())
 {
-    LinkEvaluatorFactory::getInstance()->setScriptManager(scriptManagerLinking_);
 }
 
 Workspace::~Workspace() {
@@ -455,9 +452,6 @@ void Workspace::serialize(XmlSerializer& s) const {
     // Serialize volumecontainer...
     s.serialize("VolumeContainer", volumeContainer_);
 
-    // Serialize ScriptManagerLinking
-    s.serialize("ScriptManagerLinking", scriptManagerLinking_);
-
     // Serialize network...
     s.serialize("ProcessorNetwork", network_);
 
@@ -479,15 +473,6 @@ void Workspace::deserialize(XmlDeserializer& s) {
 
     // Deserialize volume-container...
     s.deserialize("VolumeContainer", volumeContainer_);
-
-    // Deserialize ScriptManagerLinking
-    try {
-        s.deserialize("ScriptManagerLinking", scriptManagerLinking_);
-    }
-    catch(XmlSerializationNoSuchDataException&) {
-        s.removeLastError();
-    }
-    LinkEvaluatorFactory::getInstance()->setScriptManager(scriptManagerLinking_);
 
     // Deserialize network...
     s.deserialize("ProcessorNetwork", network_);

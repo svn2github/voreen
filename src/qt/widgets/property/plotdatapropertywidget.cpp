@@ -76,9 +76,10 @@ void PlotDataPropertyWidget::customizeEditorWindow() {
 }
 
 QWidget* PlotDataPropertyWidget::createEditorWindowWidget() {
+    delete plotDataWidget_;
+
     plotDataWidget_ = new PlotDataWidget(property_, parentWidget());
     plotDataWidget_->createWidgets();
-    plotDataWidget_->createConnections();
 
     return plotDataWidget_;
 }

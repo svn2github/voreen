@@ -48,6 +48,7 @@ public:
 
     void showSnapshotTool();
 
+    virtual void updateFromProcessor();
 protected:
     void keyPressEvent(QKeyEvent*);
     void resizeEvent(QResizeEvent*);

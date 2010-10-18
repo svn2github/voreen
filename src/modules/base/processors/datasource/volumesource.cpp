@@ -69,6 +69,12 @@ void VolumeSource::initialize() throw (VoreenException) {
         getProcessorWidget()->updateFromProcessor();
 }
 
+void VolumeSource::deinitialize() throw (VoreenException) {
+    clearVolume();
+
+    Processor::deinitialize();
+}
+
 void VolumeSource::loadVolume(const std::string& filename) throw (tgt::FileException, std::bad_alloc) {
     clearVolume();
 
@@ -121,5 +127,7 @@ void VolumeSource::volumeHandleDelete(const VolumeHandle* source) {
 void VolumeSource::volumeChange(const VolumeHandle* /*source*/) {
     // noop
 }
+
+
 
 } // namespace
