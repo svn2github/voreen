@@ -49,7 +49,7 @@
 #include "voreen/core/ports/port.h"
 #include "voreen/core/properties/cameraproperty.h"
 #include "voreen/core/properties/propertyowner.h"
-#include "voreen/core/properties/link/dependancylinkevaluatorbase.h"
+#include "voreen/core/properties/link/dependencylinkevaluatorbase.h"
 #include "voreen/core/properties/link/linkevaluatorfactory.h"
 #include "voreen/core/network/workspace.h"
 #include "voreen/core/io/serialization/xmlserializer.h"
@@ -343,7 +343,7 @@ void NetworkEditor::createContextMenuActions() {
     editLinkAction_ = new QAction(tr("Edit"), this);
     aggregateAction_ = new QAction(QIcon(":/voreenve/icons/aggregate.png"), tr("Aggregate"), this);
     deaggregateAction_ = new QAction(QIcon(":/voreenve/icons/deaggregate.png"), tr("Deaggregate"), this);  // this action will be added to the menus on demand
-    clearDependancyHistoryAction_ = new QAction(QIcon(":/voreenve/icons/clear_dependancy.png"), tr("Clear dependancy history"), this); // this action will be added to the menus on demand
+    clearDependencyHistoryAction_ = new QAction(QIcon(":/voreenve/icons/clear_dependency.png"), tr("Clear dependency history"), this); // this action will be added to the menus on demand
 
     connect(copyAction_, SIGNAL(triggered()), this, SLOT(copyActionSlot()));
     connect(pasteAction_, SIGNAL(triggered()), this, SLOT(pasteActionSlot()));
@@ -354,7 +354,7 @@ void NetworkEditor::createContextMenuActions() {
     connect(editLinkAction_, SIGNAL(triggered()), this, SLOT(editPropertyLinkSlot()));
     connect(aggregateAction_, SIGNAL(triggered()), this, SLOT(aggregateActionSlot()));
     connect(deaggregateAction_, SIGNAL(triggered()), this, SLOT(deaggregateActionSlot()));
-    connect(clearDependancyHistoryAction_, SIGNAL(triggered()), this, SLOT(clearDependancyHistory()));
+    connect(clearDependencyHistoryAction_, SIGNAL(triggered()), this, SLOT(clearDependencyHistory()));
 }
 
 void NetworkEditor::createTimer() {
@@ -480,7 +480,6 @@ void NetworkEditor::resetScene() {
 }
 
 void NetworkEditor::setProcessorNetwork(ProcessorNetwork* network) {
-
     hideTooltip();
 
     // a locked evaluator leads to a crash if a new network is loaded
@@ -959,11 +958,11 @@ void NetworkEditor::toggleNetworkEvaluator() {
     }
 }
 
-void NetworkEditor::clearDependancyHistory() {
+void NetworkEditor::clearDependencyHistory() {
     const ArrowLinkInformation& info = linkMap_[selectedLinkArrow_];
     LinkEvaluatorBase* eval = info.first->getLinkEvaluator();
-    DependancyLinkEvaluatorBase* depEva = dynamic_cast<DependancyLinkEvaluatorBase*>(eval);
-    depEva->clearDependancyMap();
+    DependencyLinkEvaluatorBase* depEva = dynamic_cast<DependencyLinkEvaluatorBase*>(eval);
+    depEva->clearDependencyMap();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1052,6 +1051,15 @@ void NetworkEditor::keyPressEvent(QKeyEvent* event) {
         rightClickPosition_ = mapToScene(mapFromGlobal(QCursor::pos()));
         pasteActionSlot();
     }
+    else if (!event->isAccepted() && (event->key() == Qt::Key_F2)) {
+        QList<QGraphicsItem*> items = scene()->selectedItems();
+        if (items.count() == 1) {
+            QGraphicsItem* item = items[0];
+            RootGraphicsItem* rootItem = dynamic_cast<RootGraphicsItem*>(item);
+            if (rootItem)
+                rootItem->enterRenameMode();
+        }
+    }
 }
 
 void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
@@ -1119,9 +1127,9 @@ void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
 
                 tgtAssert(linkMap_.contains(selectedLinkArrow_), "linkMap didn't contain the selected link");
                 const ArrowLinkInformation& info = linkMap_[selectedLinkArrow_];
-                if (dynamic_cast<DependancyLinkEvaluatorBase*>(info.first->getLinkEvaluator())) {
-                    tgtAssert(info.second == 0, "a dependancy link arrow shouldn't contain two PropertyLinks");
-                    currentMenu.addAction(clearDependancyHistoryAction_);
+                if (dynamic_cast<DependencyLinkEvaluatorBase*>(info.first->getLinkEvaluator())) {
+                    tgtAssert(info.second == 0, "a dependency link arrow shouldn't contain two PropertyLinks");
+                    currentMenu.addAction(clearDependencyHistoryAction_);
                 }
                 break;
             }
@@ -1626,7 +1634,7 @@ LinkArrowGraphicsItem* NetworkEditor::createLinkArrowForPropertyLink(const Prope
     std::string functionname = link->getLinkEvaluator()->name();
     result->setToolTip(QString::fromStdString(functionname));
 
-    if (dynamic_cast<DependancyLinkEvaluatorBase*>(link->getLinkEvaluator()))
+    if (dynamic_cast<DependencyLinkEvaluatorBase*>(link->getLinkEvaluator()))
         result->setNormalColor(Qt::cyan);
 
     ArrowLinkInformation l = std::make_pair(link, static_cast<const PropertyLink*>(0));

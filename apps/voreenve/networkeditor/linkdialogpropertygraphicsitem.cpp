@@ -107,6 +107,7 @@ void LinkDialogPropertyGraphicsItem::mouseMoveEvent(QGraphicsSceneMouseEvent* ev
 
     scene()->setSceneRect(oldBounds_);  // this prevents the growing (and therefore the unwanted ability to scroll) of the sceneRect
     scene()->invalidate();
+    emit(movedArrow(currentArrow_));
 }
 
 void LinkDialogPropertyGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
@@ -146,6 +147,7 @@ void LinkDialogPropertyGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent*
         emit deleteArrow(currentArrow_);
         currentArrow_ = 0;
     }
+    emit endedArrow();
 }
 
 } // namespace

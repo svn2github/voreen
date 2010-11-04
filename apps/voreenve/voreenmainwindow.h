@@ -97,7 +97,7 @@ public:
         MODE_DEVELOPMENT
     };
 
-    VoreenMainWindow(const std::string& workspace = "", const std::string& dataset = "");
+    VoreenMainWindow(const std::string& workspace = "", const std::string& dataset = "", bool resetSettings = false);
     ~VoreenMainWindow();
 
     void init(VoreenSplashScreen* splash = 0);
@@ -142,6 +142,7 @@ public slots:
 
     // help menu
     void helpFirstSteps();
+    void helpTutorialSlides();
     void helpAnimation();
     void helpWebsite();
     void helpAbout();
@@ -149,7 +150,8 @@ public slots:
     // further slots
     void guiModeChanged();
 
-    void resetQSettings();
+    // deletes the session QSettings
+    void resetSettings();
 
 protected:
     void changeEvent(QEvent* event);
@@ -279,6 +281,7 @@ private:
 
     QAction* aboutAction_;
     QAction* helpFirstStepsAct_;
+    QAction* helpTutorialSlidesAct_;
     QAction* helpAnimationAct_;
     QAction* openDatasetAction_;
     QAction* openRawDatasetAction_;
@@ -305,7 +308,6 @@ private:
     ConsolePlugin* consolePlugin_;
 
     bool resetSettings_;
-    bool resetQSettings_;
     bool loadLastWorkspace_;
     QString lastWorkspace_;
 

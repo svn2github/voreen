@@ -65,15 +65,6 @@ uniform TF_SAMPLER_TYPE_4 transferFunc4_;
 
 
 bool inUnitCube(vec3 sample) {
-    /*return (all(lessThanEqual(sample, vec3(1.0))) && (all(greaterThanEqual(sample, vec3(0.0)))));
-
-    if(any(greaterThan(sample, vec3(1.0))))
-        return false;
-    if(any(lessThan(sample, vec3(0.0))))
-        return false;
-
-    return !(any(greaterThan(sample, vec3(1.0))) || any(lessThan(sample, vec3(0.0)))); */
-
     if(any(greaterThan(sample, vec3(1.0))) || any(lessThan(sample, vec3(0.0))))
         return false;
     return true;
@@ -143,11 +134,14 @@ void rayTraversal(in vec3 first, in vec3 last) {
 
         // if opacity greater zero, apply compositing
         if (color.a > 0.0) {
+            //color.a = 1.0 - pow(1.0 - color.a, 1.0/opacityCorrection_);
+            //color.a /= opacityCorrection_;
+            //color.a = MV_OPACITY_CORRECTION(color.a);
             RC_BEGIN_COMPOSITING
             //TODO: adapt t, tDepth ?
-            result = RC_APPLY_COMPOSITING(result, color, worldSamplePos, voxel1.xyz, t, tDepth);
-            result1 = RC_APPLY_COMPOSITING_1(result1, color, worldSamplePos, voxel1.xyz, t, tDepth);
-            result2 = RC_APPLY_COMPOSITING_2(result2, color, worldSamplePos, voxel1.xyz, t, tDepth);
+            result = RC_APPLY_COMPOSITING_1(result, color, worldSamplePos, voxel1.xyz, t, tDepth);
+            result1 = RC_APPLY_COMPOSITING_2(result1, color, worldSamplePos, voxel1.xyz, t, tDepth);
+            result2 = RC_APPLY_COMPOSITING_3(result2, color, worldSamplePos, voxel1.xyz, t, tDepth);
             RC_END_COMPOSITING
         }
 
@@ -174,9 +168,9 @@ void rayTraversal(in vec3 first, in vec3 last) {
         // if opacity greater zero, apply compositing
         if (color2.a > 0.0) {
             RC_BEGIN_COMPOSITING
-            result = RC_APPLY_COMPOSITING(result, color2, worldSamplePos, voxel2.xyz, t, tDepth);
-            result1 = RC_APPLY_COMPOSITING_1(result1, color2, worldSamplePos, voxel2.xyz, t, tDepth);
-            result2 = RC_APPLY_COMPOSITING_2(result2, color2, worldSamplePos, voxel2.xyz, t, tDepth);
+            result = RC_APPLY_COMPOSITING_1(result, color2, worldSamplePos, voxel2.xyz, t, tDepth);
+            result1 = RC_APPLY_COMPOSITING_2(result1, color2, worldSamplePos, voxel2.xyz, t, tDepth);
+            result2 = RC_APPLY_COMPOSITING_3(result2, color2, worldSamplePos, voxel2.xyz, t, tDepth);
             RC_END_COMPOSITING
         }
 #endif
@@ -204,9 +198,9 @@ void rayTraversal(in vec3 first, in vec3 last) {
         // if opacity greater zero, apply compositing
         if (color3.a > 0.0) {
             RC_BEGIN_COMPOSITING
-            result = RC_APPLY_COMPOSITING(result, color3, worldSamplePos, voxel3.xyz, t, tDepth);
-            result1 = RC_APPLY_COMPOSITING_1(result1, color3, worldSamplePos, voxel3.xyz, t, tDepth);
-            result2 = RC_APPLY_COMPOSITING_2(result2, color3, worldSamplePos, voxel3.xyz, t, tDepth);
+            result = RC_APPLY_COMPOSITING_1(result, color3, worldSamplePos, voxel3.xyz, t, tDepth);
+            result1 = RC_APPLY_COMPOSITING_2(result1, color3, worldSamplePos, voxel3.xyz, t, tDepth);
+            result2 = RC_APPLY_COMPOSITING_3(result2, color3, worldSamplePos, voxel3.xyz, t, tDepth);
             RC_END_COMPOSITING
         }
 #endif
@@ -234,9 +228,9 @@ void rayTraversal(in vec3 first, in vec3 last) {
         // if opacity greater zero, apply compositing
         if (color4.a > 0.0) {
             RC_BEGIN_COMPOSITING
-            result = RC_APPLY_COMPOSITING(result, color4, worldSamplePos, voxel4.xyz, t, tDepth);
-            result1 = RC_APPLY_COMPOSITING_1(result1, color4, worldSamplePos, voxel4.xyz, t, tDepth);
-            result2 = RC_APPLY_COMPOSITING_2(result2, color4, worldSamplePos, voxel4.xyz, t, tDepth);
+            result = RC_APPLY_COMPOSITING_1(result, color4, worldSamplePos, voxel4.xyz, t, tDepth);
+            result1 = RC_APPLY_COMPOSITING_2(result1, color4, worldSamplePos, voxel4.xyz, t, tDepth);
+            result2 = RC_APPLY_COMPOSITING_3(result2, color4, worldSamplePos, voxel4.xyz, t, tDepth);
             RC_END_COMPOSITING
         }
 #endif

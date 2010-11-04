@@ -174,6 +174,7 @@ void TransFuncIntensity::updateTexture() {
         tex_->texel<col4>(x) = col4(0, 0, 0, 0);
 
     tex_->uploadTexture();
+    LGL_ERROR;
 
     textureInvalid_ = false;
 }

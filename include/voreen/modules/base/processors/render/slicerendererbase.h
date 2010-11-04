@@ -39,7 +39,8 @@
 #include "voreen/core/datastructures/transfunc/transfunc.h"
 
 #include "voreen/core/properties/transfuncproperty.h"
-#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/optionproperty.h"
 
 #include "voreen/core/ports/volumeport.h"
 
@@ -58,6 +59,7 @@ public:
     SliceRendererBase();
 
 protected:
+    virtual void initialize() throw (VoreenException);
     virtual void deinitialize() throw (VoreenException);
 
     /**
@@ -90,7 +92,10 @@ protected:
 
 protected:
     TransFuncProperty transferFunc_;
-    BoolProperty filterTexture_;
+
+    IntOptionProperty texFilterMode_;         ///< texture filtering mode to use for volume access
+    GLEnumOptionProperty texClampMode_;       ///< texture clamp mode to use for the volume
+    FloatProperty texBorderIntensity_;        ///< clamp border intensity
 
     tgt::Shader* sliceShader_;
 
@@ -99,6 +104,10 @@ protected:
 
     RenderPort outport_;
     VolumePort inport_;
+
+private:
+    void adjustPropertyVisibilities();
+
 };
 
 // ----------------------------------------------------------------------------

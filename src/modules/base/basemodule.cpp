@@ -109,6 +109,7 @@
 #include "voreen/modules/base/processors/proxygeometry/cubeproxygeometry.h"
 #include "voreen/modules/base/processors/proxygeometry/cubemeshproxygeometry.h"
 #include "voreen/modules/base/processors/proxygeometry/explosionproxygeometry.h"
+#include "voreen/modules/base/processors/proxygeometry/multiplanarproxygeometry.h"
 #include "voreen/modules/base/processors/proxygeometry/multivolumeproxygeometry.h"
 #include "voreen/modules/base/processors/proxygeometry/proxygeometry.h"
 
@@ -274,6 +275,7 @@ BaseModule::BaseModule()
     addProcessor(new CubeProxyGeometry());
     addProcessor(new CubeMeshProxyGeometry());
     addProcessor(new ExplosionProxyGeometry());
+    addProcessor(new MultiPlanarProxyGeometry());
     addProcessor(new MultiVolumeProxyGeometry());
 
     // render

@@ -27,6 +27,7 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QDesktopServices>
 #include <QErrorMessage>
 #include <QFile>
 #include <QFileDialog>
@@ -423,6 +424,8 @@ std::vector<std::string> VolumeLoadButton::openFileDialog() {
     QList<QUrl> urls;
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getVolumePath().c_str());
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     dlg.setSidebarUrls(urls);
 
     std::vector<std::string> filenames;

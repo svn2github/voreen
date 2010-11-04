@@ -97,6 +97,7 @@ private:
     VolumePort inportSecond_;
     VolumePort outport_;
 
+    BoolProperty disableOptimization_;
     BoolProperty enableProcessing_;
     OptionProperty<CombineOperation> combineFunction_;
     FloatProperty factorC_;

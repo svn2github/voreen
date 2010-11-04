@@ -68,6 +68,7 @@
 #include "voreen/qt/voreenapplicationqt.h"
 #include "voreen/core/version.h"
 
+#include <QDesktopServices>
 
 namespace voreen {
 
@@ -77,7 +78,7 @@ const int MAX_RECENT_FILES = 8;
 
 // Version number of restoring state of the main window.
 // Increase when incompatible changes happen.
-const int WINDOW_STATE_VERSION = 13;  // V2.6
+const int WINDOW_STATE_VERSION = 14;  // V2.6.1
 
 } // namespace
 
@@ -222,12 +223,11 @@ protected:
 
 } // namespace
 
-VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::string& dataset)
+VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::string& dataset, bool resetSettings)
     : QMainWindow()
     , guiMode_(MODE_NONE)
     , animationEditor_(0)
-    , resetSettings_(false)
-    , resetQSettings_(false)
+    , resetSettings_(resetSettings)
     , canvasPos_(0, 0)
     , canvasSize_(0, 0)
 {
@@ -237,6 +237,12 @@ VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::stri
 
     // initialialize the console early so it gets all the interesting messages
     consolePlugin_ = new ConsolePlugin(this);
+
+    // clear session settings (window states, paths, ...), if specified by cmd line parameter
+    if (resetSettings_) {
+        settings_.clear();
+        LWARNINGC("voreenve.VoreenMainWindow", "Restored session settings");
+    }
 
     // if we have a stylesheet we want the fancy menu bar, please
     if (!qApp->styleSheet().isEmpty())
@@ -248,7 +254,7 @@ VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::stri
     if (!dataset.empty())
         defaultDataset_ = dataset.c_str();
 
-    setMinimumSize(300, 200);
+    setMinimumSize(600, 400);
     setWindowIcon(QIcon(":/voreenve/icons/voreen-logo_64x64.png"));
     setAcceptDrops(true);
 
@@ -548,7 +554,7 @@ void VoreenMainWindow::createMenus() {
     actionMenu_->addAction(rebuildShadersAction_);
 
     QAction* resetQSettingsAction = new QAction("Reset Settings", this);
-    connect(resetQSettingsAction, SIGNAL(triggered()), this, SLOT(resetQSettings()));
+    connect(resetQSettingsAction, SIGNAL(triggered()), this, SLOT(resetSettings()));
     actionMenu_->addAction(resetQSettingsAction);
 
     //
@@ -571,6 +577,10 @@ void VoreenMainWindow::createMenus() {
     helpFirstStepsAct_->setShortcut(tr("F1"));
     connect(helpFirstStepsAct_, SIGNAL(triggered()), this, SLOT(helpFirstSteps()));
     helpMenu_->addAction(helpFirstStepsAct_);
+
+    helpTutorialSlidesAct_ = new QAction(QIcon(":/voreenve/icons/pdf.png"), tr("&Tutorial Slides..."), this);
+    connect(helpTutorialSlidesAct_, SIGNAL(triggered()), this, SLOT(helpTutorialSlides()));
+    helpMenu_->addAction(helpTutorialSlidesAct_);
 
     helpAnimationAct_ = new QAction(QIcon(/*":/voreenve/icons/help.png"*/), tr("&Animation Manual..."), this);
     connect(helpAnimationAct_, SIGNAL(triggered()), this, SLOT(helpAnimation()));
@@ -766,7 +776,7 @@ void VoreenMainWindow::createToolWindows() {
     consoleTool_ = addToolDockWindow(consoleAction, consolePlugin_, "Console", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea);
     consoleTool_->setAllowedAreas(Qt::BottomDockWidgetArea);
     consoleTool_->setFloating(false);
-    consoleTool_->resize(700, 180);
+    consoleTool_->resize(700, 150);
     consoleTool_->setMinimumHeight(100);
 
     // render target debug window
@@ -874,33 +884,33 @@ void VoreenMainWindow::loadSettings() {
         setWindowState(windowState() | Qt::WindowMaximized);
 }
 
-void VoreenMainWindow::resetQSettings() {
-    QMessageBox msgBox;
-    msgBox.setText("This will erase all settings.");
-    msgBox.setInformativeText("Do you want to proceed?");
+void VoreenMainWindow::resetSettings() {
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Reset Settings"));
+    msgBox.setIcon(QMessageBox::Question);
+    msgBox.setText(tr("This will reset the complete window configuration as well as the default paths."));
+    msgBox.setInformativeText(tr("Do you want to proceed?"));
     msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int ret = msgBox.exec();
-    if(ret == QMessageBox::Ok) {
+    if (ret == QMessageBox::Ok) {
         settings_.clear();
-        resetQSettings_ = true;
-        loadWindowSettings();
-        processorListWidget_->loadSettings();
+        resetSettings_ = true;
+        LINFOC("voreenve.VoreenMainWindow", "Restored session settings");
+        QMessageBox::information(this, tr("Settings Restored"), tr("All session settings have been restored. "
+             "Please restart the application for the changes to take effect."));
     }
 }
 
 void VoreenMainWindow::loadWindowSettings() {
     // Restore visibility, position and size of tool windows from settings
     if (!resetSettings_) {
-        if(resetQSettings_) {
-            for (int i=0; i < toolWindows_.size(); ++i) {
-                if (!toolWindows_[i]->objectName().isEmpty()) {
-                        toolWindows_[i]->setVisible(false);
-                }
+        for (int i=0; i < toolWindows_.size(); ++i) {
+            if (!toolWindows_[i]->objectName().isEmpty()) {
+                toolWindows_[i]->setVisible(false);
             }
-            resetQSettings_ = false;
-            return;
         }
+
         settings_.beginGroup("Windows");
         for (int i=0; i < toolWindows_.size(); ++i) {
             if (!toolWindows_[i]->objectName().isEmpty()) {
@@ -939,9 +949,14 @@ void VoreenMainWindow::saveSettings() {
     // write version number of the config file format (might be useful someday)
     settings_.setValue("ConfigVersion", 1);
 
+    // do not save any session settings, if user has resetted them
+    if (resetSettings_)
+        return;
+
     if (guiMode_ == MODE_APPLICATION) {
         applicationModeState_ = saveState(WINDOW_STATE_VERSION);
-    } else if (guiMode_ == MODE_DEVELOPMENT) {
+    }
+    else if (guiMode_ == MODE_DEVELOPMENT) {
         developmentModeState_ = saveState(WINDOW_STATE_VERSION);
         networkEditorWindowState_ = networkEditorWindow_->saveGeometry();
     }
@@ -997,6 +1012,8 @@ void VoreenMainWindow::openNetwork() {
 #ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     fileDialog.setSidebarUrls(urls);
 
     if (fileDialog.exec()) {
@@ -1051,6 +1068,8 @@ bool VoreenMainWindow::saveNetworkAs() {
 #ifndef VRN_DEPLOYMENT
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     fileDialog.setSidebarUrls(urls);
 
     if (fileDialog.exec()) {
@@ -1105,6 +1124,8 @@ void VoreenMainWindow::exportWorkspace() {
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     fileDialog.setSidebarUrls(urls);
 
     if (fileDialog.exec() == false)
@@ -1136,6 +1157,8 @@ void VoreenMainWindow::extractWorkspaceArchive() {
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     fileDialog.setSidebarUrls(urls);
 
     // pass queried filename to overloaded function
@@ -1154,9 +1177,23 @@ void VoreenMainWindow::extractWorkspaceArchive(QString archivFile) {
     // extract archive file
     QString workspaceFile = "";
     QString workspaceDir = "";
+    QString archiveName = QFileInfo(archivFile).baseName();
+    QDir archivePath = QFileInfo(archivFile).absoluteDir();
     workspaceDir = QFileDialog::getExistingDirectory(this, tr("Extract Workspace Archive To..."),
-        workspacePath_, (QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks));
+        archivePath.path(), (QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks));
+
     if (!workspaceDir.isEmpty()) {
+        // create subdirectory with name of archive in target directory
+        QDir dir(workspaceDir);
+        dir.mkdir(archiveName);
+        workspaceDir += "/" + archiveName;
+        if (!dir.exists(archiveName)) {
+           QMessageBox::critical(this, tr("Failure"),
+                tr("Failed to create directory:\n") + workspaceDir);
+            return;
+        }
+
+        // extract workspace to created subdirectory
         try {
             workspaceFile = vis_->extractWorkspaceArchive(archivFile, workspaceDir, true);
         }
@@ -1279,6 +1316,8 @@ void VoreenMainWindow::openWorkspace() {
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     fileDialog.setSidebarUrls(urls);
 
     if (fileDialog.exec()) {
@@ -1343,6 +1382,8 @@ bool VoreenMainWindow::saveWorkspaceAs() {
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getModulePath().c_str());
 #endif
     urls << QUrl::fromLocalFile(VoreenApplication::app()->getDataPath().c_str());
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
     fileDialog.setSidebarUrls(urls);
 
     if (fileDialog.exec()) {
@@ -1617,6 +1658,11 @@ void VoreenMainWindow::helpFirstSteps() {
     connect(this, SIGNAL(closeMainWindow()), help, SLOT(close()));
 }
 
+void VoreenMainWindow::helpTutorialSlides() {
+    QString path(VoreenApplication::app()->getDocumentationPath("vis2010-tutorial-slides.pdf").c_str());
+    QDesktopServices::openUrl(QUrl(QString::fromStdString("file:///") + path, QUrl::TolerantMode));
+}
+
 void VoreenMainWindow::helpAnimation() {
     QString path(VoreenApplication::app()->getDocumentationPath("animation/animation.html").c_str());
     HelpBrowser* help = new HelpBrowser(QUrl::fromLocalFile(path), tr("VoreenVE Animation Manual"));
@@ -1736,7 +1782,6 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
     setUpdatesEnabled(false);
 
     // adjust property list widget at last, since this is quite expensive and may flicker
-//    qApp->processEvents(); //TODO: seems unneccessary
     if (guiMode == MODE_APPLICATION)
         propertyListWidget_->setState(PropertyListWidget::LIST, Property::USER);
     else
@@ -1847,6 +1892,7 @@ void VoreenMainWindow::snapshotActionTriggered(bool /*triggered*/) {
         }
     }
 }
+
 
 
 } // namespace
