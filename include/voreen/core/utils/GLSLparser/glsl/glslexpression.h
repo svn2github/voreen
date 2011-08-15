@@ -2,7 +2,8 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2010 The Voreen Team. <http://www.voreen.org>   *
+ * Created between 2005 and 2011 by The Voreen Team                   *
+ * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
