@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,6 +26,7 @@
  *                                                                    *
  **********************************************************************/
 
+#include <QWidget>
 #include <QComboBox>
 #include <QDialog>
 #include <QDoubleSpinBox>
@@ -37,19 +38,23 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
-#include "voreen/core/io/volumeserializerpopulator.h"
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
+#include "voreen/core/properties/propertywidget.h"
 #include "voreen/core/properties/matrixproperty.h"
-#include "voreen/qt/widgets/rawvolumewidget.h"
-#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
+#include "voreen/core/io/volumeserializerpopulator.h"
 
+#include "voreen/qt/widgets/rawvolumewidget.h"
+#include "voreen/qt/widgets/property/qpropertywidget.h"
 
 namespace voreen {
 
-RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::string& objectModel, std::string& format,
+RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::string& objectModel, std::string& format, int& numFrames,
                                  tgt::ivec3& dim, tgt::vec3& spacing, int& headerSkip, bool& bigEndian, tgt::mat4& trafoMat, int fixedZDim)
     : QDialog(parent)
     , objectModel_(objectModel)
     , format_(format)
+    , numFrames_(numFrames)
     , dim_(dim)
     , spacing_(spacing)
     , trafoMat_(trafoMat)
@@ -61,6 +66,7 @@ RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::
     QHBoxLayout* datatypeModelLayout = new QHBoxLayout();
     QVBoxLayout* datatypeBoxLayout = new QVBoxLayout();
     QVBoxLayout* objectModelBoxLayout = new QVBoxLayout();
+    QVBoxLayout* numTimeFramesBoxLayout = new QVBoxLayout();
     QHBoxLayout* headerSkipBoxLayout = new QHBoxLayout();
     QHBoxLayout* endiannessBoxLayout_ = new QHBoxLayout();
     QHBoxLayout* headerSkipEndiannessBoxLayout = new QHBoxLayout();
@@ -78,6 +84,7 @@ RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::
 
     QGroupBox* datatypeBox = new QGroupBox(this);
     QGroupBox* objectModelBox = new QGroupBox(this);
+    QGroupBox* numTimeFramesBox = new QGroupBox(this);
     QGroupBox* headerSkipBox = new QGroupBox(this);
     QGroupBox* endiannessBox_ = new QGroupBox(this);
     QGroupBox* dimensionBox = new QGroupBox(this);
@@ -94,13 +101,24 @@ RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::
     datatypeComboBox_->addItem("Integer 8-bit",         "CHAR");
     datatypeComboBox_->addItem("Integer 16-bit",        "SHORT");
     datatypeComboBox_->addItem("Integer 32-bit",        "INT");
-    datatypeComboBox_->addItem("Float 8-bit",           "FLOAT8");
-    datatypeComboBox_->addItem("Float 16-bit",          "FLOAT16");
     datatypeComboBox_->addItem("Float 32-bit",          "FLOAT");
+
     objectModelComboBox_ = new QComboBox();
-    objectModelComboBox_->addItem("Intensity",  "I");
-    objectModelComboBox_->addItem("RGB",        "RGB");
-    objectModelComboBox_->addItem("RGBA",       "RGBA");
+    objectModelComboBox_->addItem("Intensity",              "I");
+    objectModelComboBox_->addItem("RGB",                    "RGB");
+    objectModelComboBox_->addItem("RGBA",                   "RGBA");
+    objectModelComboBox_->addItem("Tensor Upper Diagonal",  "TENSOR_UP");
+    objectModelComboBox_->addItem("Tensor Lower Diagonal",  "TENSOR_LOW");
+    objectModelComboBox_->addItem("Tensor Diagonal Order",  "TENSOR_DIAG");
+    objectModelComboBox_->addItem("Tensor Upper Diagonal Side-by-Side",  "TENSOR_FUSION_UP");
+    objectModelComboBox_->addItem("Tensor Lower Diagonal Side-by-Side",  "TENSOR_FUSION_LOW");
+    objectModelComboBox_->addItem("Tensor Diagonal Order Side-by-Side",  "TENSOR_FUSION_DIAG");
+
+    numTimeFramesSpin_ = new QSpinBox();
+    numTimeFramesSpin_->setMinimumWidth(60);
+    numTimeFramesSpin_->setMinimum(1);
+    numTimeFramesSpin_->setMaximum(512);
+
 
     objectModelBox->setTitle("Object Model");
     objectModelBox->setLayout(objectModelBoxLayout);
@@ -109,6 +127,10 @@ RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::
     datatypeBoxLayout->addWidget(datatypeComboBox_);
     datatypeBox->setLayout(datatypeBoxLayout);
     datatypeBox->setTitle("Data Type");
+
+    numTimeFramesBox->setTitle("Number of Frames");
+    numTimeFramesBox->setLayout(numTimeFramesBoxLayout);
+    numTimeFramesBoxLayout->addWidget(numTimeFramesSpin_);
 
     headerSkipSpin_->setMinimumWidth(60);
     headerSkipBox->setTitle("Header Skip");
@@ -202,15 +224,26 @@ RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::
     QHBoxLayout* matrixLayout = new QHBoxLayout();
     QLabel* trafoLabel = new QLabel("Transformation matrix", this);
     matrixLayout->addWidget(trafoLabel);
-    QPropertyWidgetFactory* qpwf = new QPropertyWidgetFactory();
-    trafoMatWidget_ = qpwf->createWidget(trafoMatProp_);
+    trafoMatWidget_ = 0;
+    const std::vector<VoreenModule*>& modules = VoreenApplication::app()->getModules();
+    for (size_t m=0; m<modules.size(); m++) {
+        PropertyWidget* propWidget = VoreenApplication::app()->createPropertyWidget(trafoMatProp_);
+        if (propWidget) {
+            trafoMatWidget_ = dynamic_cast<QPropertyWidget*>(propWidget);
+            if (!trafoMatWidget_) {
+                LERRORC("voreen.qt.RawVolumeWidget", "generated trafoMatProp_ widget is not of type QPropertyWidget");
+                return;
+            }
+        }
+    }
+    tgtAssert(trafoMatWidget_, "trafoMatWidget_ is 0");
     connect(trafoMatWidget_, SIGNAL(modified()), this, SLOT(updateValues()));
     matrixLayout->addWidget(trafoMatWidget_);
-    delete qpwf;
     mainLayout->addWidget(filenameLabel);
 
     datatypeModelLayout->addWidget(datatypeBox, 4);
     datatypeModelLayout->addWidget(objectModelBox, 3);
+    datatypeModelLayout->addWidget(numTimeFramesBox, 2);
     mainLayout->addLayout(datatypeModelLayout);
 
     headerSkipEndiannessBoxLayout->addWidget(headerSkipBox, 4);
@@ -224,6 +257,7 @@ RawVolumeWidget::RawVolumeWidget(QWidget* parent, const QString& filename, std::
 
     connect(datatypeComboBox_, SIGNAL(currentIndexChanged(int)), this, SLOT(updateValues()));
     connect(objectModelComboBox_, SIGNAL(currentIndexChanged(int)), this, SLOT(updateValues()));
+    connect(numTimeFramesSpin_, SIGNAL(valueChanged(int)), this, SLOT(updateValues()));
     connect(headerSkipSpin_, SIGNAL(valueChanged(int)), this, SLOT(updateValues()));
     connect(endiannessCombo_, SIGNAL(currentIndexChanged(int)), this, SLOT(updateValues()));
 
@@ -259,6 +293,7 @@ void RawVolumeWidget::updateValues() {
 
     objectModel_ = objectModelComboBox_->itemData(objectModelComboBox_->currentIndex()).toString().toStdString();
     format_ = datatypeComboBox_->itemData(datatypeComboBox_->currentIndex()).toString().toStdString();
+    numFrames_ = numTimeFramesSpin_->value();
     headerSkip_ = headerSkipSpin_->value();
     bigEndian_ = endiannessCombo_->itemData(endiannessCombo_->currentIndex()).toBool();
 

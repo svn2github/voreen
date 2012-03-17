@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,7 +27,6 @@
  **********************************************************************/
 
 #include "voreen/core/properties/matrixproperty.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 namespace voreen {
 
@@ -38,12 +37,35 @@ FloatMat2Property::FloatMat2Property(const std::string& id, const std::string& g
         invalidationLevel)
 {}
 
-PropertyWidget* FloatMat2Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+FloatMat2Property::FloatMat2Property() 
+    : NumericProperty<tgt::mat2>("", "", tgt::mat2(0.f), tgt::mat2(-10.f), tgt::mat2(10.f), tgt::mat2(0.1f),
+        Processor::INVALID_RESULT)
+{}
+
+Property* FloatMat2Property::create() const {
+    return new FloatMat2Property();
 }
 
-std::string FloatMat2Property::getTypeString() const {
-    return "FloatMatrix2x2";
+Variant FloatMat2Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = ((get() - getMinValue()) / (getMaxValue() - getMinValue())).t00;
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatMat2Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getMat2());
+}
+
+int FloatMat2Property::getVariantType() const {
+    return Variant::VariantTypeMat2;
 }
 
 //---------------------------------------------------------------------------
@@ -55,12 +77,35 @@ FloatMat3Property::FloatMat3Property( const std::string& id, const std::string& 
         invalidationLevel)
 {}
 
-PropertyWidget* FloatMat3Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+FloatMat3Property::FloatMat3Property() 
+    : NumericProperty<tgt::mat3>("", "", tgt::mat3(0.f), tgt::mat3(-10.f), tgt::mat3(10.f), tgt::mat3(0.1f),
+        Processor::INVALID_RESULT)
+{}
+
+Property* FloatMat3Property::create() const {
+    return new FloatMat3Property();
 }
 
-std::string FloatMat3Property::getTypeString() const {
-    return "FloatMatrix3x3";
+Variant FloatMat3Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = (get() - (getMinValue()) / (getMaxValue() - getMinValue())).t00;
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatMat3Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getMat3());
+}
+
+int FloatMat3Property::getVariantType() const {
+    return Variant::VariantTypeMat3;
 }
 
 //---------------------------------------------------------------------------
@@ -72,12 +117,35 @@ FloatMat4Property::FloatMat4Property(const std::string& id, const std::string& g
         invalidationLevel)
 {}
 
-PropertyWidget* FloatMat4Property::createWidget(PropertyWidgetFactory* f)  {
-    return f->createWidget(this);
+FloatMat4Property::FloatMat4Property() 
+    : NumericProperty<tgt::mat4>("", "", tgt::mat4(0.f), tgt::mat4(-10.f), tgt::mat4(10.f), tgt::mat4(0.1f),
+        Processor::INVALID_RESULT)
+{}
+
+Property* FloatMat4Property::create() const {
+    return new FloatMat4Property();
 }
 
-std::string FloatMat4Property::getTypeString() const {
-    return "FloatMatrix4x4";
+Variant FloatMat4Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = (get() - (getMinValue()) / (getMaxValue() - getMinValue())).t00;
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatMat4Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getMat4());
+}
+
+int FloatMat4Property::getVariantType() const {
+    return Variant::VariantTypeMat4;
 }
 
 } // namespace voreen

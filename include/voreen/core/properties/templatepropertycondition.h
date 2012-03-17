@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -106,7 +106,7 @@ public:
         if (observed_ == 0)
             return false;
         else
-            return (observed_->get() == value_);
+            return (value_ == observed_->get());
     }
 };
 

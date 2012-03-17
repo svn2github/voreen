@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -57,7 +57,6 @@ AboutBox::AboutBox(const QString& application, const QString& description, QWidg
     ui.labelRight->setText(s);
 
     QStringList developers;
-    developers << QString::fromLatin1("Alexander Bock");
     developers << QString::fromLatin1("Benjamin Bolte");
     developers << QString::fromLatin1("Helge Böschen");
     developers << QString::fromLatin1("Raphael Bruns");
@@ -85,13 +84,13 @@ AboutBox::AboutBox(const QString& application, const QString& description, QWidg
     developers << QString::fromLatin1("Christian Schulte zu Berge");
     developers << QString::fromLatin1("Michael Specht");
     developers << QString::fromLatin1("Fabian Spiegel");
+    developers << QString::fromLatin1("Erik Sundén");
     developers << QString::fromLatin1("David Terbeek");
     developers << QString::fromLatin1("Christian Vorholt");
     developers << QString::fromLatin1("Carolin Walter");
     developers << QString::fromLatin1("Michael Weinkath");
     developers << QString::fromLatin1("Frank Wisniewski");
-//    developers.replaceInStrings(" ", "&nbsp;");
-
+    //developers.replaceInStrings(" ", "&nbsp;");
 
     QString developersString;
     for (int i=0; i < developers.size(); i++) {
@@ -104,13 +103,14 @@ AboutBox::AboutBox(const QString& application, const QString& description, QWidg
     ui.labelDevelopers->setText(s);
 
     QStringList mainDevelopers;
+    mainDevelopers << QString::fromLatin1("Alexander Bock");
     mainDevelopers << QString::fromLatin1("Stefan Diepenbrock");
     mainDevelopers << QString::fromLatin1("Florian Lindemann");
     mainDevelopers << QString::fromLatin1("Jörg Mensmann");
     mainDevelopers << QString::fromLatin1("Jennis Meyer-Spradow");
     mainDevelopers << QString::fromLatin1("Jörg-Stefan Praßni");
     mainDevelopers << QString::fromLatin1("Timo Ropinski");
-//    mainDevelopers.replaceInStrings(" ", "&nbsp;");
+    //mainDevelopers.replaceInStrings(" ", "&nbsp;");
 
     QString mainDevelopersString;
     for (int i=0; i < mainDevelopers.size(); i++) {
@@ -128,7 +128,6 @@ AboutBox::AboutBox(const QString& application, const QString& description, QWidg
     setStyleSheet("QDialog { background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #444444, stop:1 #aaaaaa) }\n"
                   "QFrame#frame { background-color: #8E8E8E }");
 #endif
-
 
     adjustSize();
 }

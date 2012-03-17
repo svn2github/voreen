@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -47,8 +47,7 @@ namespace voreen {
  *
  * @see VolumeCollection
  */
-class VolumeContainer : public VolumeCollection {
-
+class VRN_CORE_API VolumeContainer : public VolumeCollection {
 public:
 
     VolumeContainer();
@@ -68,7 +67,7 @@ public:
     * does take ownership of the added VolumeHandle and therefore
     * deletes it on its own destruction.
     */
-    virtual void add(VolumeHandle* volumeHandle);
+    virtual void add(VolumeHandleBase* volumeHandle);
 
    /**
     * Adds VolumeHandles contained by the passed VolumeCollection
@@ -87,7 +86,7 @@ public:
      *
      * @see releaseVolume
      */
-    virtual void remove(const VolumeHandle* handle);
+    virtual void remove(const VolumeHandleBase* handle);
 
     /**
      * Deletes all VolumeHandles contained by the passed collection
@@ -106,55 +105,10 @@ public:
     virtual void clear();
 
     /**
-     * Loads the data set with the specified filename and
-     * adds it to the collection. The container takes
-     * ownership of the loaded volume and deletes it
-     * on destruction. In case, the specified file
-     * contains more than one file, all files are loaded.
-     *
-     * @param filename the volume data file to load
-     *
-     * @throw tgt::FileException
-     * @throw std::bad_alloc
-     *
-     * @return VolumeCollection containing VolumeHandles that wrap the loaded volumes,
-     *     or 0 in case no volume could be loaded
-     */
-    virtual VolumeCollection* loadVolume(const std::string& filename)
-        throw (tgt::FileException, std::bad_alloc);
-
-    /**
-     * Loads a raw data set from the specified file
-     * and adds it to the collection. The container takes
-     * ownership of the loaded volume and deletes it
-     * on destruction.
-     *
-     * @param filename the volume data file to load
-     * @param objectModel \c I (intensity) or \c RGBA
-     * @param format voxel data format, one of \c UCHAR, \c USHORT, \c USHORT_12 (for CT datasets),
-     *        \c FLOAT 8 and \c FLOAT16.
-     * @param dimensions number of voxels in x-, y- and z-direction
-     * @param spacing size of a single voxel
-     * @param headerskip number of bytes to skip at the beginning of the data file
-     * @param bigEndian if set to true, the data is converted from big endian to little endian byte order
-     *
-     * @throw tgt::FileException
-     * @throw std::bad_alloc
-     *
-     * @return VolumeHandle wrapping the loaded volume, or 0 in case the volume could not be loaded
-     */
-    virtual VolumeHandle* loadRawVolume(const std::string& filename,
-                                        const std::string& objectModel, const std::string& format,
-                                        const tgt::ivec3& dimensions, const tgt::vec3& spacing = tgt::vec3(1.f),
-                                        int headerskip = 0, bool bigEndian = false)
-        throw (tgt::FileException, std::bad_alloc);
-
-
-    /**
      * Removes the passed volume handle from the container
      * without deleting it.
      */
-    virtual void release(const VolumeHandle* handle);
+    virtual void release(const VolumeHandleBase* handle);
 
     /**
      * Removes all contained volume handles from the container

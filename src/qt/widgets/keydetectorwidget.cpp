@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -52,13 +52,13 @@ QString ModifierDetectorWidget::getStringForModifier(Qt::KeyboardModifiers modif
         modifierString += "Shift";
 
     if (modifier & Qt::ControlModifier)
-        modifierString += (modifierString == "") ? "Ctrl" : " + Ctrl";
+        modifierString += ((modifierString == "") ? "Ctrl" : " + Ctrl");
 
     if (modifier & Qt::AltModifier)
-        modifierString += (modifierString == "") ? "Alt" : " + Alt";
+        modifierString += ((modifierString == "") ? "Alt" : " + Alt");
 
     if (modifier & Qt::MetaModifier)
-        modifierString += (modifierString == "") ? "Meta" : " + Meta";
+        modifierString += ((modifierString == "") ? "Meta" : " + Meta");
 
     return modifierString;
 }

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -42,13 +42,6 @@ namespace voreen {
 class TransFuncFactory : public SerializableFactory {
 public:
     /**
-     * Returns the singleton instance of the tranfer function factory.
-     *
-     * @returns the instance.
-     */
-    static TransFuncFactory* getInstance();
-
-    /**
      * @see SerializableFactory::getTypeString
      */
     virtual const std::string getTypeString(const std::type_info& type) const;
@@ -58,16 +51,6 @@ public:
      */
     virtual Serializable* createType(const std::string& typeString);
 
-private:
-    /**
-     * Default constructor.
-     */
-    TransFuncFactory();
-
-    /**
-     * Singleton instance of the transfer function factory.
-     */
-    static TransFuncFactory* instance_;
 };
 
 } // namespace voreen

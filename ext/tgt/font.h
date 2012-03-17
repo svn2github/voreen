@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2009 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -41,7 +41,7 @@ namespace tgt {
  * By default a font size of 72 is set, but can be changed via the \sa setSize method.
  * If TGT_HAS_FTGL is not set, the methods do nothing but will be present anyway.
  */
-class Font {
+class TGT_API Font {
 public:
     enum FontType {
         NIL,
@@ -193,14 +193,14 @@ public:
      * \sa pos The pen position of the first character
      * \sa text The text to be rendered
      */
-    virtual void render(const tgt::vec3& pos, const std::string& text);
+    virtual void render(const tgt::vec3& pos, const std::string& text) const;
 
     /**
      * Computes the bounding box for the the text 'text' beginning at position 'pos'.
      * \sa pos The pen position of the first character
      * \sa text The text for which the bounding box should be computed
      */
-    virtual tgt::Bounds getBounds(const tgt::vec3& pos, const std::string& text);
+    virtual tgt::Bounds getBounds(const tgt::vec3& pos, const std::string& text) const;
 
 protected:
 #ifdef TGT_HAS_FTGL

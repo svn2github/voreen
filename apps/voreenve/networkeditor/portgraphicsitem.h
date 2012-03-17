@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -171,6 +171,12 @@ public:
      */
     void setCurrentArrow(PortArrowGraphicsItem* arrow);
 
+    /**
+     * Returns an image of this ports content. Will return 0 if this port is no RenderPort or if the
+     * image generation was not successfull
+     */
+    QImage* getRenderPortImage() const;
+
 signals:
     /**
      * This signal is emitted if a new arrow is created. This signal only appears
@@ -186,7 +192,7 @@ signals:
 
 protected:
     /**
-     * Returns the color for the internal port type.</br>
+     * Returns the color for the internal port type.
      * <ul>
      * <li>VolumePort = Red</li>
      * <li>CoProcessorPort = Green</li>
@@ -218,6 +224,7 @@ private:
         ~TCTooltip();
 
         void initialize(RenderTarget* rt);
+        QImage* getImage() const;
 
     protected:
         void paint(QPainter *painter, const QStyleOptionGraphicsItem* option, QWidget* widget);

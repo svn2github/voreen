@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,65 +37,18 @@ using tgt::plane;
 
 namespace voreen {
 
-/*
- * constructor
- */
-
-VolumeTexture::VolumeTexture(GLubyte* data,
-                             const mat4& matrix,
-                             const vec3& llf,
-                             const vec3& urb,
-                             const ivec3& dimensions,
+VolumeTexture::VolumeTexture(const GLubyte* data, const tgt::ivec3& dimensions,
                              GLint format,
                              GLint internalformat,
                              GLenum dataType,
                              tgt::Texture::Filter filter)
-  : tgt::Texture(data, dimensions, format, internalformat, dataType, filter),
-    matrix_(matrix), llf_(llf), urb_(urb)
+  : tgt::Texture(const_cast<GLubyte*>(data), dimensions, format, internalformat, dataType, filter)
 {
-
     tgtAssert(tgt::hand(tgt::greaterThan(dimensions, ivec3(1))),
         "Invalid volume dimensions: Must be greater one in all directions");
 
     // Always set to a 3d texture
     setType(GL_TEXTURE_3D);
-
-    // calculate cubeSize
-    cubeSize_ = abs(urb - llf);
-
-    // calculate position
-    center_ = llf + cubeSize_ * vec3(0.5f, 0.5f, -0.5f); // keep right hand coordinate sytem in mind
-
-    // calculate cube vertices
-    plane::createCubeVertices(llf, urb, cubeVertices_);
-}
-
-/*
- * getters and setters
- */
-
-mat4 VolumeTexture::getMatrix() const {
-    return matrix_;
-}
-
-vec3 VolumeTexture::getCenter() const {
-    return center_;
-}
-
-vec3 VolumeTexture::getLLF() const {
-    return llf_;
-}
-
-tgt::vec3 VolumeTexture::getURB() const {
-    return urb_;
-}
-
-const tgt::vec3* VolumeTexture::getCubeVertices() const {
-    return cubeVertices_;
-}
-
-tgt::vec3 VolumeTexture::getCubeSize() const {
-    return cubeSize_;
 }
 
 } // namespace voreen

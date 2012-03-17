@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,51 +29,24 @@
 #ifndef VRN_PROPERTYWIDGETFACTORY_H
 #define VRN_PROPERTYWIDGETFACTORY_H
 
-#include "voreen/core/properties/properties_decl.h"
-
 namespace voreen {
 
+class Property;
+class PropertyWidget;
+
 /**
- * A PropertyWidgetFactory creates Widgets for every Property.
- * See Property::createWidget(PropertyWidgetFactory* f) for how it is used.
+ * Interface for factories that create GUI representations for properties.
+ *
+ * If a module contains custom properties, it is also expected to provide
+ * a suitable PropertyWidgetFactory for these properties.
+ *
+ * @see VoreenModule::addPropertyWidgetFactory
  */
 class PropertyWidgetFactory {
 public:
     virtual ~PropertyWidgetFactory() {}
-    virtual PropertyWidget* createWidget(BoolProperty* p) = 0;
-    virtual PropertyWidget* createWidget(ButtonProperty* p) = 0;
-    virtual PropertyWidget* createWidget(CameraProperty* p) = 0;
-    virtual PropertyWidget* createWidget(ColorMapProperty* p) = 0;
-    virtual PropertyWidget* createWidget(FileDialogProperty* p) = 0;
-    virtual PropertyWidget* createWidget(FloatProperty* p) = 0;
-    virtual PropertyWidget* createWidget(FloatVec2Property* p) = 0;
-    virtual PropertyWidget* createWidget(FloatVec3Property* p) = 0;
-    virtual PropertyWidget* createWidget(FloatVec4Property* p) = 0;
-    virtual PropertyWidget* createWidget(FontProperty* p) = 0;
-    virtual PropertyWidget* createWidget(IntProperty* p) = 0;
-    virtual PropertyWidget* createWidget(IntVec2Property* p) = 0;
-    virtual PropertyWidget* createWidget(IntVec3Property* p) = 0;
-    virtual PropertyWidget* createWidget(IntVec4Property* p) = 0;
-    virtual PropertyWidget* createWidget(FloatMat2Property* p) = 0;
-    virtual PropertyWidget* createWidget(FloatMat3Property* p) = 0;
-    virtual PropertyWidget* createWidget(FloatMat4Property* p) = 0;
-    virtual PropertyWidget* createWidget(PlotEntitiesProperty* p) = 0;
-    virtual PropertyWidget* createWidget(OptionPropertyBase* p) = 0;
-    virtual PropertyWidget* createWidget(PlotPredicateProperty* p) = 0;
-    virtual PropertyWidget* createWidget(PlotDataProperty* p) = 0;
-    virtual PropertyWidget* createWidget(PlotSelectionProperty* p) = 0;
-    virtual PropertyWidget* createWidget(PropertyVector* p) = 0;
-    virtual PropertyWidget* createWidget(ShaderProperty* p) = 0;
-    virtual PropertyWidget* createWidget(StringProperty* p) = 0;
-    virtual PropertyWidget* createWidget(TransFuncProperty* p) = 0;
-    virtual PropertyWidget* createWidget(VolumeCollectionProperty* p) = 0;
-    virtual PropertyWidget* createWidget(VolumeHandleProperty* p) = 0;
 
-
-    // deprecated
-    virtual PropertyWidget* createWidget(ColorProperty* p) = 0;
-    virtual PropertyWidget* createWidget(LightProperty* p) = 0;
-
+    virtual PropertyWidget* createWidget(Property*) const = 0;
 };
 
 } // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,7 +28,7 @@
 
 #include "voreen/qt/widgets/transfunc/doubleslider.h"
 
-#include "tgt/math.h"
+#include "tgt/tgt_math.h"
 
 #include <math.h>
 
@@ -48,8 +48,8 @@ DoubleSlider::DoubleSlider(QWidget* parent)
     leftSliderActive_ = false;
     rightSliderActive_ = false;
     minimalAllowedSliderDistance_ = 1.f/255.f;
-    sliderWidth_ = 5;
-    setFixedHeight(20);
+    sliderWidth_ = 4;
+    setFixedHeight(16);
 }
 
 void DoubleSlider::setOffsets(int left, int right) {

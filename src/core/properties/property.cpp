@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,7 +27,6 @@
  **********************************************************************/
 
 #include "voreen/core/properties/property.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 #include "voreen/core/properties/propertywidget.h"
 
 namespace voreen {
@@ -40,15 +39,31 @@ Property::Property(const std::string& id, const std::string& guiText, Processor:
     , widgetsEnabled_(true)
     , visible_(true)
     , lod_(USER)
-    , views_(1)
+    , views_(DEFAULT)
     , groupId_("")
     , interactionModeVisited_(false)
     , serializeValue_(false)
     , linkCheckVisited_(false)
     , initialGuiName_(guiText)
 {
-    tgtAssert(!id.empty(), "Property's id must not be empty");
+//    tgtAssert(!id.empty(), "Property's id must not be empty");
 }
+
+Property::Property() 
+    : id_("")
+    , guiName_("")
+    , owner_(0)
+    , invalidationLevel_(Processor::INVALID_RESULT)
+    , widgetsEnabled_(true)
+    , visible_(true)
+    , lod_(USER)
+    , views_(DEFAULT)
+    , groupId_("")
+    , interactionModeVisited_(false)
+    , serializeValue_(false)
+    , linkCheckVisited_(false)
+    , initialGuiName_("")
+{}
 
 Property::~Property() {
     disconnectWidgets();
@@ -57,8 +72,12 @@ Property::~Property() {
         delete (*it);
 }
 
-Processor::InvalidationLevel Property::getInvalidationLevel() {
+Processor::InvalidationLevel Property::getInvalidationLevel() const {
     return invalidationLevel_;
+}
+
+void Property::setInvalidationLevel(Processor::InvalidationLevel invalidationLevel) {
+    invalidationLevel_ = invalidationLevel;
 }
 
 void Property::setWidgetsEnabled(bool enabled) {
@@ -71,11 +90,11 @@ bool Property::getWidgetsEnabled() const {
     return widgetsEnabled_;
 }
 
-void Property::initialize() throw (VoreenException) {
+void Property::initialize() throw (tgt::Exception) {
     // currently nothing to do
 }
 
-void Property::deinitialize() throw (VoreenException) {
+void Property::deinitialize() throw (tgt::Exception) {
     // currently nothing to do
 }
 
@@ -96,7 +115,7 @@ void Property::setViews(View views) {
 }
 
 Property::View Property::getViews() const {
-    return View(views_);
+    return views_;
 }
 
 void Property::setGroupID(const std::string& gid) {
@@ -116,8 +135,14 @@ PropertyOwner* Property::getOwner() const {
 }
 
 void Property::addWidget(PropertyWidget* widget) {
-    if (widget)
+    if (widget) {
+        if (!visible_)
+            widget->setVisible(visible_);
+        if (!widgetsEnabled_)
+            widget->setEnabled(false);
+
         widgets_.insert(widget);
+    }
 }
 
 void Property::removeWidget(PropertyWidget* widget) {
@@ -163,10 +188,6 @@ std::string Property::getFullyQualifiedGuiName() const {
         return getGuiName();
 }
 
-PropertyWidget* Property::createWidget(PropertyWidgetFactory*) {
-    return 0;
-}
-
 void Property::serialize(XmlSerializer& s) const {
     if(serializeValue_)
         return;
@@ -179,6 +200,7 @@ void Property::serialize(XmlSerializer& s) const {
 
     for (std::set<PropertyWidget*>::const_iterator it = widgets_.begin(); it != widgets_.end(); ++it) {
         (*it)->updateMetaData();
+        // FIXME What exactly is this supposed to do? The return value is not used... FL
         (*it)->getWidgetMetaData();
     }
 
@@ -186,7 +208,7 @@ void Property::serialize(XmlSerializer& s) const {
 }
 
 void Property::deserialize(XmlDeserializer& s) {
-    if(serializeValue_)
+    if (serializeValue_)
         return;
 
     // deserialize level-of-detail, if available
@@ -227,18 +249,6 @@ void Property::deserializeValue(XmlDeserializer& s) {
 
 MetaDataContainer& Property::getMetaDataContainer() const {
     return metaDataContainer_;
-}
-
-PropertyWidget* Property::createAndAddWidget(PropertyWidgetFactory* f) {
-    PropertyWidget* widget = createWidget(f);
-    if (widget) {
-        if (!visible_)
-            widget->setVisible(visible_);
-        if (!widgetsEnabled_)
-            widget->setEnabled(false);
-        addWidget(widget);
-    }
-    return widget;
 }
 
 void Property::registerLink(PropertyLink* link) {
@@ -341,8 +351,18 @@ bool Property::isLinkedWith(const Property* dest, bool transitive) const {
     return false;
 }
 
-std::string Property::getTypeString() const {
+std::string Property::getTypeDescription() const {
     return "<unknown>";
 }
+
+Variant Property::getVariant(bool) const {
+    return Variant();
+}
+
+int Property::getVariantType() const {
+    return Variant::VariantTypeInvalid;
+}
+
+void Property::setVariant(const Variant&, bool) {}
 
 } // namespace voreen

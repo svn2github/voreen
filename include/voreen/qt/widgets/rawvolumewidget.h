@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -46,7 +46,7 @@ namespace voreen {
 class RawVolumeWidget : public QDialog {
     Q_OBJECT
 public:
-    RawVolumeWidget(QWidget* parent, const QString& filename, std::string& objectModel, std::string& format,
+    RawVolumeWidget(QWidget* parent, const QString& filename, std::string& objectModel, std::string& format, int& numFrames,
         tgt::ivec3& dim, tgt::vec3& spacing, int& headerSkip, bool& bigEndian, tgt::mat4& trafoMat,  int fixedZDim = -1);
     ~RawVolumeWidget();
 
@@ -57,6 +57,7 @@ private:
     QPushButton* submit_;
     QComboBox* datatypeComboBox_;
     QComboBox* objectModelComboBox_;
+    QSpinBox* numTimeFramesSpin_;
     QSpinBox* headerSkipSpin_;
     QComboBox* endiannessCombo_;
     QSpinBox* xDimension_;
@@ -68,6 +69,7 @@ private:
 
     std::string& objectModel_;
     std::string& format_;
+    int& numFrames_;
     tgt::ivec3& dim_;
     tgt::vec3& spacing_;
     tgt::mat4& trafoMat_;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,7 +30,7 @@
 #define VRN_NETWORKEDITOR_H
 
 #include "voreen/core/network/processornetwork.h"
-#include "voreen/qt/widgets/snapshotplugin.h"
+#include "voreen/qt/widgets/snapshotwidget.h"
 
 #include <QGraphicsView>
 #include <QMenu>
@@ -47,7 +47,9 @@ class AggregationMetaData;
 class HasToolTip;
 class LinkArrowGraphicsItem;
 class LinkEvaluatorBase;
+class NetworkEditor;
 class NetworkEvaluator;
+class AnnotationGraphicsItem;
 class PortArrowGraphicsItem;
 class PortGraphicsItem;
 class ProcessorGraphicsItem;
@@ -55,6 +57,24 @@ class PropertyGraphicsItem;
 class RootGraphicsItem;
 class TooltipTimer;
 class Workspace;
+
+/**
+ * Widget for taking snapshots of the network graph
+ */
+class NetworkSnapshotPlugin : public SnapshotElement {
+Q_OBJECT
+public:
+    NetworkSnapshotPlugin(NetworkEditor* networkEditorWidget);
+
+public slots:
+    void sizeComboChanged(int);
+
+protected:
+    void saveSnapshot(const QString& filename);
+    void saveSnapshot(const QString& filename, int width, int height);
+
+    NetworkEditor* networkEditorWidget_;
+};
 
 enum NetworkEditorLayer {
     NetworkEditorLayerUndefined,
@@ -70,7 +90,6 @@ class NetworkEditor : public QGraphicsView, public ProcessorNetworkObserver {
 Q_OBJECT
 public:
     NetworkEditor(QWidget* parent = 0, ProcessorNetwork* workspace = 0, NetworkEvaluator* evaluator = 0);
-    ~NetworkEditor();
 
     ProcessorNetwork* getProcessorNetwork();
 
@@ -81,14 +100,14 @@ public:
 
     ProcessorGraphicsItem* getProcessorGraphicsItem(Processor* processor);
 
-    virtual void processorAdded(const Processor* processor);
-    virtual void processorRemoved(const Processor* processor);
-    virtual void propertyLinkAdded(const PropertyLink* link);
-    virtual void propertyLinkRemoved(const PropertyLink* link);
-    virtual void portConnectionAdded(const Port* outport, const Port* inport);
-    virtual void portConnectionRemoved(const Port* outport, const Port* inport);
-    virtual void networkChanged();
-    virtual void processorRenamed(const Processor* processor, const std::string& prevName);
+    void processorAdded(const Processor* processor);
+    void processorRemoved(const Processor* processor);
+    void propertyLinkAdded(const PropertyLink* link);
+    void propertyLinkRemoved(const PropertyLink* link);
+    void portConnectionAdded(const Port* outport, const Port* inport);
+    void portConnectionRemoved(const Port* outport, const Port* inport);
+    void networkChanged();
+    void processorRenamed(const Processor* processor, const std::string& prevName);
 
     NetworkEditorLayer currentLayer() const;
 
@@ -96,6 +115,8 @@ public:
     void translate(qreal dx, qreal dy);
 
     void selectPreviouslySelectedProcessors();
+
+    NetworkSnapshotPlugin* getSnapshotPlugin() const;
 
 public slots:
     void setProcessorNetwork(ProcessorNetwork* network);
@@ -112,6 +133,7 @@ public slots:
 
     void setLayerToDataflow();
     void setLayerToLinking();
+    void toggleNotesLayer();
 
 private slots:
     void copyActionSlot();
@@ -153,6 +175,13 @@ private slots:
 
     // clears the history of the selected PropertyLink
     void clearDependencyHistory();
+
+    // opens a file dialog and saves the image stored in <code>temporaryRenderPortImage_</code>
+    void saveRenderPortImage();
+
+    void createNewAnnotation();
+    void editAnnotation();
+    void removeAnnotation();
 
 signals:
     /**
@@ -227,12 +256,12 @@ protected:
     //void clearClipboard();
 
     PortGraphicsItem* getPortGraphicsItem(const Port* port) const;
+    void removeAnnotation(AnnotationGraphicsItem* annotation);
 
 private:
     typedef std::pair<const PropertyLink*, const PropertyLink*> ArrowLinkInformation;
 
     void centerView();
-
     ProcessorNetwork* processorNetwork_;
     NetworkEvaluator* evaluator_;
 
@@ -248,19 +277,26 @@ private:
     QAction* deleteAction_;
     QAction* deleteLinkAction_;
     QAction* renameAction_;
+    QAction* editAnnotation_;
     QAction* editLinkAction_;
     QAction* aggregateAction_;
     QAction* deaggregateAction_;
     QAction* clearDependencyHistoryAction_;
+    QAction* saveRenderPortImageAction_;
+    QAction* newAnnotationAction_;
 
     QMap<LinkArrowGraphicsItem*, ArrowLinkInformation> linkMap_;
 
     PortArrowGraphicsItem* selectedPortArrow_;
     LinkArrowGraphicsItem* selectedLinkArrow_;
 
+    QImage* temporaryRenderPortImage_;
+
     // Maps from the processors of the current network to their graphic items.
     QMap<Processor*,ProcessorGraphicsItem*> processorItemMap_;
     QList<AggregationGraphicsItem*> aggregationItems_;
+    QList<AnnotationGraphicsItem*> annotationGraphicsItems_;
+
     //QMap<Processor*,AggregationGraphicsItem*> aggregationItemMap_;
 
     //QList<RootGraphicsItem*> clipboardProcessors_;
@@ -268,7 +304,7 @@ private:
     //QList<LinkArrowGraphicsItem*> clipboardLinkArrows_;
 
     // construed as translation vector
-    QPointF sceneTranslate_;
+    QPoint sceneTranslate_;
     // needed, because Qt::MouseMove returns always Qt::NoButton (setting variable on MousePress)
     bool translateScene_;
     bool needsScale_;
@@ -283,6 +319,7 @@ private:
     TooltipTimer* ttimer_;
 
     QWidget* layerButtonContainer_;
+    QToolButton* annotationLayerButton_;
     QToolButton* dataflowLayerButton_;
     QToolButton* linkingLayerButton_;
     QWidget* autoLinkingContainer_;
@@ -295,25 +332,11 @@ private:
 
     NetworkEditorLayer currentLayer_;
 
+    QString snapshotPath_;
+
+    NetworkSnapshotPlugin* snapshotPlugin_;
+
     static const std::string loggerCat_;
-};
-
-/**
- * Widget for taking snapshots of the network graph
- */
-class NetworkSnapshotPlugin : public SnapshotPlugin {
-    Q_OBJECT
-public:
-    NetworkSnapshotPlugin(QWidget* parent, NetworkEditor* networkEditorWidget);
-
-public slots:
-    void sizeComboChanged(int);
-
-protected:
-    void saveSnapshot(const QString& filename);
-    void saveSnapshot(const QString& filename, int width, int height);
-
-    NetworkEditor* networkEditorWidget_;
 };
 
 } // namespace voreen

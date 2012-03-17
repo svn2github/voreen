@@ -27,7 +27,6 @@
 
 #include <qapplication.h>
 
-#include "tgt/config.h"
 #include "tgt/guiapplication.h"
 #include "tgt/qt/qttimer.h"
 #include "tgt/qt/qtcanvas.h"

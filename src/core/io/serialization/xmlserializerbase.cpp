@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -137,6 +137,11 @@ void XmlSerializerBase::registerFactory(SerializableFactory* factory) {
     factories_.push_back(factory);
 }
 
+void XmlSerializerBase::registerFactories(const std::vector<SerializableFactory*>& factories) {
+    for (size_t i=0; i<factories.size(); i++)
+        registerFactory(factories.at(i));
+}
+
 void XmlSerializerBase::setUseAttributes(const bool& useAttributes) {
     useAttributes_ = useAttributes;
 }
@@ -201,5 +206,7 @@ std::string XmlSerializerBase::convertDataToString(const double& data) {
 
     return s;
 }
+
+
 
 } // namespace

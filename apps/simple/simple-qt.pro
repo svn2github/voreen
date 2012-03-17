@@ -1,7 +1,6 @@
 TARGET = simple-qt
 TEMPLATE = app
 LANGUAGE = C++
-
 CONFIG += qt console
 QT += opengl
 
@@ -19,8 +18,4 @@ SOURCES += simple-qt.cpp
 
 unix {
   DEFINES += LINUX
-
-#  LIBS += -lGL -lGLU -lGLEW
-#  LIBS += -lvoreen_core -lziparch
-#  LIBS += -lIL -lILU -lILUT
 }

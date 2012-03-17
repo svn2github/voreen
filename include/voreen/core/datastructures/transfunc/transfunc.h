@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,11 +31,16 @@
 
 #include "voreen/core/io/serialization/serialization.h"
 
+#include "voreen/core/voreencoredefine.h"
 #include "tgt/texture.h"
 #include "tgt/vector.h"
 
 #include <vector>
 #include <string>
+
+namespace tgt {
+    class Shader;
+}
 
 namespace voreen {
 
@@ -45,7 +50,7 @@ namespace voreen {
  * The lookup table can be defined by passing pixel data that is directly
  * assigned to the transfer function's texture.
  */
-class TransFunc : public Serializable {
+class VRN_CORE_API TransFunc : public Serializable {
 public:
 
     /**
@@ -82,6 +87,8 @@ public:
      * @return string representation of the sampler type used by the transfer function
      */
     virtual std::string getSamplerType() const;
+
+    virtual void setUniform(tgt::Shader* shader, const std::string& uniform, const GLint texUnit);
 
     /**
      * Returns the dimensions of the transfer function's texture.
@@ -201,6 +208,21 @@ public:
      * Returns the format of the transfer function texture internally used.
      */
     GLint getFormat() const;
+
+    //TODO: make pure virtual:
+    virtual int getNumDimensions() const {
+        if(dimensions_.z == 1) {
+            if(dimensions_.y == 1)
+                return 1;
+            else
+                return 2;
+        }
+        else
+            return 3;
+    }
+    virtual tgt::vec2 getDomain(int /*dimension = 0*/) const { return tgt::vec2(0.0f, 1.0f); }
+    virtual void setDomain(tgt::vec2 /*domain*/, int /*dimension = 0*/) {} 
+    virtual void setDomain(float lower, float upper, int dimension) { setDomain(tgt::vec2(lower, upper), dimension); } 
 
 protected:
 

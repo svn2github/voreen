@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -266,25 +266,25 @@ void TransFuncQuad::deserialize(XmlDeserializer& s) {
 bool TransFuncQuad::move(const tgt::vec2& offset) {
     // only move the control point when one is grabbed
     if (grabbed_ > -1) {
-        tgt::vec2 temp = coords_[grabbed_] + offset;
+        //tgt::vec2 temp = coords_[grabbed_] + offset;
         // do not move control point when it is outside of allowed region
-        if ((temp.x < 0.f) || (temp.x > 1.f) ||
-            (temp.y < 0.f) || (temp.y > 1.f))
-        {
-            return false;
-        }
-        else
+        //if ((temp.x < 0.f) || (temp.x > 1.f) ||
+            //(temp.y < 0.f) || (temp.y > 1.f))
+        //{
+            //return false;
+        //}
+        //else
             coords_[grabbed_] += offset;
     }
     else {
         for (int i = 0; i < 4; ++i) {
-            tgt::vec2 temp = coords_[i] + offset;
+            //tgt::vec2 temp = coords_[i] + offset;
             // do not move primitive when one point is outside of allowed region
-            if ((temp.x < 0.f) || (temp.x > 1.f) ||
-                (temp.y < 0.f) || (temp.y > 1.f))
-            {
-                return false;
-            }
+            //if ((temp.x < 0.f) || (temp.x > 1.f) ||
+                //(temp.y < 0.f) || (temp.y > 1.f))
+            //{
+                //return false;
+            //}
         }
         for (int i = 0; i < 4; ++i)
             coords_[i] += offset;
@@ -495,25 +495,25 @@ void TransFuncBanana::deserialize(XmlDeserializer& s) {
 
 bool TransFuncBanana::move(const tgt::vec2& offset) {
     if (grabbed_ > -1) {
-        tgt::vec2 temp = coords_[grabbed_] + offset;
+        //tgt::vec2 temp = coords_[grabbed_] + offset;
         // do not move control point when it is outside of allowed region
-        if ((temp.x < 0.f) || (temp.x > 1.f) ||
-            (temp.y < 0.f) || (temp.y > 1.f))
-        {
-            return false;
-        }
-        else
+        //if ((temp.x < 0.f) || (temp.x > 1.f) ||
+            //(temp.y < 0.f) || (temp.y > 1.f))
+        //{
+            //return false;
+        //}
+        //else
             coords_[grabbed_] += offset;
     }
     else {
         for (int i = 0; i < 4; ++i) {
-            tgt::vec2 temp = coords_[i] + offset;
+            //tgt::vec2 temp = coords_[i] + offset;
             //do not move primitive when one point is outside of allowed region
-            if ((temp.x < 0.f) || (temp.x > 1.f) ||
-                (temp.y < 0.f) || (temp.y > 1.f))
-            {
-                return false;
-            }
+            //if ((temp.x < 0.f) || (temp.x > 1.f) ||
+                //(temp.y < 0.f) || (temp.y > 1.f))
+            //{
+                //return false;
+            //}
         }
         for (int i = 0; i < 4; ++i)
             coords_[i] += offset;

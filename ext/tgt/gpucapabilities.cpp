@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -42,12 +42,16 @@ using std::stringstream;
 namespace tgt {
 
 const std::string GpuCapabilities::loggerCat_("tgt.GpuCapabilities");
+    
+SINGLETON_CLASS_SOURCE(GpuCapabilities)
 
 GpuCapabilities::GpuCapabilities(bool detectCaps) {
+	retrieveAvailableMemory_ = true;
+	settingsAvailableMemoryInMB_ = 0;
 	if (detectCaps) {
-		detectCapabilities();
-		detectOS();
-	}
+        detectCapabilities();
+        detectOS();
+    }
 }
 
 GpuCapabilities::GlVersion GpuCapabilities::getGlVersion() {
@@ -123,6 +127,33 @@ int GpuCapabilities::getMaxTextureSize() {
     return maxTexSize_;
 }
 
+void GpuCapabilities::setRetrieveAvailableTextureMem(bool fetch) {
+	retrieveAvailableMemory_ = fetch;
+}
+
+void GpuCapabilities::setCurrentAvailableTextureMem(int mem) {
+	settingsAvailableMemoryInMB_ = mem;
+}
+
+int GpuCapabilities::getCurrentAvailableTextureMem(bool use_application_override) {
+    int currentAvailableTexMem = settingsAvailableMemoryInMB_*1024;
+
+	if(retrieveAvailableMemory_ || !use_application_override){
+#ifdef GL_ATI_meminfo
+    if(vendor_ == GPU_VENDOR_ATI) {
+        glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, (GLint *) &currentAvailableTexMem);
+    }
+#endif
+#ifdef GL_NVX_gpu_memory_info
+    if(vendor_ == GPU_VENDOR_NVIDIA) {
+        glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, (GLint *) &currentAvailableTexMem);
+    }
+#endif
+	}
+
+    return currentAvailableTexMem;
+}
+
 bool GpuCapabilities::is3DTexturingSupported() {
     return texturing3D_;
 }
@@ -163,6 +194,10 @@ int GpuCapabilities::getMaxColorAttachments() {
     return maxColorAttachments_;
 }
 
+int GpuCapabilities::getMaxProgramLoopCount(){
+    return maxProgramLoopCount_;
+}
+
 void GpuCapabilities::logCapabilities(bool extensionsString, bool osString) {
     if (osString)
         LINFO("OS version:          " << osVersionString_);
@@ -180,6 +215,7 @@ void GpuCapabilities::logCapabilities(bool extensionsString, bool osString) {
         LINFO("OpenGL Extensions:   " << glExtensionsString_);
 
     stringstream features;
+    features.precision(6);
     features << "Texturing:           " << (isOpenGlVersionSupported(GlVersion::TGT_GL_VERSION_1_1) ? "yes" : "no");
     if (isOpenGlVersionSupported(GlVersion::TGT_GL_VERSION_1_1))
         features << ", max size: " << getMaxTextureSize();
@@ -204,21 +240,22 @@ void GpuCapabilities::logCapabilities(bool extensionsString, bool osString) {
     features.clear();
     features.str("");
     features << "Framebuffer Objects: " << (areFramebufferObjectsSupported() ? "yes" : "no");
-	if(areFramebufferObjectsSupported())
-		features << ", max " << getMaxColorAttachments() << " color attachments";
+    if(areFramebufferObjectsSupported())
+        features << ", max " << getMaxColorAttachments() << " color attachments";
     LINFO(features.str());
 
     features.clear();
     features.str("");
     features << "Shaders:             " << (areShadersSupported() ? "yes (OpenGL 2.0)" : "no");
-
-    if (areShadersSupported()) {
+    if (!areShadersSupported()) {
+        LINFO(features);
+    }
+    else {
         features << ", GLSL Version " << shaderVersion_;
-
         features << ", Shader Model ";
         if (shaderModel_ == SHADER_MODEL_5)
             features << "5.0";
-        if (shaderModel_ == SHADER_MODEL_4)
+        else if (shaderModel_ == SHADER_MODEL_4)
             features << "4.0";
         else if (shaderModel_ == SHADER_MODEL_3)
             features << "3.0";
@@ -226,9 +263,9 @@ void GpuCapabilities::logCapabilities(bool extensionsString, bool osString) {
             features << "2.0";
         else
             features << "unknown";
+        LINFO(features.str());
 
         if (GLEW_NV_fragment_program2) {
-            LINFO(features.str());
             features.clear();
             features.str("");
             features << "Shader Capabilities: ";
@@ -238,10 +275,10 @@ void GpuCapabilities::logCapabilities(bool extensionsString, bool osString) {
             features << "MAX_PROGRAM_LOOP_COUNT=" << i;
             glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_EXEC_INSTRUCTIONS_NV, &i);
             features << ", MAX_PROGRAM_EXEC_INSTRUCTIONS=" << i;
+            LDEBUG(features.str());
         }        
     }
-    
-    LINFO(features.str());
+
 }
 
 GpuCapabilities::OSVersion GpuCapabilities::getOSVersion() {
@@ -296,7 +333,7 @@ void GpuCapabilities::detectCapabilities() {
     // for information about shader models in OpenGL
     if (isExtensionSupported("GL_ARB_tessellation_shader"))
         shaderModel_ = SHADER_MODEL_5;
-    if (isExtensionSupported("GL_ARB_geometry_shader4") ||
+    else if (isExtensionSupported("GL_ARB_geometry_shader4") ||
         isExtensionSupported("GL_EXT_geometry_shader4"))
         shaderModel_ = SHADER_MODEL_4;
     else if (isExtensionSupported("GL_NV_vertex_program3")  ||
@@ -361,12 +398,21 @@ void GpuCapabilities::detectCapabilities() {
 
     framebufferObjects_ = (isExtensionSupported("GL_EXT_framebuffer_object"));
 
-	if(framebufferObjects_) {
-		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAttachments_);
-	}
-	else
-		maxColorAttachments_ = -1;
+    if(framebufferObjects_) {
+        glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxColorAttachments_);
+    }
+    else
+        maxColorAttachments_ = -1;
 
+    maxProgramLoopCount_ = -1;
+    if (GLEW_NV_fragment_program2) {
+        GLint i = -1;
+        glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOOP_COUNT_NV, &i);
+        if (i > 0) {
+            //Restrict cycles to realistic samplingRate*maximumDimension, 20*(10 000) slices = 200 000
+            maxProgramLoopCount_ = std::min(static_cast<int>(i), 200000);
+        }
+    }
 }
 
 void GpuCapabilities::detectOS() {
@@ -461,6 +507,7 @@ const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::TGT_GL_VERSION_3_1(
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::TGT_GL_VERSION_3_2(3,2,0);
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::TGT_GL_VERSION_3_3(3,3,0);
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::TGT_GL_VERSION_4_0(4,0,0);
+const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::TGT_GL_VERSION_4_1(4,1,0);
 
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_110(1,10); ///< GLSL version 1.10
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_120(1,20); ///< GLSL version 1.20
@@ -469,6 +516,7 @@ const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_140(
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_150(1,50); ///< GLSL version 1.50
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_330(3,30); ///< GLSL version 3.30
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_400(4, 0); ///< GLSL version 4.00
+const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_410(4,10); ///< GLSL version 4.10
 
 GpuCapabilities::GlVersion::GlVersion(int major, int minor, int release)
   : major_(major), minor_(minor), release_(release)
@@ -515,7 +563,7 @@ bool GpuCapabilities::GlVersion::parseVersionString(const string& st) {
     vstr >> major_;
     if (vstr.fail()) {
         LERROR("Failed to parse major version! Version string: " << st);
-		major_ = -1;
+        major_ = -1;
         return false;
     }
 
@@ -526,8 +574,8 @@ bool GpuCapabilities::GlVersion::parseVersionString(const string& st) {
     vstr >> minor_;
     if (vstr.fail()) {
         LERROR("Failed to parse minor version! Version string: " << st);
-		major_ = -1;
-		minor_ = -1;
+        major_ = -1;
+        minor_ = -1;
         return false;
     }
 
@@ -549,78 +597,78 @@ bool GpuCapabilities::GlVersion::parseVersionString(const string& st) {
 
 
 bool operator==(const GpuCapabilities::GlVersion& x, const GpuCapabilities::GlVersion& y) {
-	if ((x.major_ == y.major_) && (x.minor_ == y.minor_) && (x.release_ == y.release_))
-		return true;
-	else	
-		return false;
+    if ((x.major_ == y.major_) && (x.minor_ == y.minor_) && (x.release_ == y.release_))
+        return true;
+    else	
+        return false;
 }
 
 bool operator!=(const GpuCapabilities::GlVersion& x, const GpuCapabilities::GlVersion& y) {
-	if ((x.major_ != y.major_) || (x.minor_ != y.minor_) || (x.release_ != y.release_))
-		return true;
-	else	
-		return false;
+    if ((x.major_ != y.major_) || (x.minor_ != y.minor_) || (x.release_ != y.release_))
+        return true;
+    else	
+        return false;
 }
 
 bool operator<(const GpuCapabilities::GlVersion& x, const GpuCapabilities::GlVersion& y) {
-	if (x.major_ < y.major_)
-		return true;
-	else if (x.major_ == y.major_) {
-		if (x.minor_ < y.minor_)
-			return true;
-		else if (x.minor_ == y.minor_) 
-			if (x.release_ < y.release_)
-				return true;
+    if (x.major_ < y.major_)
+        return true;
+    else if (x.major_ == y.major_) {
+        if (x.minor_ < y.minor_)
+            return true;
+        else if (x.minor_ == y.minor_) 
+            if (x.release_ < y.release_)
+                return true;
     }
-	return false;
+    return false;
 }
 
 bool operator<=(const GpuCapabilities::GlVersion& x, const GpuCapabilities::GlVersion& y) {
-	if (x.major_ < y.major_)
-		return true;
-	else if (x.major_ == y.major_) {
-		if (x.minor_ < y.minor_)
-			return true;
-		else if (x.minor_ == y.minor_) 
-			if (x.release_ <= y.release_)
-				return true;
+    if (x.major_ < y.major_)
+        return true;
+    else if (x.major_ == y.major_) {
+        if (x.minor_ < y.minor_)
+            return true;
+        else if (x.minor_ == y.minor_) 
+            if (x.release_ <= y.release_)
+                return true;
     }
-	return false;
+    return false;
 }
 
 bool operator>(const GpuCapabilities::GlVersion& x, const GpuCapabilities::GlVersion& y) {
-	if (x.major_ > y.major_)
-		return true;
-	else if (x.major_ == y.major_) {
-		if (x.minor_ > y.minor_)
-			return true;
-		else if (x.minor_ == y.minor_) 
-			if (x.release_ > y.release_)
-				return true;
+    if (x.major_ > y.major_)
+        return true;
+    else if (x.major_ == y.major_) {
+        if (x.minor_ > y.minor_)
+            return true;
+        else if (x.minor_ == y.minor_) 
+            if (x.release_ > y.release_)
+                return true;
     }
-	return false;
+    return false;
 }
 
 bool operator>=(const GpuCapabilities::GlVersion& x, const GpuCapabilities::GlVersion& y) {
-	if (x.major_ > y.major_)
-		return true;
-	else if (x.major_ == y.major_) {
-		if (x.minor_ > y.minor_)
-			return true;
-		else if (x.minor_ == y.minor_) 
-			if (x.release_ >= y.release_)
-				return true;
+    if (x.major_ > y.major_)
+        return true;
+    else if (x.major_ == y.major_) {
+        if (x.minor_ > y.minor_)
+            return true;
+        else if (x.minor_ == y.minor_) 
+            if (x.release_ >= y.release_)
+                return true;
     }
-	return false;
+    return false;
 }
 
 std::ostream& operator<<(std::ostream& s, const GpuCapabilities::GlVersion& v) {
-	if (v.major_ == -1)
-		return (s << "unknown");
-	else if (v.release_ == 0)
-		return (s << v.major_ << "." << v.minor_);
-	else
-		return (s << v.major_ << "." << v.minor_ << "." << v.release_);
+    if (v.major_ == -1)
+        return (s << "unknown");
+    else if (v.release_ == 0)
+        return (s << v.major_ << "." << v.minor_);
+    else
+        return (s << v.major_ << "." << v.minor_ << "." << v.release_);
 }
 
 } // namespace tgt

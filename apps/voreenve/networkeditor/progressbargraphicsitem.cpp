@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,10 +37,12 @@ namespace voreen {
 
 ProgressBarGraphicsItem::ProgressBarGraphicsItem(QGraphicsItem* parent, const QPointF& center, qreal width, qreal height)
     : QGraphicsItem(parent)
+    , backgroundColor1_(3, 3, 3)
+    , backgroundColor2_(21, 21, 21)
 {
     resize(center, width, height);
-
     time_.start();
+    setProgressTier(0);
 }
 
 int ProgressBarGraphicsItem::type() const {
@@ -119,8 +121,8 @@ void ProgressBarGraphicsItem::paint(QPainter* painter, const QStyleOptionGraphic
     QLinearGradient upperBackgroundGradient(boundingRect_.x(), boundingRect_.y(), boundingRect_.x(), boundingRect_.y() + boundingRect_.height() / 2.0);
     //upperBackgroundGradient.setColorAt(0.0, QColor(163, 163, 163));
     //upperBackgroundGradient.setColorAt(1.0, QColor(208, 208, 208));
-    upperBackgroundGradient.setColorAt(0.0, QColor(3, 3, 3));
-    upperBackgroundGradient.setColorAt(0.0, QColor(21, 21, 21));
+    upperBackgroundGradient.setColorAt(0.0, backgroundColor1_);
+    upperBackgroundGradient.setColorAt(0.0, backgroundColor2_);
 
     QBrush upperBackgroundBrush(upperBackgroundGradient);
     painter->setBrush(upperBackgroundBrush);
@@ -136,19 +138,45 @@ void ProgressBarGraphicsItem::paint(QPainter* painter, const QStyleOptionGraphic
     progressRect.setWidth(boundingRect_.width() * progress_);
 
     QLinearGradient upperForegroundGradient(progressRect.x(), progressRect.y(), progressRect.x(), progressRect.y() + progressRect.height() / 2.0);
-    //upperForegroundGradient.setColorAt(0.0, QColor(173, 235, 199));
-    //upperForegroundGradient.setColorAt(1.0, QColor(139, 227, 176));
-    upperForegroundGradient.setColorAt(0.0, QColor(176, 191, 217));
-    upperForegroundGradient.setColorAt(1.0, QColor(59, 106, 193));
+    upperForegroundGradient.setColorAt(0.0, upperForegroundColor1_);
+    upperForegroundGradient.setColorAt(1.0, upperForegroundColor2_);
 
     QBrush upperForegroundBrush(upperForegroundGradient);
     painter->setBrush(upperForegroundBrush);
     painter->drawRect(progressRect.x(), progressRect.y(), progressRect.width(), progressRect.height() / 2.0 + 1.0);
 
-    //QBrush lowerForegroundBrush(QColor(38, 214, 118));
-    QBrush lowerForegroundBrush(QColor(22, 85, 200));
+    QBrush lowerForegroundBrush(lowerForegroundColor_);
     painter->setBrush(lowerForegroundBrush);
     painter->drawRect(progressRect.x(), progressRect.y() + progressRect.height() / 2.0, progressRect.width(), progressRect.height() / 2.0);
+}
+
+void ProgressBarGraphicsItem::setProgressTier(int tier) {
+    tier = tier % 3; // we currently only support three colors
+
+    switch (tier) {
+    case 0:
+        upperForegroundColor1_ = QColor(176, 191, 217);
+        upperForegroundColor2_ = QColor(60, 109, 194);
+        lowerForegroundColor_ = QColor(22, 87, 199);
+        break;
+    case 1:
+        upperForegroundColor1_ = QColor(176, 217, 193);
+        upperForegroundColor2_ = QColor(60, 194, 116);
+        lowerForegroundColor_ = QColor(22, 199, 96);
+        break;
+    case 2:
+        upperForegroundColor1_ = QColor(217, 176, 176);
+        upperForegroundColor2_ = QColor(194, 60, 60);
+        lowerForegroundColor_ = QColor(199, 22, 22);
+        break;
+    }
+
+    QGraphicsItem::update();
+    if (scene())
+        scene()->invalidate();
+    qApp->processEvents();
+    time_.restart();
+
 }
 
 } // namespace

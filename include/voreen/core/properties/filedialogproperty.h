@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,7 +33,7 @@
 
 namespace voreen {
 
-class FileDialogProperty : public StringProperty {
+class VRN_CORE_API FileDialogProperty : public StringProperty {
 public:
 
     enum FileMode {
@@ -45,10 +45,13 @@ public:
     FileDialogProperty(const std::string& id, const std::string& guiText, const std::string& dialogCaption,
                    const std::string& directory, const std::string& fileFilter = "", FileMode fileMode = OPEN_FILE,
                    Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    FileDialogProperty();
     virtual ~FileDialogProperty() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "FileDialogProperty"; }
+    virtual std::string getTypeDescription() const { return "FileDialog"; }
 
     const std::string& getDialogCaption() const { return dialogCaption_; }
     const std::string& getDirectory() const { return directory_; }
@@ -64,8 +67,6 @@ public:
      * @see Property::deserialize
      */
     virtual void deserialize(XmlDeserializer& s);
-
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
 
 protected:
     std::string dialogCaption_;

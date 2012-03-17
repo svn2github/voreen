@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,8 @@
 #ifndef VRN_CODEEDIT_H
 #define VRN_CODEEDIT_H
 
+#include "voreen/qt/voreenqtdefine.h"
+
 #include <QPlainTextEdit>
 #include <QObject>
 
@@ -39,14 +41,16 @@ class QWidget;
 
 class StatusArea;
 
-class CodeEdit : public QPlainTextEdit {
+class VRN_QT_API CodeEdit : public QPlainTextEdit {
 Q_OBJECT
 
 public:
     CodeEdit(QWidget* parent = 0);
+    virtual ~CodeEdit();
 
     void statusAreaPaintEvent(QPaintEvent *event);
     int statusAreaWidth();
+    void updateFontSize(unsigned char s);
 
 public slots:
     void moveCursorToPosition(int line, int col = -1);
@@ -61,7 +65,8 @@ private slots:
     void highlightCurrentLine();
 
 private:
-    StatusArea* statusArea;
+    StatusArea* statusArea_;
+    QFont font_;
 };
 
 

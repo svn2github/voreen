@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -39,7 +39,7 @@ namespace voreen {
  * Normally in a derived class you have only to call the ctor with the
  * appropriate shader name and overwrite the render method.
  */
-class ImageProcessor : public RenderProcessor {
+class VRN_CORE_API ImageProcessor : public RenderProcessor {
 public:
     /**
      * Constructor.
@@ -52,11 +52,13 @@ public:
     virtual std::string getCategory() const  { return "Image Processing"; }
 
 protected:
-    virtual void initialize() throw (VoreenException);
-    virtual void deinitialize() throw (VoreenException);
+    virtual void initialize() throw (tgt::Exception);
+    virtual void deinitialize() throw (tgt::Exception);
 
     /// Load the needed shader.
     virtual void compile();
+
+    virtual tgt::vec2 computeDepthRange(RenderPort* port);
 
     tgt::Shader* program_;
     std::string shaderFilename_;

@@ -25,7 +25,6 @@
 #ifndef TGT_GLUTAPPLICATION_H
 #define TGT_GLUTAPPLICATION_H
 
-#include "tgt/config.h"
 #include "tgt/guiapplication.h"
 #include "tgt/glut/glutcanvas.h"
 #include "tgt/glut/gluttimer.h"

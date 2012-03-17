@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,15 +33,25 @@
 
 namespace voreen {
 
-class IntProperty : public NumericProperty<int> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<int>;
+#endif
+
+class VRN_CORE_API IntProperty : public NumericProperty<int> {
 public:
     IntProperty(const std::string& id, const std::string& guiText,
         int value = 0, int minValue = 0, int maxValue = 100,
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
+    IntProperty();
+    
+    virtual Property* create() const;
 
-    virtual std::string getTypeString() const;
+    virtual std::string getClassName() const       { return "IntegerProperty"; }
+    virtual std::string getTypeDescription() const { return "Integer"; }
 
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 
 };
 

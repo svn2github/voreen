@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -76,7 +76,7 @@ QLayout* TransFuncEditorIntensityGradient::createMappingLayout() {
     if (supported_) {
         transCanvas_ = new tgt::QtCanvas("", tgt::ivec2(1, 1), tgt::GLCanvas::RGBADD, 0, true);
         transCanvas_->getGLFocus();
-        transCanvas_->setMinimumSize(200, 100);
+        //transCanvas_->setMinimumSize(200, 100);
 
         painter_ = new TransFuncIntensityGradientPainter(transCanvas_);
         painter_->initialize();
@@ -125,6 +125,22 @@ QLayout* TransFuncEditorIntensityGradient::createButtonLayout() {
     histogramEnabledButton_->setIcon(QIcon(":/icons/histogram.png"));
     histogramEnabledButton_->setToolTip(tr("Show data histogram"));
 
+    buttonLayout->addWidget(clearButton_);
+    buttonLayout->addWidget(loadButton_);
+    buttonLayout->addWidget(saveButton_);
+    buttonLayout->addSpacing(4);
+    buttonLayout->addWidget(gridEnabledButton_);
+    buttonLayout->addWidget(histogramEnabledButton_);
+
+    buttonLayout->addStretch();
+
+    return buttonLayout;
+}
+
+QLayout* TransFuncEditorIntensityGradient::createPrimitivesButtonLayout() {
+    QBoxLayout* buttonLayout;
+    buttonLayout = new QHBoxLayout();
+
     quadButton_ = new QToolButton();
     quadButton_->setIcon(QIcon(":/icons/quad.png"));
     quadButton_->setToolTip(tr("Add a quad"));
@@ -141,17 +157,10 @@ QLayout* TransFuncEditorIntensityGradient::createButtonLayout() {
     colorButton_->setIcon(QIcon(":/icons/colorize.png"));
     colorButton_->setToolTip(tr("Change the color of the selected primitive"));
 
-    buttonLayout->addWidget(clearButton_);
-    buttonLayout->addWidget(loadButton_);
-    buttonLayout->addWidget(saveButton_);
-    buttonLayout->addSpacing(7);
-    buttonLayout->addWidget(gridEnabledButton_);
-    buttonLayout->addWidget(histogramEnabledButton_);
-    buttonLayout->addSpacing(7);
     buttonLayout->addWidget(quadButton_);
     buttonLayout->addWidget(bananaButton_);
     buttonLayout->addWidget(deleteButton_);
-    buttonLayout->addWidget(colorButton_);
+    buttonLayout->addWidget(colorButton_); 
 
     buttonLayout->addStretch();
 
@@ -200,6 +209,7 @@ void TransFuncEditorIntensityGradient::createWidgets() {
 
     QLayout* mappingLayout = createMappingLayout();
     QLayout* buttonLayout = createButtonLayout();
+    QLayout* primitivesButtonLayout = createPrimitivesButtonLayout();
     QLayout* sliderLayout = createSliderLayout();
 
     QSplitter* splitter = new QSplitter(orientation_);
@@ -207,6 +217,7 @@ void TransFuncEditorIntensityGradient::createWidgets() {
     if (orientation_ == Qt::Vertical) {
         buttonSlider = new QVBoxLayout();
         buttonSlider->addItem(buttonLayout);
+        buttonSlider->addItem(primitivesButtonLayout);
         buttonSlider->addItem(mappingLayout);
         mapping->setLayout(buttonSlider);
         slider->setLayout(sliderLayout);
@@ -214,9 +225,16 @@ void TransFuncEditorIntensityGradient::createWidgets() {
     else {
         buttonSlider = new QHBoxLayout();
         buttonSlider->addItem(buttonLayout);
+        buttonSlider->addItem(new QSpacerItem(5, 1));
         buttonSlider->addItem(sliderLayout);
+
+        QVBoxLayout* vLayout = new QVBoxLayout();
+        vLayout->addItem(buttonSlider);
+        vLayout->addItem(primitivesButtonLayout);
+        vLayout->addStretch(10);
+
         mapping->setLayout(mappingLayout);
-        slider->setLayout(buttonSlider);
+        slider->setLayout(vLayout);
     }
 
     splitter->setChildrenCollapsible(false);
@@ -225,7 +243,6 @@ void TransFuncEditorIntensityGradient::createWidgets() {
 
     //mapping is more stretched then buttons and slider
     splitter->setStretchFactor(0, 5);
-    splitter->setStretchFactor(1, 1);
 
     QHBoxLayout* mainLayout = new QHBoxLayout();
     mainLayout->addWidget(splitter);
@@ -359,7 +376,7 @@ void TransFuncEditorIntensityGradient::updateFromProperty() {
     if (!supported_)
         return;
 
-    VolumeHandle* newHandle = property_->getVolumeHandle();
+    const VolumeHandleBase* newHandle = property_->getVolumeHandle();
     if (newHandle != volumeHandle_) {
         volumeHandle_ = newHandle;
         volumeChanged();
@@ -383,14 +400,14 @@ void TransFuncEditorIntensityGradient::volumeChanged() {
     histogramBrightness_->setValue(100);
     histogramBrightness_->blockSignals(false);
 
-    if (volumeHandle_ && volumeHandle_->getVolume()) {
-        int bits = volumeHandle_->getVolume()->getBitsStored() / volumeHandle_->getVolume()->getNumChannels();
+    if (volumeHandle_ && volumeHandle_->getRepresentation<Volume>()) {
+        int bits = volumeHandle_->getRepresentation<Volume>()->getBitsStored() / volumeHandle_->getRepresentation<Volume>()->getNumChannels();
         maximumIntensity_ = static_cast<int>(pow(2.f, static_cast<float>(bits)))-1;
     }
 
     // propagate volume to painter where the histogram is calculated
     if (volumeHandle_)
-        painter_->volumeChanged(volumeHandle_->getVolume());
+        painter_->volumeChanged(volumeHandle_);
     else
         painter_->volumeChanged(0);
 }

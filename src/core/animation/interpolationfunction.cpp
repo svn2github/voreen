@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -47,17 +47,17 @@ using tgt::Camera;
 
 namespace voreen {
 
-template <class T>
-InterpolationFunction<T>::InterpolationFunction() {
-}
+//template <class T>
+//InterpolationFunction<T>::InterpolationFunction() {
+//}
+//
+//template <class T>
+//InterpolationFunction<T>::~InterpolationFunction() {}
 
-template <class T>
-InterpolationFunction<T>::~InterpolationFunction() {}
-
-template <class T>
-std::string InterpolationFunction<T>::getName() const {
-    return getIdentifier() + ": " + getMode();
-}
+//template <class T>
+//std::string InterpolationFunction<T>::getName() const {
+//    return getIdentifier() + ": " + getMode();
+//}
 
 template <>
 std::string InterpolationFunction<int>::getMode() const {
@@ -249,10 +249,10 @@ std::string InterpolationFunction<VolumeHandle*>::getIdentifier() const {
     return "default boolean";
 }
 
-template <class T>
-InterpolationFunction<T>* InterpolationFunction<T>::clone() const{
-    return new InterpolationFunction<T>();
-}
+//template <class T>
+//InterpolationFunction<T>* InterpolationFunction<T>::clone() const{
+//    return new InterpolationFunction<T>();
+//}
 
 template <>
 int InterpolationFunction<int>::interpolate(int startvalue, int endvalue, float time) const {
@@ -361,7 +361,9 @@ Camera InterpolationFunction<Camera>::interpolate(Camera startvalue, Camera endv
             tgt::vec3 upvec = normalize(intfunc2->interpolate(startvalue.getUpVector(), endvalue.getUpVector(), time));
 /*            tgt::vec3 direction = intfunc2->interpolate(startvalue->getDirection(), endvalue->getDirection(), time);
             return new CameraNode(posvec, focvec, upvec, direction); */
-            return Camera(posvec, focvec, upvec);
+            Camera cam(startvalue);
+            cam.positionCamera(posvec, focvec, upvec);
+            return cam;
 }
 
 template <>
@@ -486,57 +488,57 @@ VolumeHandle* InterpolationFunction<VolumeHandle*>::interpolate(VolumeHandle* st
         return endvalue;
 }
 
-template <class T>
-void InterpolationFunction<T>::serialize(XmlSerializer& s) const {
-    s.serialize("properties", this->getProperties());
-}
+//template <class T>
+//void InterpolationFunction<T>::serialize(XmlSerializer& s) const {
+//    s.serialize("properties", this->getProperties());
+//}
+//
+//template <class T>
+//void InterpolationFunction<T>::deserialize(XmlDeserializer& s) {
+//    std::vector<Property*> props;
+//    s.deserialize("properties", props);
+//    for (size_t i = 0; i < props.size(); ++i)
+//        addProperty(props.at(i));
+//}
 
-template <class T>
-void InterpolationFunction<T>::deserialize(XmlDeserializer& s) {
-    std::vector<Property*> props;
-    s.deserialize("properties", props);
-    for (size_t i = 0; i < props.size(); ++i)
-        addProperty(props.at(i));
-}
-
-template class InterpolationFunction<float>;
-template class InterpolationFunction<int>;
-template class InterpolationFunction<bool>;
-template class InterpolationFunction<tgt::ivec2>;
-template class InterpolationFunction<tgt::ivec3>;
-template class InterpolationFunction<tgt::ivec4>;
-template class InterpolationFunction<tgt::vec2>;
-template class InterpolationFunction<tgt::vec3>;
-template class InterpolationFunction<tgt::vec4>;
-template class InterpolationFunction<tgt::quat>;
-template class InterpolationFunction<tgt::mat2>;
-template class InterpolationFunction<tgt::mat3>;
-template class InterpolationFunction<tgt::mat4>;
-template class InterpolationFunction<tgt::Camera>;
-template class InterpolationFunction<std::string>;
-template class InterpolationFunction<ShaderSource>;
-template class InterpolationFunction<TransFunc*>;
-template class InterpolationFunction<VolumeCollection*>;
-template class InterpolationFunction<VolumeHandle*>;
-
-template class MultiPointInterpolationFunction<float>;
-template class MultiPointInterpolationFunction<int>;
-template class MultiPointInterpolationFunction<bool>;
-template class MultiPointInterpolationFunction<tgt::ivec2>;
-template class MultiPointInterpolationFunction<tgt::ivec3>;
-template class MultiPointInterpolationFunction<tgt::ivec4>;
-template class MultiPointInterpolationFunction<tgt::vec2>;
-template class MultiPointInterpolationFunction<tgt::vec3>;
-template class MultiPointInterpolationFunction<tgt::vec4>;
-template class MultiPointInterpolationFunction<tgt::quat>;
-template class MultiPointInterpolationFunction<tgt::mat2>;
-template class MultiPointInterpolationFunction<tgt::mat3>;
-template class MultiPointInterpolationFunction<tgt::mat4>;
-template class MultiPointInterpolationFunction<tgt::Camera>;
-template class MultiPointInterpolationFunction<std::string>;
-template class MultiPointInterpolationFunction<ShaderSource>;
-template class MultiPointInterpolationFunction<TransFunc*>;
-template class MultiPointInterpolationFunction<VolumeCollection*>;
-template class MultiPointInterpolationFunction<VolumeHandle*>;
+//template class InterpolationFunction<float>;
+//template class InterpolationFunction<int>;
+//template class InterpolationFunction<bool>;
+//template class InterpolationFunction<tgt::ivec2>;
+//template class InterpolationFunction<tgt::ivec3>;
+//template class InterpolationFunction<tgt::ivec4>;
+//template class InterpolationFunction<tgt::vec2>;
+//template class InterpolationFunction<tgt::vec3>;
+//template class InterpolationFunction<tgt::vec4>;
+//template class InterpolationFunction<tgt::quat>;
+//template class InterpolationFunction<tgt::mat2>;
+//template class InterpolationFunction<tgt::mat3>;
+//template class InterpolationFunction<tgt::mat4>;
+//template class InterpolationFunction<tgt::Camera>;
+//template class InterpolationFunction<std::string>;
+//template class InterpolationFunction<ShaderSource>;
+//template class InterpolationFunction<TransFunc*>;
+//template class InterpolationFunction<VolumeCollection*>;
+//template class InterpolationFunction<VolumeHandle*>;
+//
+//template class MultiPointInterpolationFunction<float>;
+//template class MultiPointInterpolationFunction<int>;
+//template class MultiPointInterpolationFunction<bool>;
+//template class MultiPointInterpolationFunction<tgt::ivec2>;
+//template class MultiPointInterpolationFunction<tgt::ivec3>;
+//template class MultiPointInterpolationFunction<tgt::ivec4>;
+//template class MultiPointInterpolationFunction<tgt::vec2>;
+//template class MultiPointInterpolationFunction<tgt::vec3>;
+//template class MultiPointInterpolationFunction<tgt::vec4>;
+//template class MultiPointInterpolationFunction<tgt::quat>;
+//template class MultiPointInterpolationFunction<tgt::mat2>;
+//template class MultiPointInterpolationFunction<tgt::mat3>;
+//template class MultiPointInterpolationFunction<tgt::mat4>;
+//template class MultiPointInterpolationFunction<tgt::Camera>;
+//template class MultiPointInterpolationFunction<std::string>;
+//template class MultiPointInterpolationFunction<ShaderSource>;
+//template class MultiPointInterpolationFunction<TransFunc*>;
+//template class MultiPointInterpolationFunction<VolumeCollection*>;
+//template class MultiPointInterpolationFunction<VolumeHandle*>;
 
 } // namespace voreen

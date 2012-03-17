@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -45,7 +45,6 @@
 #include <QWidget>
 #include <QLCDNumber>
 #include <QColorGroup>
-#include <QGroupBox>
 #include <QLabel>
 
 namespace voreen {
@@ -54,10 +53,10 @@ FontPropertyWidget::FontPropertyWidget(FontProperty* prop, QWidget* parent)
     : QPropertyWidget(prop, parent)
     , property_(prop)
 {
-    QGroupBox* groupBox = new QGroupBox(this);
-    addWidget(groupBox);
+    groupBox_ = new QGroupBox(this);
+    addWidget(groupBox_);
 
-    QVBoxLayout* tgtFontLayout = new QVBoxLayout(groupBox);
+    QVBoxLayout* tgtFontLayout = new QVBoxLayout(groupBox_);
     tgtFontLayout->setContentsMargins(2,2,2,2);
 
     tgtFontType_ = new QComboBox();
@@ -127,7 +126,11 @@ FontPropertyWidget::FontPropertyWidget(FontProperty* prop, QWidget* parent)
     connect(tgtLineWidthSlider_, SIGNAL(valueChanged(int)),  this,            SLOT(updateProperty()));
     connect(tgtLineWidthSlider_, SIGNAL(valueChanged(int)),  tgtLineWidthLCD, SLOT(display(int)));
 
+    connect(tgtTextAlign_,        SIGNAL(currentIndexChanged(int)),     this,            SLOT(updateProperty()));
+    connect(tgtVerticalTextAlign_,SIGNAL(currentIndexChanged(int)),     this,            SLOT(updateProperty()));
+
     updateFromProperty();
+    addVisibilityControls();
 }
 
 void FontPropertyWidget::updateFromProperty() {

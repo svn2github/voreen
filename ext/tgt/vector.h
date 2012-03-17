@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -29,8 +29,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "tgt/config.h"
-#include "tgt/math.h"
+#include "tgt/tgt_math.h"
 
 /*
     Performance remarks:
@@ -502,31 +501,31 @@ struct Vector4 {
 /*
     statics
 */
-    static const Vector4<float> white;
-    static const Vector4<float> black;
-    static const Vector4<float> gray;
-    static const Vector4<float> red;
-    static const Vector4<float> green;
-    static const Vector4<float> blue;
-    static const Vector4<float> brown;
-    static const Vector4<float> yellow;
+    //static Vector4<float> white;
+    //static Vector4<float> black;
+    //static Vector4<float> gray;
+    //static Vector4<float> red;
+    //static Vector4<float> green;
+    //static Vector4<float> blue;
+    //static Vector4<float> brown;
+    //static Vector4<float> yellow;
 
-    static Vector4<T> zero;
+    //static Vector4<T> zero;
 };
 
 
-template<class T> const Vector4<float> Vector4<T>::white (1.f, 1.f, 1.f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::black (0.f, 0.f, 0.f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::gray  (.5f, .5f, .5f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::red   (1.f, 0.f, 0.f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::green (0.f, 1.f, 0.f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::blue  (0.f, 0.f, 1.f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::yellow(1.f, 1.f, 0.f, 1.f);
-template<class T> const Vector4<float> Vector4<T>::brown (0.6f, 0.4f, 0.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::white (1.f, 1.f, 1.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::black (0.f, 0.f, 0.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::gray  (.5f, .5f, .5f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::red   (1.f, 0.f, 0.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::green (0.f, 1.f, 0.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::blue  (0.f, 0.f, 1.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::yellow(1.f, 1.f, 0.f, 1.f);
+//template<class T> Vector4<float> Vector4<T>::brown (0.6f, 0.4f, 0.f, 1.f);
 
 /// init statics
-template<class T>
-Vector4<T> Vector4<T>::zero = Vector4<T>(T(0), T(0), T(0), T(0));
+//template<class T>
+//Vector4<T> Vector4<T>::zero = Vector4<T>(T(0), T(0), T(0), T(0));
 
 /*
     typedefs for easy usage
@@ -561,6 +560,26 @@ typedef Vector4<size_t> svec4;
 typedef Vector2<bool>   bvec2;
 typedef Vector3<bool>   bvec3;
 typedef Vector4<bool>   bvec4;
+
+#ifdef DLL_TEMPLATE_INST
+template struct TGT_API Vector2<float>;
+template struct TGT_API Vector3<float>;
+template struct TGT_API Vector4<float>;
+template struct TGT_API Vector2<double>;
+template struct TGT_API Vector3<double>;
+template struct TGT_API Vector4<double>;
+template struct TGT_API Vector2<int>;
+template struct TGT_API Vector3<int>;
+template struct TGT_API Vector4<int>;
+template struct TGT_API Vector2<size_t>;
+template struct TGT_API Vector3<size_t>;
+template struct TGT_API Vector4<size_t>;
+template struct TGT_API Vector2<bool>;
+template struct TGT_API Vector3<bool>;
+template struct TGT_API Vector4<bool>;
+template struct TGT_API Vector3<uint8_t>;
+template struct TGT_API Vector4<uint8_t>;
+#endif
 
 /*
     uint8_t types

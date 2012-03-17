@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -48,6 +48,18 @@ public:
     SelectionMetaData<T>(const std::vector<T>& values = std::vector<T>()) : values_(values) {}
     virtual ~SelectionMetaData() {}
 
+    virtual std::string getClassName() const { return "SelectionMetaData<T>"; }
+    virtual Serializable* create() const {
+        return new SelectionMetaData<T>();
+    }
+    virtual MetaDataBase* clone() const {
+        return new SelectionMetaData<T>(values_);
+    }
+
+    virtual std::string toString() const {
+        return "";
+    };
+
     /**
      * @see Serializable::serialize
      */
@@ -61,27 +73,6 @@ public:
     virtual void deserialize(XmlDeserializer& s) {
         s.deserialize("values", values_);
     }
-
-    /**
-     * @see SerializableFactory::getTypeString
-     */
-    virtual const std::string getTypeString(const std::type_info& type) const {
-        if (type == typeid(SelectionMetaData<Processor*>))
-            return "SelectionMetaData::Processor";
-        else
-            return "";
-    }
-
-    /**
-     * @see SerializableFactory::createType
-     */
-    virtual Serializable* createType(const std::string& typeString) {
-        if (typeString == "SelectionMetaData::Processor")
-            return new SelectionMetaData<Processor*>;
-        else
-            return 0;
-    }
-
 
     /**
      * Sets the selected value.
@@ -109,6 +100,7 @@ public:
     void addValue(const T& value) {
         values_.push_back(value);
     }
+
 
 private:
     std::vector<T> values_;

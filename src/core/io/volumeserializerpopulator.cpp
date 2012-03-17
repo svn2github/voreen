@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,43 +31,27 @@
 #include "voreen/core/voreenapplication.h"
 #include "voreen/core/voreenmodule.h"
 #include "voreen/core/io/volumeserializer.h"
+#include "voreen/core/io/volumereader.h"
+#include "voreen/core/io/volumewriter.h"
 
-#include "voreen/core/io/datvolumereader.h"
-#include "voreen/core/io/datvolumewriter.h"
-#include "voreen/core/io/rawvolumereader.h"
-#include "voreen/core/io/brickedvolumereader.h"
 #include "voreen/core/io/progressbar.h"
-
-#ifdef VRN_WITH_ZLIB
-    #include "voreen/core/io/zipvolumereader.h"
-#endif
-
 
 namespace voreen {
 
-VolumeSerializerPopulator::VolumeSerializerPopulator(bool showProgress)
+VolumeSerializerPopulator::VolumeSerializerPopulator(ProgressBar* progressBar)
     : vs_(new VolumeSerializer()),
-      progressDialog_(0)
+      progressBar_(progressBar)
 {
 
     if (VoreenApplication::app()) {
-        // create progress bar
-        if (showProgress) {
-            progressDialog_ = VoreenApplication::app()->createProgressDialog();
-            if (progressDialog_) {
-                progressDialog_->setTitle("Loading volume");
-                progressDialog_->setMessage("Loading volume ...");
-            }
-        }
-
         // retrieve volume readers/writers from modules
         std::vector<VoreenModule*> modules = VoreenApplication::app()->getModules();
         for (size_t i=0; i<modules.size(); i++) {
             for (size_t j=0; j<modules.at(i)->getVolumeReaders().size(); j++) {
-                readers_.push_back(modules.at(i)->getVolumeReaders().at(j)->create(progressDialog_));
+                readers_.push_back(modules.at(i)->getVolumeReaders().at(j)->create(progressBar_));
             }
             for (size_t j=0; j<modules.at(i)->getVolumeWriters().size(); j++) {
-                writers_.push_back(modules.at(i)->getVolumeWriters().at(j)->create(progressDialog_));
+                writers_.push_back(modules.at(i)->getVolumeWriters().at(j)->create(progressBar_));
             }
         }
     }
@@ -75,36 +59,14 @@ VolumeSerializerPopulator::VolumeSerializerPopulator(bool showProgress)
         LWARNINGC("voreen.VolumeSerializerPopulator", "VoreenApplication not instantiated");
     }
 
-    readers_.push_back(new DatVolumeReader(progressDialog_));
-    readers_.push_back(new RawVolumeReader(progressDialog_));
-    readers_.push_back(new BrickedVolumeReader(progressDialog_) );
-
-#ifdef VRN_WITH_ZLIB
-    readers_.push_back(new ZipVolumeReader(this, progressDialog_));
-#endif
-
     // populate array with all known VolumeReaders
-    // --> if an FormatClashException occurs here it is an error in this method
     for (size_t i = 0; i < readers_.size(); ++i) {
-        try {
-            vs_->registerReader(readers_[i]);
-        }
-        catch (const FormatClashException& e) {
-            LWARNINGC("voreen.VolumeSerializerPopulator", e.what());
-        }
+        vs_->registerReader(readers_[i]);
     }
 
     // populate array with all known VolumeWriters
-    // --> if an FormatClashException occurs here it is an error in this method
-    writers_.push_back(new DatVolumeWriter());
-
     for (size_t i = 0; i < writers_.size(); ++i) {
-        try {
-            vs_->registerWriter(writers_[i]);
-        }
-        catch (const FormatClashException& e) {
-            LWARNINGC("voreen.VolumeSerializerPopulator", e.what());
-        }
+        vs_->registerWriter(writers_[i]);
     }
 }
 
@@ -112,45 +74,59 @@ VolumeSerializerPopulator::~VolumeSerializerPopulator() {
     delete vs_;
 
     for (size_t i = 0; i < readers_.size(); ++i)
-        if (readers_[i] && !readers_[i]->isPersistent())
+        if (readers_[i])
             delete readers_[i];
 
     for (size_t i = 0; i < writers_.size(); ++i)
         delete writers_[i];
-
-    if (progressDialog_)
-        progressDialog_->hide();
-    delete progressDialog_;
 }
 
-const VolumeSerializer* VolumeSerializerPopulator::getVolumeSerializer() const {
+VolumeSerializer* VolumeSerializerPopulator::getVolumeSerializer() const {
     return vs_;
 }
 
 std::vector<std::string> VolumeSerializerPopulator::getSupportedReadExtensions() const {
-
     std::vector<std::string> extensions;
     for (size_t i=0; i<readers_.size(); ++i) {
-        for (size_t j=0; j<readers_[i]->getExtensions().size(); ++j) {
-            if (std::find(extensions.begin(), extensions.end(), readers_[i]->getExtensions()[j]) == extensions.end())
-                extensions.push_back(readers_[i]->getExtensions()[j]);
+        for (size_t j=0; j<readers_[i]->getSupportedExtensions().size(); ++j) {
+            if (std::find(extensions.begin(), extensions.end(), readers_[i]->getSupportedExtensions()[j]) == extensions.end())
+                extensions.push_back(readers_[i]->getSupportedExtensions()[j]);
         }
     }
-
     return extensions;
 }
 
-std::vector<std::string> VolumeSerializerPopulator::getSupportedWriteExtensions() const {
-
-    std::vector<std::string> extensions;
-    for (size_t i=0; i<writers_.size(); ++i) {
-        for (size_t j=0; j<writers_[i]->getExtensions().size(); ++j) {
-            if (std::find(extensions.begin(), extensions.end(), writers_[i]->getExtensions()[j]) == extensions.end())
-                extensions.push_back(writers_[i]->getExtensions()[j]);
+std::vector<std::string> VolumeSerializerPopulator::getSupportedReadFilenames() const {
+    std::vector<std::string> filenames;
+    for (size_t i=0; i<readers_.size(); ++i) {
+        for (size_t j=0; j<readers_[i]->getSupportedFilenames().size(); ++j) {
+            if (std::find(filenames.begin(), filenames.end(), readers_[i]->getSupportedFilenames()[j]) == filenames.end())
+                filenames.push_back(readers_[i]->getSupportedFilenames()[j]);
         }
     }
+    return filenames;
+}
 
+std::vector<std::string> VolumeSerializerPopulator::getSupportedWriteExtensions() const {
+    std::vector<std::string> extensions;
+    for (size_t i=0; i<writers_.size(); ++i) {
+        for (size_t j=0; j<writers_[i]->getSupportedExtensions().size(); ++j) {
+            if (std::find(extensions.begin(), extensions.end(), writers_[i]->getSupportedExtensions()[j]) == extensions.end())
+                extensions.push_back(writers_[i]->getSupportedExtensions()[j]);
+        }
+    }
     return extensions;
+}
+
+std::vector<std::string> VolumeSerializerPopulator::getSupportedWriteFilenames() const {
+    std::vector<std::string> filenames;
+    for (size_t i=0; i<writers_.size(); ++i) {
+        for (size_t j=0; j<writers_[i]->getSupportedFilenames().size(); ++j) {
+            if (std::find(filenames.begin(), filenames.end(), writers_[i]->getSupportedFilenames()[j]) == filenames.end())
+                filenames.push_back(writers_[i]->getSupportedFilenames()[j]);
+        }
+    }
+    return filenames;
 }
 
 } // namespace voreen

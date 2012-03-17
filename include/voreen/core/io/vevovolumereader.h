@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -81,7 +81,7 @@ class VevoFrame {
 public:
     int num_;
     size_t size_;
-    uint offset_;
+    unsigned int offset_;
     float tstamp_;          // frame's timestamp in msecs
     std::string file_;      // .rdb frame container
     size_t segID_;          // segmented id of the frame depending on the heart period segmentation granularity n;

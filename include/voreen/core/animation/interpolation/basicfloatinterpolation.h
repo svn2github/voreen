@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,12 +29,14 @@
 #ifndef VRN_BASICFLOATINTERPOLATION_H
 #define VRN_BASICFLOATINTERPOLATION_H
 
+#include "voreen/core/voreencoredefine.h"
+
 namespace voreen {
 
 /**
  * This class offers a set of basic interpolation functions for float-values.
  */
-class BasicFloatInterpolation {
+class VRN_CORE_API BasicFloatInterpolation {
 public:
     BasicFloatInterpolation();
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,7 +41,7 @@ class PropertyLink;
  * Interface for network observers. Objects of this type
  * can be registered at a ProcessorNetwork.
  */
-class ProcessorNetworkObserver : public Observer {
+class VRN_CORE_API ProcessorNetworkObserver : public Observer {
 public:
 
     /**

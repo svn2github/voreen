@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,6 +28,8 @@
 
 #include "linkdialoggraphicsview.h"
 
+#include "linkdialoggraphicsscene.h"
+
 #include <QAction>
 #include <QKeyEvent>
 
@@ -37,7 +39,7 @@ LinkDialogGraphicsView::LinkDialogGraphicsView(QWidget* parent)
 {
     setMinimumSize(700, 480);
     setMaximumHeight(480);
-    setScene(new QGraphicsScene);
+    setScene(new LinkDialogGraphicsScene);
     setMouseTracking(true);
     setBackgroundBrush(QBrush(Qt::darkGray));
     setRenderHint(QPainter::Antialiasing);

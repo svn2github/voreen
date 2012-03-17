@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -93,25 +93,24 @@ void VolumeCollectionPropertyWidget::updateCollection() {
     }
 
     collection->clear();
-    QList<QTreeWidgetItem*> items = volumeInfos_->findItems(".", Qt::MatchContains);
+    QList<QTreeWidgetItem*> items = volumeInfos_->findItems("", Qt::MatchContains);
     for(size_t i = 0; i < volumeContainer_->size(); i++) {
-        if (items.at(i)->checkState(0) == Qt::Checked) {
+        if (items.at(static_cast<int>(i))->checkState(0) == Qt::Checked) {
             collection->add(volumeContainer_->at(i));
         }
     }
     prop_->invalidate();
-
 }
 
 void VolumeCollectionPropertyWidget::updateCollection(QTreeWidgetItem*, int) {
     updateCollection();
 }
 
-void VolumeCollectionPropertyWidget::volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {
+void VolumeCollectionPropertyWidget::volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {
     updateWidget();
 }
 
-void VolumeCollectionPropertyWidget::volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {
+void VolumeCollectionPropertyWidget::volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {
     updateCollection();
     updateWidget();
 }
@@ -128,21 +127,21 @@ void VolumeCollectionPropertyWidget::updateWidget() {
 
     volumeInfos_->clear();
     for(size_t i = 0 ; i< volumeContainer_->size(); i++) {
-        VolumeHandle* handle = volumeContainer_->at(i);
-        Volume* volume = volumeContainer_->at(i)->getVolume();
+        VolumeHandleBase* handle = volumeContainer_->at(i);
         QTreeWidgetItem* qtwi = new QTreeWidgetItem(volumeInfos_);
 
         qtwi->setFont(0, QFont(QString("Arial"), fontSize));
-        QString info = QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle) + "\n"
+        QString info = QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle)
+                                               + VolumeViewHelper::getVolumeTimestep(handle)
+                                               + "\n"
                                                + VolumeViewHelper::getVolumePath(handle));
         qtwi->setText(0, info);
-        qtwi->setIcon(0, QIcon(VolumeViewHelper::generateBorderedPreview(volume, 27, 0)));
+        qtwi->setIcon(0, QIcon(VolumeViewHelper::generateBorderedPreview(handle, 27, 0)));
         qtwi->setSizeHint(0,QSize(27,27));
         qtwi->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
         // set tree widget to checked, if the corresponding volume handle is contained by the property's collection
-        // TODO: check for volume handle object instead of origin, when new serialization is in place
-        qtwi->setCheckState(0, collection->selectOrigin(handle->getOrigin())->empty() ? Qt::Unchecked : Qt::Checked);
+        qtwi->setCheckState(0, collection->contains(handle) ? Qt::Checked : Qt::Unchecked);
 
         volumeInfos_->addTopLevelItem(qtwi);
     }
@@ -155,14 +154,14 @@ void VolumeCollectionPropertyWidget::setVolumeContainer(VolumeContainer* volumeC
 
     volumeContainer_ = volumeContainer;
 
-    if (volumeContainer_)
+    if (volumeContainer_) 
         volumeContainer_->addObserver(this);
 
     updateWidget();
 }
 
 void VolumeCollectionPropertyWidget::selectAll(bool toggle) {
-    QList<QTreeWidgetItem*> items = volumeInfos_->findItems(".", Qt::MatchContains);
+    QList<QTreeWidgetItem*> items = volumeInfos_->findItems("", Qt::MatchContains);
     QList<QTreeWidgetItem*>::iterator it = items.begin();
     while(it != items.end()) {
         (*it)->setCheckState(0, toggle ? Qt::Checked : Qt::Unchecked);

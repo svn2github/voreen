@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,7 @@
 
 #include "voreen/core/network/processornetwork.h"
 #include "voreen/core/properties/property.h"
+#include "voreen/qt/voreenqtdefine.h"
 
 #include <map>
 #include <QScrollArea>
@@ -47,8 +48,8 @@ class VolumeContainer;
  *
  * PropertyListWidget objects register themselves as observers at the assigned ProcessorNetwork.
  */
-class PropertyListWidget : public QScrollArea, public ProcessorNetworkObserver {
-    Q_OBJECT
+class VRN_QT_API PropertyListWidget : public QScrollArea, public ProcessorNetworkObserver {
+Q_OBJECT
 public:
     /**
      * Determines the widget's GUI mode.

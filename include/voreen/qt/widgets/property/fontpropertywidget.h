@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QGroupBox>
 #include <QSlider>
 #include <math.h>
 #include <tgt/vector.h>
@@ -52,6 +53,7 @@ public slots:
     void updateProperty();
 
 private:
+    QGroupBox* groupBox_;
     QComboBox* tgtFontType_;
     QComboBox* tgtFontName_;
     QSlider* tgtFontSizeSlider_;

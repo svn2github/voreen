@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,9 +28,8 @@
 
 #include "networkeditor.h"
 
-#include "voreen/qt/widgets/processor/qprocessorwidgetfactory.h"
-
 #include "aggregationgraphicsitem.h"
+#include "annotationgraphicsitem.h"
 #include "arrowheadselectiongraphicsitem.h"
 #include "linkarrowgraphicsitem.h"
 #include "portarrowgraphicsitem.h"
@@ -41,38 +40,48 @@
 #include "propertylinkdialog.h"
 #include "textgraphicsitem.h"
 
+#include "voreen/core/voreenapplication.h"
 #include "voreen/core/io/serialization/meta/aggregationmetadata.h"
 #include "voreen/core/io/serialization/meta/primitivemetadata.h"
 #include "voreen/core/io/serialization/meta/selectionmetadata.h"
 #include "voreen/core/io/serialization/meta/zoommetadata.h"
+#include "voreen/core/io/serialization/meta/networkannotation.h"
 #include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/processors/processorfactory.h"
 #include "voreen/core/ports/port.h"
+#include "voreen/core/ports/coprocessorport.h"
 #include "voreen/core/properties/cameraproperty.h"
 #include "voreen/core/properties/propertyowner.h"
-#include "voreen/core/properties/link/dependencylinkevaluatorbase.h"
+#include "voreen/core/properties/link/dependencylinkevaluator.h"
 #include "voreen/core/properties/link/linkevaluatorfactory.h"
+#include "voreen/core/properties/link/linkevaluatorid.h"
 #include "voreen/core/network/workspace.h"
 #include "voreen/core/io/serialization/xmlserializer.h"
 #include "voreen/core/io/serialization/xmldeserializer.h"
 #include "voreen/core/processors/processorfactory.h"
 #include "voreen/core/datastructures/transfunc/transfuncfactory.h"
-#include "voreen/modules/base/processors/datasource/volumesource.h"
-#include "voreen/modules/base/processors/datasource/volumecollectionsource.h"
 
 #include "hastooltip.h"
+
+#ifdef VRN_MODULE_BASE
+#include "modules/base/processors/datasource/volumesource.h"
+#include "modules/base/processors/datasource/volumecollectionsource.h"
+#endif
 
 #include <QApplication>
 #include <QBoxLayout>
 #include <QButtonGroup>
 #include <QClipboard>
 #include <QComboBox>
+#include <QDesktopServices>
+#include <QFileDialog>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QPoint>
 #include <QTimer>
 #include <QToolButton>
 #include <QTransform>
+#include <QUrl>
 #include <QSpinBox>
 
 #include <cmath>
@@ -104,6 +113,34 @@ namespace {
                           matrix.t10, matrix.t11, matrix.t12,
                           matrix.t20, matrix.t21, matrix.t22);
     }
+
+    QString whatsThisInfo = "<h3>Network Editor</h3>This area is the visual representation of the currently active network. All \
+                            processors with their connections are displayed and editable. The three buttons in the upper right corner \
+                            toggle different modes:</br> \
+                            <p><img src=\":/voreenve/icons/dataflow-mode.png\" width=\"25\"><b>Dataflow</b> In this mode, the \
+                            connections between ports are in focus. It is possible to create new connections (dragging from one \
+                            port to another), reroute connections (drag the arrowhead to another port), or remove connections ( \
+                            either select a connection and hit DEL, context menu, or drag the arrowhead into empty space). Tooltips \
+                            of the arrows provide additional information about the data transmitted between those ports. Please note \
+                            that only ports of the same type can be connected.</p>\
+                            <p><img src=\":/voreenve/icons/linking-mode.png\" width=\"25\"><b>Linking</b> In this mode, properties \
+                            can be connected (=linked) so that they stay synchronized (i.e. if one property changes, the linked \
+                            property will recieve the same value). New links can be created by dragging between processors. Deleting \
+                            links is done by selecting them and hitting DEL or context menu. Note that even if there are multiple \
+                            links between properties of two processors, only one arrow is drawn between those processors. This mode \
+                            has some other buttons to modify the general behavior:<br/>\
+                            <img src=\":/voreenve/icons/linking-camera-auto.png\" width=\"25\">If this button is selected, links \
+                            between CameraPropertys are created automatically every time a new processor is added to the network.<br/> \
+                            <img src=\":/voreenve/icons/linking-camera.png\" width=\"25\">This action will immediately connect all \
+                            CameraPropertys in the network with each other.<br/>\
+                            <img src=\":/voreenve/icons/linking-remove.png\" width=\"25\">Will remove all property links from the \
+                            current network.</p>\
+                            <p><img src=\":/voreenve/icons/notes.png\" width=\"25\"><b>Notes</b> This mode is for viewing and manipulating \
+                            network annotations which are essentially notes for the specific network. They are created by using \
+                            the context menu and are changed and deleted using their context menu.</p>\
+                            <p><img src=\":voreenve/icons/player-pause.png\" width=\"25\"> The <b>Evaluation</b> button in the lower \
+                            right stops the automatic evaluation of the network which normally happens after every valid change and is useful if there \
+                            is an expensive processor which should not be processed every time.</p>";
 }
 
 namespace voreen {
@@ -161,9 +198,7 @@ namespace {
         bool aggregations = true;
 
         XmlDeserializer d;
-        d.registerFactory(ProcessorFactory::getInstance());
-        d.registerFactory(TransFuncFactory::getInstance());
-        try {
+         try {
             d.read(stream);
         }
         catch (SerializationException&) {
@@ -261,21 +296,26 @@ NetworkEditor::NetworkEditor(QWidget* parent, ProcessorNetwork* network, Network
     , evaluator_(evaluator)
     , selectedPortArrow_(0)
     , selectedLinkArrow_(0)
+    , temporaryRenderPortImage_(0)
     , needsScale_(false)
     , networkEvaluatorIsLockedByButton_(false)
     , activateTooltips_(true)
     , activeTooltip_(0)
     , layerButtonContainer_(0)
+    , annotationLayerButton_(0)
     , dataflowLayerButton_(0)
     , linkingLayerButton_(0)
     , otherButtonContainer_(0)
     , stopNetworkEvaluatorButton_(0)
     , currentLayer_(NetworkEditorLayerUndefined)
+    , snapshotPath_(QString::fromStdString(VoreenApplication::app()->getSnapshotPath()))
+    , snapshotPlugin_(new NetworkSnapshotPlugin(this))
 {
     tgtAssert(evaluator_ != 0, "passed null pointer");
     //tgtAssert(getProcessorNetwork() != 0, "no network available");
 
     setScene(new QGraphicsScene(this));
+    setWhatsThis(whatsThisInfo);
 
     translateScene_ = false;
 
@@ -294,18 +334,11 @@ NetworkEditor::NetworkEditor(QWidget* parent, ProcessorNetwork* network, Network
     createOtherButtons();
 }
 
-NetworkEditor::~NetworkEditor() {
-    //clearClipboard();
-    //hideTooltip();
-    //delete ttimer_;
-}
-
 // ------------------------------------------------------------------------------------------------
 // initialization methods
 // ------------------------------------------------------------------------------------------------
 
 void NetworkEditor::generateGraphicsItems() {
-
     if (!getProcessorNetwork())
         return;
 
@@ -319,9 +352,9 @@ void NetworkEditor::generateGraphicsItems() {
         outports.insert(outports.end(), coprocessoroutports.begin(), coprocessoroutports.end());
 
         foreach (Port* port, outports) {
-            std::vector<Port*> connectedPorts = port->getConnected();
+            std::vector<const Port*> connectedPorts = port->getConnected();
 
-            foreach (Port* connectedPort, connectedPorts)
+            foreach (const Port* connectedPort, connectedPorts)
                 portConnectionAdded(port, connectedPort);
         }
     }
@@ -329,8 +362,18 @@ void NetworkEditor::generateGraphicsItems() {
     foreach (ProcessorGraphicsItem* procItem, processorItemMap_.values())
         scene()->addItem(procItem);
 
-    foreach (PropertyLink* link, getProcessorNetwork()->getPropertyLinks()) {
+    foreach (PropertyLink* link, getProcessorNetwork()->getPropertyLinks())
         createLinkArrowForPropertyLink(link);
+
+    NetworkAnnotationContainer* annotationContainer = dynamic_cast<NetworkAnnotationContainer*>(getProcessorNetwork()->getMetaDataContainer().getMetaData("Annotation"));
+    if (annotationContainer) {
+        foreach (NetworkAnnotation* annotation, annotationContainer->getAnnotations()) {
+            AnnotationGraphicsItem* annotationItem = new AnnotationGraphicsItem(annotation);
+            connect(annotationItem, SIGNAL(closeButtonPressed()), this, SLOT(removeAnnotation()));
+            annotationItem->setVisible(false);
+            annotationGraphicsItems_.append(annotationItem);
+            scene()->addItem(annotationItem);
+        }
     }
 }
 
@@ -341,21 +384,27 @@ void NetworkEditor::createContextMenuActions() {
     deleteAction_ = new QAction(QIcon(":/voreenve/icons/eraser.png"), tr("Delete"), this);
     deleteLinkAction_ = new QAction(QIcon(":/voreenve/icons/eraser.png"), tr("Delete"), this);
     renameAction_ = new QAction(QIcon(":/voreenve/icons/rename.png"), tr("Rename"), this);
+    editAnnotation_ = new QAction(QIcon(":/voreenve/icons/rename.png"), tr("Edit"), this);
     editLinkAction_ = new QAction(tr("Edit"), this);
     aggregateAction_ = new QAction(QIcon(":/voreenve/icons/aggregate.png"), tr("Aggregate"), this);
     deaggregateAction_ = new QAction(QIcon(":/voreenve/icons/deaggregate.png"), tr("Deaggregate"), this);  // this action will be added to the menus on demand
     clearDependencyHistoryAction_ = new QAction(QIcon(":/voreenve/icons/clear_dependency.png"), tr("Clear dependency history"), this); // this action will be added to the menus on demand
+    saveRenderPortImageAction_ = new QAction(tr("Save RenderPort as Image"), this);
+    newAnnotationAction_ = new QAction(QIcon(":/voreenve/icons/notes-add.png"), tr("New Annotation"), this);
 
     connect(copyAction_, SIGNAL(triggered()), this, SLOT(copyActionSlot()));
     connect(pasteAction_, SIGNAL(triggered()), this, SLOT(pasteActionSlot()));
     connect(replaceAction_, SIGNAL(triggered()), this, SLOT(replaceActionSlot()));
     connect(deleteAction_, SIGNAL(triggered()), this, SLOT(deleteActionSlot()));
     connect(renameAction_, SIGNAL(triggered()), this, SLOT(renameActionSlot()));
+    connect(editAnnotation_, SIGNAL(triggered()), this, SLOT(editAnnotation()));
     connect(deleteLinkAction_, SIGNAL(triggered()), this, SLOT(deletePropertyLinkSlot()));
     connect(editLinkAction_, SIGNAL(triggered()), this, SLOT(editPropertyLinkSlot()));
     connect(aggregateAction_, SIGNAL(triggered()), this, SLOT(aggregateActionSlot()));
     connect(deaggregateAction_, SIGNAL(triggered()), this, SLOT(deaggregateActionSlot()));
     connect(clearDependencyHistoryAction_, SIGNAL(triggered()), this, SLOT(clearDependencyHistory()));
+    connect(saveRenderPortImageAction_, SIGNAL(triggered()), this, SLOT(saveRenderPortImage()));
+    connect(newAnnotationAction_, SIGNAL(triggered()), this, SLOT(createNewAnnotation()));
 }
 
 void NetworkEditor::createTimer() {
@@ -373,6 +422,7 @@ void NetworkEditor::createLayerButtons() {
     dataflowLayerButton_->setIconSize(layerButtonSize);
     dataflowLayerButton_->setToolTip(tr("switch to data flow mode"));
     dataflowLayerButton_->setCheckable(true);
+    dataflowLayerButton_->setShortcut(Qt::CTRL + Qt::Key_1);
     connect(dataflowLayerButton_, SIGNAL(clicked()), this, SLOT(setLayerToDataflow()));
     layerLayout->addWidget(dataflowLayerButton_);
 
@@ -381,6 +431,7 @@ void NetworkEditor::createLayerButtons() {
     linkingLayerButton_->setIconSize(layerButtonSize);
     linkingLayerButton_->setToolTip(tr("switch to linking mode"));
     linkingLayerButton_->setCheckable(true);
+    linkingLayerButton_->setShortcut(Qt::CTRL + Qt::Key_2);
     connect(linkingLayerButton_, SIGNAL(clicked()), this, SLOT(setLayerToLinking()));
     layerLayout->addWidget(linkingLayerButton_);
 
@@ -422,6 +473,15 @@ void NetworkEditor::createOtherButtons() {
     otherButtonContainer_ = new QWidget(this);
     QBoxLayout* otherLayout = new QHBoxLayout(otherButtonContainer_);
 
+    annotationLayerButton_ = new QToolButton;
+    annotationLayerButton_->setIcon(QIcon(":/voreenve/icons/notes.png"));
+    annotationLayerButton_->setIconSize(layerButtonSize);
+    annotationLayerButton_->setToolTip(tr("Show/hide sticky notes"));
+    annotationLayerButton_->setCheckable(true);
+    annotationLayerButton_->setShortcut(Qt::CTRL + Qt::Key_3);
+    connect(annotationLayerButton_, SIGNAL(clicked()), this, SLOT(toggleNotesLayer()));
+    otherLayout->addWidget(annotationLayerButton_);
+
     stopNetworkEvaluatorButton_ = new QToolButton;
     stopNetworkEvaluatorButton_->setIcon(QIcon(":/voreenve/icons/player-pause.png"));
     stopNetworkEvaluatorButton_->setIconSize(otherButtonSize);
@@ -443,7 +503,7 @@ void NetworkEditor::layoutLayerButtons() {
 
     layerButtonContainer_->move(x,y);
 
-    x += layerButtonContainer_->width() - autoLinkingContainer_->width();
+    x += linkingLayerButton_->pos().x() - layerButtonSpacingX + 1;
     y += static_cast<int>(layerButtonContainer_->height() * 0.85f);
 
     autoLinkingContainer_->move(x,y);
@@ -500,6 +560,7 @@ void NetworkEditor::setProcessorNetwork(ProcessorNetwork* network) {
 
     resetScene();
     linkMap_.clear();
+    annotationGraphicsItems_.clear();
 
     generateGraphicsItems();
 
@@ -544,10 +605,21 @@ void NetworkEditor::setProcessorNetwork(ProcessorNetwork* network) {
         linkCamerasAutoButton_->setChecked(cameraLinkMeta->getValue());
     else
         linkCamerasAutoButton_->setChecked(true);
+
+    annotationLayerButton_->setChecked(false);
+    if (network) {
+        MetaDataContainer& container = getProcessorNetwork()->getMetaDataContainer();
+        NetworkAnnotationContainer* annotationContainer = dynamic_cast<NetworkAnnotationContainer*>(container.getMetaData("Annotation"));
+        if (annotationContainer) {
+            if (annotationContainer->getShowAnnotations()) {
+                annotationLayerButton_->setChecked(true);
+                toggleNotesLayer();
+            }
+        }
+    }
 }
 
 void NetworkEditor::selectPreviouslySelectedProcessors() {
-
     if (!getProcessorNetwork())
         return;
 
@@ -607,7 +679,6 @@ QSize NetworkEditor::sizeHint() const {
 }
 
 void NetworkEditor::updateSelectedItems() {
-
     if (!getProcessorNetwork())
         return;
 
@@ -635,7 +706,6 @@ void NetworkEditor::updateSelectedItems() {
 }
 
 void NetworkEditor::scaleView() {
-
     if (!getProcessorNetwork())
         return;
 
@@ -688,7 +758,6 @@ void NetworkEditor::scaleView() {
 }
 
 void NetworkEditor::scale(qreal sx, qreal sy) {
-
     if (getProcessorNetwork()) {
         QTransform transformMatrix = transform();
         if (transformMatrix.isIdentity())
@@ -739,8 +808,6 @@ void NetworkEditor::copyActionSlot() {
     std::stringstream stream;
 
     XmlSerializer s;
-    s.registerFactory(ProcessorFactory::getInstance());
-    s.registerFactory(TransFuncFactory::getInstance());
 
     std::vector<Processor*> processors;
     std::vector<AggregationMetaData> aggregations;
@@ -758,7 +825,9 @@ void NetworkEditor::copyActionSlot() {
                 Processor* processor = procItem->getProcessor();
 
                 // special treatment for VolumeSource and VolumeCollection because they shouldn't
-                // serialize their volume on a copy'n'paste
+                // serialize their volume on a copy'n'paste 
+                // TODO: look for VolumeHandleProperty/VolumeCollectionProperty instead of Source processors
+#ifdef VRN_MODULE_BASE
                 VolumeSource* volumeSource = dynamic_cast<VolumeSource*>(processor);
                 if (volumeSource) {
                     volumeSourceMap.insert(processor, volumeSource->getVolumeHandle());
@@ -770,6 +839,7 @@ void NetworkEditor::copyActionSlot() {
                     volumeCollectionSourceMap.insert(processor, volumeCollection->getVolumeCollection());
                     volumeCollection->setVolumeCollection(0);
                 }
+#endif
 
                 processors.push_back(processor);
                 break;
@@ -797,6 +867,7 @@ void NetworkEditor::copyActionSlot() {
     clipboard->setText(value);
 
     // now we can reset the VolumeSources and VolumeCollections
+#ifdef VRN_MODULE_BASE
     foreach (Processor* processor, volumeSourceMap.keys()) {
         VolumeSource* volumeSource = static_cast<VolumeSource*>(processor);
         volumeSource->setVolumeHandle(volumeSourceMap[processor]);
@@ -806,6 +877,7 @@ void NetworkEditor::copyActionSlot() {
         VolumeCollectionSource* volumeCollection = static_cast<VolumeCollectionSource*>(processor);
         volumeCollection->setVolumeCollection(volumeCollectionSourceMap[processor]);
     }
+#endif
 }
 
 void NetworkEditor::pasteActionSlot() {
@@ -822,8 +894,6 @@ void NetworkEditor::pasteActionSlot() {
     std::stringstream stream(clip.toStdString());
 
     XmlDeserializer d;
-    d.registerFactory(ProcessorFactory::getInstance());
-    d.registerFactory(TransFuncFactory::getInstance());
     d.read(stream);
     try {
         std::vector<Processor*> processors;
@@ -865,7 +935,6 @@ void NetworkEditor::pasteActionSlot() {
 }
 
 void NetworkEditor::replaceActionSlot() {
-
     if (!getProcessorNetwork())
         return;
 
@@ -881,16 +950,14 @@ void NetworkEditor::replaceActionSlot() {
 
     //tgtAssert(clipboardProcessors_.size() == 1, "there were no or multiple items in the clipboard");
 
-    QPointF oldPosition = selected[0]->pos();
+    //QPointF oldPosition = selected[0]->pos();
 
     QClipboard* clipboard = QApplication::clipboard();
     QString clip = clipboard->text();
     std::stringstream stream(clip.toStdString());
 
     XmlDeserializer d;
-    d.registerFactory(ProcessorFactory::getInstance());
-    d.registerFactory(TransFuncFactory::getInstance());
-    try {
+     try {
         d.read(stream);
         Processor* proc = 0;
         d.deserialize("SingleProcessor", proc);
@@ -906,7 +973,8 @@ void NetworkEditor::replaceActionSlot() {
 }
 
 void NetworkEditor::deleteActionSlot() {
-    removeItems(scene()->selectedItems());
+    QList<QGraphicsItem*> selected = scene()->selectedItems();
+    removeItems(selected);
     updateSelectedItems();
 
     emit processorsSelected(QList<Processor*>());
@@ -960,10 +1028,51 @@ void NetworkEditor::toggleNetworkEvaluator() {
 }
 
 void NetworkEditor::clearDependencyHistory() {
-    const ArrowLinkInformation& info = linkMap_[selectedLinkArrow_];
-    LinkEvaluatorBase* eval = info.first->getLinkEvaluator();
-    DependencyLinkEvaluatorBase* depEva = dynamic_cast<DependencyLinkEvaluatorBase*>(eval);
+    LinkEvaluatorBase* eval = linkMap_[selectedLinkArrow_].first->getLinkEvaluator();
+    DependencyLinkEvaluator* depEva = dynamic_cast<DependencyLinkEvaluator*>(eval);
     depEva->clearDependencyMap();
+}
+
+void NetworkEditor::saveRenderPortImage() {
+    QFileDialog filedialog(this);
+    filedialog.setWindowTitle(tr("Save Snapshot"));
+    filedialog.setDirectory(snapshotPath_);
+    filedialog.setDefaultSuffix(tr("png"));
+
+    QStringList filter;
+    filter << tr("PNG image (*.png)");
+    filter << tr("JPEG image (*.jpg)");
+    filter << tr("Windows Bitmap (*.bmp)");
+    filter << tr("TIFF image (*.tif)");
+    filedialog.setFilters(filter);
+    filedialog.setAcceptMode(QFileDialog::AcceptSave);
+
+    QList<QUrl> urls;
+    urls << QUrl::fromLocalFile(VoreenApplication::app()->getSnapshotPath().c_str());
+    urls << QUrl::fromLocalFile(VoreenApplication::app()->getDocumentsPath().c_str());
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    urls << QUrl::fromLocalFile(QDesktopServices::storageLocation(QDesktopServices::HomeLocation));
+    filedialog.setSidebarUrls(urls);
+
+    struct tm* Tm;
+    time_t currentTime = time(NULL);
+    Tm = localtime(&currentTime);
+    std::stringstream timestamp;
+    timestamp << "snapshot " << (Tm->tm_year+1900) << "-" << (Tm->tm_mon+1) << "-" << Tm->tm_mday << "-" << Tm->tm_hour << "-" << Tm->tm_min << "-" << Tm->tm_sec;
+    timestamp << ".png";
+    filedialog.selectFile(tr(timestamp.str().c_str()));
+
+    QStringList fileList;
+    if (filedialog.exec()) {
+        fileList = filedialog.selectedFiles();
+        snapshotPath_ = filedialog.directory().path();
+    }
+    if (fileList.empty())
+        return;
+
+    QString file = fileList.at(0);
+
+    temporaryRenderPortImage_->save(file);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -974,9 +1083,10 @@ void NetworkEditor::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::RightButton)
         return;
     // shift and left button activate translation of scene.
-    else if (event->button() == Qt::LeftButton && event->modifiers() == Qt::ShiftModifier) {
+    else if ((event->button() == Qt::LeftButton && event->modifiers() == Qt::ShiftModifier) || event->button() == Qt::MidButton) {
         translateScene_ = true;
-        sceneTranslate_ = mapToScene(event->pos());
+        //sceneTranslate_ = mapToScene(event->pos());
+        sceneTranslate_ = event->pos();
     }
     else
         QGraphicsView::mousePressEvent(event);
@@ -984,9 +1094,10 @@ void NetworkEditor::mousePressEvent(QMouseEvent* event) {
 
 void NetworkEditor::mouseMoveEvent(QMouseEvent* event) {
     if (translateScene_) {
-        sceneTranslate_ -= mapToScene(event->pos());
-        translate(sceneTranslate_.x(), sceneTranslate_.y());
-        sceneTranslate_ = mapToScene(event->pos());
+        QPoint dP = (sceneTranslate_ - event->pos()) ;
+        qreal distance = 1.0 / (1.0 / dP.manhattanLength()) * (1.0 / dP.manhattanLength());
+        QPointF mappedP = mapToScene(dP.x(), dP.y());
+        translate(mappedP.x() / distance, mappedP.y() / distance);
     }
     else {
         // tooltip behavior
@@ -994,10 +1105,8 @@ void NetworkEditor::mouseMoveEvent(QMouseEvent* event) {
         QGraphicsItem* item = itemAt(event->pos());
         HasToolTip* tooltip = dynamic_cast<HasToolTip*>(item);
         if (item && tooltip && activateTooltips_) {
-            //if (item->type() != PortGraphicsItem::Type) {
             lastItemWithTooltip_ = tooltip;
             ttimer_->resetIfDistant(event->pos(),500);
-            //}
         }
         else {
              if (ttimer_->isDistant(event->pos()))
@@ -1009,7 +1118,7 @@ void NetworkEditor::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void NetworkEditor::mouseReleaseEvent(QMouseEvent* event) {
-    if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::LeftButton || event->button() == Qt::MidButton)
         translateScene_ = false;
 
     QGraphicsView::mouseReleaseEvent(event);
@@ -1076,6 +1185,9 @@ void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
         case TextGraphicsItem::Type:
         case OpenPropertyListButton::Type:
             item = item->parentItem();
+        };
+
+        switch (item->type()) {
         case ProcessorGraphicsItem::Type:
         case AggregationGraphicsItem::Type:
             {
@@ -1118,8 +1230,6 @@ void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
 
                 break;
             }
-        case PortArrowGraphicsItem::Type:
-            return;
         case LinkArrowGraphicsItem::Type:
             {
                 selectedLinkArrow_ = qgraphicsitem_cast<LinkArrowGraphicsItem*>(item);
@@ -1128,7 +1238,7 @@ void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
 
                 tgtAssert(linkMap_.contains(selectedLinkArrow_), "linkMap didn't contain the selected link");
                 const ArrowLinkInformation& info = linkMap_[selectedLinkArrow_];
-                if (dynamic_cast<DependencyLinkEvaluatorBase*>(info.first->getLinkEvaluator())) {
+                if (dynamic_cast<DependencyLinkEvaluator*>(info.first->getLinkEvaluator())) {
                     tgtAssert(info.second == 0, "a dependency link arrow shouldn't contain two PropertyLinks");
                     currentMenu.addAction(clearDependencyHistoryAction_);
                 }
@@ -1139,6 +1249,24 @@ void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
                 RootGraphicsItem* root = qgraphicsitem_cast<RootGraphicsItem*>(item->parentItem());
                 QList<QAction*> widgetActions = root->getProcessorWidgetContextMenuActions();
                 currentMenu.addActions(widgetActions);
+                break;
+            }
+        case PortGraphicsItem::Type:
+            {
+                PortGraphicsItem* portItem = qgraphicsitem_cast<PortGraphicsItem*>(item);
+                QImage* img = portItem->getRenderPortImage();
+                if (img) {
+                    temporaryRenderPortImage_ = img;
+                    currentMenu.addAction(saveRenderPortImageAction_);
+                }
+                break;
+            }
+        case AnnotationGraphicsItem::Type:
+            {
+                scene()->clearSelection();
+                item->setSelected(true);
+                currentMenu.addAction(editAnnotation_);
+                currentMenu.addAction(deleteAction_);
                 break;
             }
         default:
@@ -1175,6 +1303,9 @@ void NetworkEditor::contextMenuEvent(QContextMenuEvent* event) {
 
         if (clipboardHasValidContent())
             currentMenu.addAction(pasteAction_);
+
+        if (annotationLayerButton_->isChecked())
+            currentMenu.addAction(newAnnotationAction_);
     }
     currentMenu.exec(event->globalPos());
 }
@@ -1374,6 +1505,14 @@ void NetworkEditor::removeItems(QList<QGraphicsItem*> items) {
         case PortGraphicsItem::Type:
         case TextGraphicsItem::Type:
         case PropertyGraphicsItem::Type:
+            items.removeOne(item);
+        }
+    }
+
+    foreach (QGraphicsItem* item, items) {
+        if (item->type() == AnnotationGraphicsItem::Type) {
+            AnnotationGraphicsItem* annotation = qgraphicsitem_cast<AnnotationGraphicsItem*>(item);
+            removeAnnotation(annotation);
             items.removeOne(item);
         }
     }
@@ -1632,11 +1771,11 @@ LinkArrowGraphicsItem* NetworkEditor::createLinkArrowForPropertyLink(const Prope
     }
 
     LinkArrowGraphicsItem* result = new LinkArrowGraphicsItem(sourceProp, destinationProp);
-    std::string functionname = link->getLinkEvaluator()->name();
+    std::string functionname = link->getLinkEvaluator()->getClassName();
     result->setToolTip(QString::fromStdString(functionname));
 
-    if (dynamic_cast<DependencyLinkEvaluatorBase*>(link->getLinkEvaluator()))
-        result->setNormalColor(Qt::cyan);
+    if (dynamic_cast<DependencyLinkEvaluator*>(link->getLinkEvaluator()))
+        result->setNormalColor(Qt::darkRed);
 
     ArrowLinkInformation l = std::make_pair(link, static_cast<const PropertyLink*>(0));
     linkMap_.insert(result, l);
@@ -1656,7 +1795,7 @@ void NetworkEditor::linkCameras() {
         return;
 
     if (QMessageBox::question(this, tr("VoreenVE"), tr("Link all cameras in the current network?"), QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
-        int numLinks = getProcessorNetwork()->linkProperties<CameraProperty>(std::vector<Processor*>(), std::vector<std::string>());
+        int numLinks = getProcessorNetwork()->linkProperties<CameraProperty>(std::vector<Processor*>(), std::vector<std::string>(), new LinkEvaluatorId);
 
         if (numLinks > 0)
             LINFO("Created " << numLinks << " camera property links");
@@ -1779,6 +1918,17 @@ void NetworkEditor::setLayerToDataflow() {
 
 void NetworkEditor::setLayerToLinking() {
     setLayer(NetworkEditorLayerLinking);
+}
+
+void NetworkEditor::toggleNotesLayer() {
+    bool layerVisible = annotationLayerButton_->isChecked();
+    foreach (AnnotationGraphicsItem* item, annotationGraphicsItems_)
+        item->setVisible(layerVisible);
+
+    MetaDataContainer& container = getProcessorNetwork()->getMetaDataContainer();
+    NetworkAnnotationContainer* annotationContainer = dynamic_cast<NetworkAnnotationContainer*>(container.getMetaData("Annotation"));
+    if (annotationContainer)
+        annotationContainer->setShowAnnotations(layerVisible);
 }
 
 NetworkEditorLayer NetworkEditor::currentLayer() const {
@@ -2227,14 +2377,61 @@ PortGraphicsItem* NetworkEditor::getPortGraphicsItem(const Port* port) const {
     return portItem;
 }
 
+void NetworkEditor::createNewAnnotation() {
+    NetworkAnnotation* annotation = new NetworkAnnotation;
+    annotation->setPosition(rightClickPosition_.x(), rightClickPosition_.y());
+
+    MetaDataContainer& container = getProcessorNetwork()->getMetaDataContainer();
+    if (!container.hasMetaData("Annotation")) {
+        MetaDataBase* metaData = new NetworkAnnotationContainer;
+        container.addMetaData("Annotation", metaData);
+    }
+    NetworkAnnotationContainer* annotationContainer = static_cast<NetworkAnnotationContainer*>(container.getMetaData("Annotation"));
+    annotationContainer->addNetworkAnnotation(annotation);
+
+    AnnotationGraphicsItem* annotationItem = new AnnotationGraphicsItem(annotation);
+    connect(annotationItem, SIGNAL(closeButtonPressed()), this, SLOT(removeAnnotation()));
+    annotationItem->enterEditMode();
+    annotationGraphicsItems_.append(annotationItem);
+    scene()->addItem(annotationItem);
+    annotationItem->setSelected(true);
+}
+
+void NetworkEditor::editAnnotation() {
+    QList<QGraphicsItem*> items = scene()->items(rightClickPosition_);
+    foreach (QGraphicsItem* item, items) {
+        AnnotationGraphicsItem* annotationItem = dynamic_cast<AnnotationGraphicsItem*>(item);
+        if (annotationItem) {
+            annotationItem->enterEditMode();
+            break;
+        }
+    }
+}
+
+void NetworkEditor::removeAnnotation() {
+    AnnotationGraphicsItem* item = dynamic_cast<AnnotationGraphicsItem*>(QObject::sender());
+    tgtAssert(item, "Only an annotation graphicsitem should call this method");
+    removeAnnotation(item);
+}
+
+void NetworkEditor::removeAnnotation(AnnotationGraphicsItem* annotation) {
+    annotationGraphicsItems_.removeOne(annotation);
+    NetworkAnnotationContainer* annotationContainer = static_cast<NetworkAnnotationContainer*>(getProcessorNetwork()->getMetaDataContainer().getMetaData("Annotation"));
+    annotationContainer->removeNetworkAnnotation(annotation->getAnnotation());
+    annotation->deleteLater();
+}
+
+NetworkSnapshotPlugin* NetworkEditor::getSnapshotPlugin() const {
+    return snapshotPlugin_;
+}
+
 // ------------------------------------------------------------------------------------------------
 
-NetworkSnapshotPlugin::NetworkSnapshotPlugin(QWidget* parent, NetworkEditor* networkEditorWidget)
-    : SnapshotPlugin(parent, 0)
+NetworkSnapshotPlugin::NetworkSnapshotPlugin(NetworkEditor* networkEditorWidget)
+    : SnapshotElement()
     , networkEditorWidget_(networkEditorWidget)
 {
-    setWindowTitle(tr("Network Snapshot"));
-    resolutions_.push_back("native");
+    setTitle(tr("Network Snapshot"));
     sizeCombo_->addItem("native");
 }
 
@@ -2246,19 +2443,19 @@ void NetworkSnapshotPlugin::saveSnapshot(const QString& filename) {
 }
 
 void NetworkSnapshotPlugin::sizeComboChanged(int index) {
-    spWidth_->blockSignals(true);
-    spHeight_->blockSignals(true);
-    SnapshotPlugin::sizeComboChanged(index);
-    if(sizeCombo_->currentText().contains("native")) {
-        spWidth_->setValue(networkEditorWidget_->sceneRect().width());
-        spHeight_->setValue(networkEditorWidget_->sceneRect().height());
+    widthSpinBox_->blockSignals(true);
+    heightSpinBox_->blockSignals(true);
+    SnapshotElement::sizeComboChanged(index);
+    if (sizeCombo_->currentText().contains("native")) {
+        widthSpinBox_->setValue(networkEditorWidget_->sceneRect().width());
+        heightSpinBox_->setValue(networkEditorWidget_->sceneRect().height());
 
-        spWidth_->setEnabled(false);
-        spHeight_->setEnabled(false);
+        widthSpinBox_->setEnabled(false);
+        heightSpinBox_->setEnabled(false);
     }
 
-    spWidth_->blockSignals(false);
-    spHeight_->blockSignals(false);
+    widthSpinBox_->blockSignals(false);
+    heightSpinBox_->blockSignals(false);
 
 }
 

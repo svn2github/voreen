@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,13 +28,16 @@
 
 #include <QApplication>
 #include <QMainWindow>
+#include <QMessageBox>
 
 #include "tgt/init.h"
+#include "tgt/logmanager.h"
 #include "tgt/qt/qtcanvas.h"
 #include "tgt/camera.h"
 #include "tgt/shadermanager.h"
 
 #include "voreen/core/utils/voreenpainter.h"
+#include "voreen/core/io/serialization/serialization.h"
 #include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/network/workspace.h"
 #include "voreen/core/network/processornetwork.h"
@@ -51,29 +54,41 @@ using namespace voreen;
 int main(int argc, char* argv[]) {
     // init both Qt and Voreen application (does not require OpenGL context)
     QApplication myapp(argc, argv);
-    VoreenApplicationQt vapp("simple-Qt", "simple-Qt", argc, argv, VoreenApplication::APP_ALL);
-    vapp.init();
+    VoreenApplicationQt vapp("simple-qt", "Simple-Qt", argc, argv, 
+        VoreenApplication::ApplicationFeatures(VoreenApplication::APP_ALL &~ VoreenApplication::APP_PROCESSOR_WIDGETS));
+    vapp.initialize();
 
     // create the mainwindow and assign a canvas to it as central widget
     QMainWindow* mainwindow = new QMainWindow();
+    mainwindow->setWindowTitle("Voreen - The Volume Rendering Engine (Simple-Qt)");
     VoreenApplicationQt::qtApp()->setMainWindow(mainwindow);
-    tgt::QtCanvas* canvas = new tgt::QtCanvas("Voreen - The Volume Rendering Engine");
+    tgt::QtCanvas* canvas = new tgt::QtCanvas();
     mainwindow->setCentralWidget(canvas);
     mainwindow->resize(512, 512);
     mainwindow->show();
 
     // must be called *after* a OpenGL context has been created (canvas)
     // and *before* any further OpenGL access
-    vapp.initGL();
+    vapp.initializeGL();
 
     // load workspace from disc
     Workspace* workspace = new Workspace();
-    workspace->load(VoreenApplication::app()->getWorkspacePath("/standard.vws"));
+    try {
+        workspace->load(VoreenApplication::app()->getWorkspacePath("/standard.vws"));
+    }
+    catch (SerializationException& e) {
+        QMessageBox::critical(mainwindow, "Loading Workspace Failed", QString::fromStdString(e.what()));
+        return EXIT_FAILURE;
+    }
 
-    // initialize the network evaluator
+    // initialize the network evaluator and retrieve the CanvasRenderer processor from the loaded network
     NetworkEvaluator* networkEvaluator = new NetworkEvaluator();
     ProcessorNetwork* network = workspace->getProcessorNetwork();
     std::vector<CanvasRenderer*> canvasRenderer = network->getProcessorsByType<CanvasRenderer>();
+    if (canvasRenderer.empty()) {
+        QMessageBox::critical(mainwindow, "Invalid Workspace", "Loaded workspace does not contain a CanvasRenderer.");
+        return EXIT_FAILURE;
+    }
 
     // init painter and connect it to canvas, evaluator and canvas renderer
     VoreenPainter* painter = new VoreenPainter(canvas, networkEvaluator, canvasRenderer[0]);
@@ -92,6 +107,7 @@ int main(int argc, char* argv[]) {
     delete networkEvaluator;
     delete mainwindow;
 
-    vapp.deinitGL();
-    vapp.deinit();
+    vapp.deinitializeGL();
+    vapp.deinitialize();
+    return 0;
 }

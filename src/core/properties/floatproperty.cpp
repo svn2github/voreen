@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,7 +27,6 @@
  **********************************************************************/
 
 #include "voreen/core/properties/floatproperty.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 namespace voreen {
 
@@ -40,12 +39,34 @@ FloatProperty::FloatProperty(const std::string& id, const std::string& guiText,
     setViews(Property::View(Property::SLIDER | Property::SPINBOX));
 }
 
-PropertyWidget* FloatProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+FloatProperty::FloatProperty() 
+    : NumericProperty<float>("", "", 0.f, 0.f, 100.f, 0.01f, Processor::INVALID_RESULT)
+{}
+
+Property* FloatProperty::create() const {
+    return new FloatProperty();
 }
 
-std::string FloatProperty::getTypeString() const {
-    return "Float";
+Variant FloatProperty::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = (get() - getMinValue()) / (getMaxValue() - getMinValue());
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatProperty::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getFloat());
+}
+
+int FloatProperty::getVariantType() const {
+    return Variant::VariantTypeFloat;
 }
 
 }   // namespace

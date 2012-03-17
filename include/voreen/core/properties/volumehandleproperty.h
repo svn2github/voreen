@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,11 +36,14 @@ namespace voreen {
 
 class VolumeHandle;
 
+#ifdef DLL_TEMPLATE_INST
+template class TemplateProperty<VolumeHandle*>;
+#endif
+    
 /**
  * Property encapsulating a VolumeHandle object.
  */
-class VolumeHandleProperty : public TemplateProperty<VolumeHandle*> {
-
+class VRN_CORE_API VolumeHandleProperty : public TemplateProperty<VolumeHandle*> {
 public:
     /**
      * Constructor.
@@ -52,8 +55,16 @@ public:
      */
     VolumeHandleProperty(const std::string& id, const std::string& guiText, VolumeHandle* const value = 0,
        Processor::InvalidationLevel invalidationLevel = Processor::INVALID_PARAMETERS);
+    VolumeHandleProperty();
 
-     virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "VolumeHandleProperty"; }
+    virtual std::string getTypeDescription() const { return "VolumeHandle"; } 
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 
     /**
      * Sets the stored volume handle to the given one.
@@ -76,9 +87,6 @@ public:
     void loadVolume(const std::string& filename)
         throw (tgt::FileException, std::bad_alloc);
 
-    /// @see Property::createWidget
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
-
     /// @see Property::serialize
     virtual void serialize(XmlSerializer& s) const;
 
@@ -87,7 +95,7 @@ public:
 
 protected:
     /// Deletes the assigned volume, if it is owned by the property.
-    virtual void deinitialize() throw (VoreenException);
+    virtual void deinitialize() throw (tgt::Exception);
 
     bool handleOwner_;
 

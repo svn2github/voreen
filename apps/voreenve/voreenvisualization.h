@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -42,8 +42,10 @@ class Workspace;
 class NetworkEvaluator;
 class PropertyListWidget;
 class NetworkEditor;
+class PerformanceRecordWidget;
 class ProcessorNetwork;
 class ProcessorListWidget;
+class RenderTargetViewer;
 class InputMappingDialog;
 class VolumeContainer;
 class VolumeContainerWidget;
@@ -93,8 +95,10 @@ public:
     void processorRemoved(const Processor* processor);
 
     void setNetworkEditorWidget(NetworkEditor* networkEditorWidget);
+    void setPerformanceRecordWidget(PerformanceRecordWidget* performanceRecordWidget);
     void setPropertyListWidget(PropertyListWidget* propertyListWidget);
     void setProcessorListWidget(ProcessorListWidget* processorListWidget);
+    void setRenderTargetViewer(RenderTargetViewer* renderTargetViewer);
     void setVolumeContainerWidget(VolumeContainerWidget* volumeContainerWidget);
     void setInputMappingDialog(InputMappingDialog* inputMappingDialog);
 
@@ -105,6 +109,7 @@ public:
 public slots:
     void setModified(bool isModified = true);
     bool rebuildShaders();
+    void addProcessorToNetwork(const QString& processorName);
 
 signals:
     void newNetwork(ProcessorNetwork* network);
@@ -114,6 +119,7 @@ signals:
 private:
     void propagateNetwork(ProcessorNetwork* network);
     void propagateVolumeContainer(VolumeContainer* container);
+    void propagateWorkspaceDescription(const std::string& description);
 
     /**
      * Deletes all tmpFiles located in tmpPath.
@@ -125,8 +131,10 @@ private:
     tgt::GLCanvas* sharedContext_;
 
     NetworkEditor* networkEditorWidget_;
+    PerformanceRecordWidget* performanceRecordWidget_;
     PropertyListWidget* propertyListWidget_;
     ProcessorListWidget* processorListWidget_;
+    RenderTargetViewer* renderTargetViewer_;
     VolumeContainerWidget* volumeContainerWidget_;
     InputMappingDialog* inputMappingDialog_;
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,11 +28,12 @@
 
 #include "rootgraphicsitem.h"
 
-#include "voreen/modules/base/processors/utility/scale.h"
+#include "modules/base/processors/utility/scale.h"
 #include "voreen/core/ports/coprocessorport.h"
 #include "voreen/core/ports/renderport.h"
 #include "aggregationgraphicsitem.h"
 #include "linkarrowgraphicsitemstub.h"
+#include "annotationgraphicsitem.h"
 #include "portarrowgraphicsitem.h"
 #include "portgraphicsitem.h"
 #include "processorgraphicsitem.h"
@@ -51,6 +52,8 @@ namespace {
     const QColor selectedColor = Qt::red;
     const QColor highlightColor = Qt::blue;
     const QColor shadowColor = Qt::black;
+
+    const qreal minimumDistanceToStartDrawingArrow = 10.0;
 }
 
 namespace voreen {
@@ -529,9 +532,14 @@ qreal RootGraphicsItem::getMinimumHeightForPorts() const {
 // event methods
 // ------------------------------------------------------------------------------------------------
 
-void RootGraphicsItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event) {
+void RootGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
+    clickPosition_ = e->pos();
+    QGraphicsItem::mousePressEvent(e);
+}
+
+void RootGraphicsItem::mouseMoveEvent(QGraphicsSceneMouseEvent* e) {
     if (currentLayer() == NetworkEditorLayerLinking) {
-        if (event->modifiers() == Qt::ControlModifier) {
+        if (e->modifiers() == Qt::ControlModifier) {
             setFlag(ItemIsMovable, true);
 
             delete currentLinkArrow_;
@@ -541,25 +549,40 @@ void RootGraphicsItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event) {
         }
         else {
             setFlag(ItemIsMovable, false);
-            if (currentLinkArrow_ == 0) {
-                currentLinkArrow_ = new LinkArrowGraphicsItemStub(this);
-                scene()->addItem(currentLinkArrow_);
-                emit startedArrow();
-            }
+            const QLineF line(e->pos(), clickPosition_);
+            if (currentLinkArrow_ || (line.length() > minimumDistanceToStartDrawingArrow)) {
+                if (currentLinkArrow_ == 0) {
+                    currentLinkArrow_ = new LinkArrowGraphicsItemStub(this);
+                    scene()->addItem(currentLinkArrow_);
+                    emit startedArrow();
+                }
 
-            QPointF pos = mapToScene(event->pos());
-            currentLinkArrow_->adjust(pos);
+                QPointF pos = mapToScene(e->pos());
+                currentLinkArrow_->adjust(pos);
+            }
         }
     }
 
-    networkEditor_->adjustLinkArrowGraphicsItems();
-    QGraphicsItem::mouseMoveEvent(event);
+    if (currentLinkArrow_)
+        networkEditor_->adjustLinkArrowGraphicsItems();
+
+    scene()->update();
+    QGraphicsItem::mouseMoveEvent(e);
 }
 
-void RootGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
+void RootGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
     if (currentLayer() == NetworkEditorLayerLinking) {
         if (currentLinkArrow_) {
-            QGraphicsItem* item = scene()->itemAt(event->scenePos());
+            QGraphicsItem* item = 0;
+            QList<QGraphicsItem*> items = scene()->items(e->scenePos());
+            foreach (QGraphicsItem* i, items) {
+                if (i->type() != LinkArrowGraphicsItemStub::Type) {
+                    item = i;
+                    break;
+                }
+            }
+
+            //QGraphicsItem* item = scene()->item(event->scenePos());
 
             if (item) {
                 if ((item->type() == OpenPropertyListButton::Type) && (item->parentItem() != this))
@@ -573,12 +596,15 @@ void RootGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
                 case AggregationGraphicsItem::Type:
                 case ProcessorGraphicsItem::Type:
                     {
+                    if (item->type() == AnnotationGraphicsItem::Type)
+                        break;
                     RootGraphicsItem* dest = dynamic_cast<RootGraphicsItem*>(item);
                     tgtAssert(dest, "link destination was no RootGraphicsItem");
                     emit createLink(this, dest);
                     }
                     break;
                 }
+                
             }
 
             delete currentLinkArrow_;
@@ -595,7 +621,7 @@ void RootGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
     //scene()->setSceneRect(scene()->sceneRect().adjusted(-1,-1,2,2));
     //scene()->setSceneRect(tmpRect);
 
-    QGraphicsItem::mouseReleaseEvent(event);
+    QGraphicsItem::mouseReleaseEvent(e);
 }
 
 // ------------------------------------------------------------------------------------------------

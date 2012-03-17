@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,8 +37,16 @@ VolumeWriter::VolumeWriter(ProgressBar* progress)
     : progress_(progress)
 {}
 
-const std::vector<std::string>& VolumeWriter::getExtensions() const {
+const std::vector<std::string>& VolumeWriter::getSupportedExtensions() const {
     return extensions_;
+}
+
+const std::vector<std::string>& VolumeWriter::getSupportedFilenames() const {
+    return filenames_;
+}
+
+const std::vector<std::string>& VolumeWriter::getSupportedProtocols() const {
+    return protocols_;
 }
 
 std::string VolumeWriter::getFileNameWithoutExtension(const std::string& filename) {
@@ -48,5 +56,15 @@ std::string VolumeWriter::getFileNameWithoutExtension(const std::string& filenam
 std::string VolumeWriter::getExtension(const std::string& filename) {
     return filename.substr(filename.rfind(".") + 1, filename.length());
 }
+
+void VolumeWriter::setProgressBar(ProgressBar* progressBar) {
+    progress_ = progressBar;
+}
+
+ProgressBar* VolumeWriter::getProgressBar() const {
+    return progress_;
+}
+
+
 
 } // namespace voreen

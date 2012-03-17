@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,7 @@
 
 #include <QMainWindow>
 #include <QUrl>
+#include "voreen/qt/voreenqtdefine.h"
 
 class QTextBrowser;
 
@@ -39,8 +40,8 @@ namespace voreen {
 /**
  * A simple HTML browser
  */
-class HelpBrowser : public QMainWindow {
-    Q_OBJECT
+class VRN_QT_API HelpBrowser : public QMainWindow {
+Q_OBJECT
 public:
     HelpBrowser(const QUrl& startPage = QUrl(), const QString& title ="", QWidget* parent = 0);
 

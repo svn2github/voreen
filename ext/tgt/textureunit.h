@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2010 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -26,7 +26,6 @@
 #define TGT_TEXTUREUNIT_H
 
 #include <string>
-#include "tgt/config.h"
 #include "tgt/tgt_gl.h"
 #include "tgt/shadermanager.h"
 
@@ -35,15 +34,15 @@ namespace tgt {
 /**
  * OpenGL Texture
  */
-class TextureUnit {
+class TGT_API TextureUnit {
 public:
     TextureUnit(bool keep = false);
     ~TextureUnit();
 
-    void activate();
+    void activate() const;
 
-    GLint getEnum();
-    GLint getUnitNumber();
+    GLint getEnum() const;
+    GLint getUnitNumber() const;
 
     static void setZeroUnit();
     static void cleanup();
@@ -56,12 +55,12 @@ public:
     static bool unused();
 
 protected:
-    void assignUnit();
+    void assignUnit() const;
     static void init();
 
-    GLint number_;
-    GLint glEnum_;
-    bool assigned_;
+    mutable GLint number_;
+    mutable GLint glEnum_;
+    mutable bool assigned_;
     bool keep_;
 
     static bool initialized_;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,20 +30,53 @@
 #include "voreen/core/datastructures/volume/volume.h"
 #include "voreen/core/io/progressbar.h"
 
+#include "tgt/filesystem.h"
+
 #include <fstream>
 
 namespace voreen {
 
-const std::string VolumeReader::loggerCat_("voreen.io.VolumeReader");
+const std::string VolumeReader::loggerCat_("voreen.VolumeReader");
 
 VolumeReader::VolumeReader(ProgressBar* progress /*= 0*/)
   : progress_(progress)
 {}
 
+VolumeCollection* VolumeReader::readSlices(const std::string&, size_t, size_t)
+    throw(tgt::FileException, std::bad_alloc)
+{
+    throw tgt::FileException("This VolumeReader can not read slice wise.");
+}
+
+VolumeHandleBase* VolumeReader::read(const VolumeOrigin& origin)
+    throw (tgt::FileException, std::bad_alloc)
+{
+
+    VolumeHandleBase* result = 0;
+
+    VolumeCollection* collection = read(origin.getPath());
+
+    if (collection && collection->size() == 1) {
+        result = collection->first();
+    }
+    else if (collection && collection->size() > 1) {
+        delete collection;
+        throw tgt::FileException("Only one volume expected", origin.getPath());
+    }
+
+    delete collection;
+
+    return result;
+}
+
+VolumeCollection* VolumeReader::readBrick(const std::string& url, tgt::ivec3, int) throw(tgt::FileException, std::bad_alloc) {
+    throw(new tgt::FileException("This file format does not support brick-wise reading of volume data.", url));
+}
+
 void VolumeReader::read(Volume* volume, FILE* fin) {
     if (progress_) {
 
-        int max = tgt::max(volume->getDimensions());
+        size_t max = tgt::max(volume->getDimensions());
 
         // validate dimensions
         if (max <= 0 || max > 1e5) {
@@ -68,8 +101,15 @@ void VolumeReader::read(Volume* volume, FILE* fin) {
     }
 }
 
-bool VolumeReader::isPersistent() const {
-    return false;
+std::vector<VolumeOrigin> VolumeReader::listVolumes(const std::string& url) const 
+        throw (tgt::FileException) {
+    std::vector<VolumeOrigin> result;
+
+    VolumeOrigin urlOrigin(url);
+    if (tgt::FileSystem::fileExists(urlOrigin.getPath()))
+        result.push_back(urlOrigin);
+
+    return result;
 }
 
 void VolumeReader::reverseXSliceOrder(Volume* const volume) const {
@@ -157,37 +197,6 @@ void VolumeReader::reverseZSliceOrder(Volume* const volume) const {
     delete [] aux;
 }
 
-VolumeCollection* VolumeReader::readSlices(const std::string&, size_t, size_t)
-    throw(tgt::FileException, std::bad_alloc)
-{
-    throw tgt::FileException("This VolumeReader can not read slice wise.");
-}
-
-VolumeHandle* VolumeReader::read(const VolumeOrigin& origin)
-    throw (tgt::FileException, std::bad_alloc)
-{
-
-    VolumeHandle* result = 0;
-
-    VolumeCollection* collection = read(origin.getPath());
-
-    if (collection && collection->size() == 1) {
-        result = collection->first();
-    }
-    else if (collection && collection->size() > 1) {
-        delete collection;
-        throw tgt::FileException("Only one volume expected", origin.getPath());
-    }
-
-    delete collection;
-
-    return result;
-}
-
-VolumeCollection* VolumeReader::readBrick(const std::string& url, tgt::ivec3, int) throw(tgt::FileException, std::bad_alloc) {
-     throw(new tgt::FileException("This file format does not support brick-wise reading of volume data.", url));
-}
-
 VolumeOrigin VolumeReader::convertOriginToRelativePath(const VolumeOrigin& origin, std::string& basePath) const {
 
     return VolumeOrigin(origin.getProtocol(),
@@ -209,12 +218,24 @@ VolumeOrigin VolumeReader::convertOriginToAbsolutePath(const VolumeOrigin& origi
         return origin;
 }
 
-const std::vector<std::string>& VolumeReader::getExtensions() const {
+const std::vector<std::string>& VolumeReader::getSupportedExtensions() const {
     return extensions_;
 }
 
-const std::vector<std::string>& VolumeReader::getProtocols() const {
+const std::vector<std::string>& VolumeReader::getSupportedFilenames() const {
+    return filenames_;
+}
+
+const std::vector<std::string>& VolumeReader::getSupportedProtocols() const {
     return protocols_;
+}
+
+void VolumeReader::setProgressBar(ProgressBar* progressBar) {
+    progress_ = progressBar;
+}
+
+ProgressBar* VolumeReader::getProgressBar() const {
+    return progress_; 
 }
 
 } // namespace voreen

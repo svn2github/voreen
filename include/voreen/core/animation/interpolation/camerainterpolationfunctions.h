@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,7 +34,11 @@
 
 namespace voreen {
 
-class CameraLinearInterpolationFunction : public InterpolationFunction<tgt::Camera> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<tgt::Camera>;
+#endif
+
+class VRN_CORE_API CameraLinearInterpolationFunction : public InterpolationFunction<tgt::Camera> {
 public:
     CameraLinearInterpolationFunction();
     InterpolationFunction<tgt::Camera>* clone() const;
@@ -44,7 +48,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraSphericalLinearInterpolationFunction : public InterpolationFunction<tgt::Camera> {
+class VRN_CORE_API CameraSphericalLinearInterpolationFunction : public InterpolationFunction<tgt::Camera> {
 public:
     CameraSphericalLinearInterpolationFunction();
     InterpolationFunction<tgt::Camera>* clone() const;
@@ -54,7 +58,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraCubicSplineInterpolationFunction: public MultiPointInterpolationFunction<tgt::Camera>{
+class VRN_CORE_API CameraCubicSplineInterpolationFunction: public MultiPointInterpolationFunction<tgt::Camera>{
 public:
     CameraCubicSplineInterpolationFunction();
     MultiPointInterpolationFunction<tgt::Camera>* clone() const;
@@ -64,7 +68,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraStartInterpolationFunction : public InterpolationFunction<tgt::Camera> {
+class VRN_CORE_API CameraStartInterpolationFunction : public InterpolationFunction<tgt::Camera> {
 public:
     CameraStartInterpolationFunction();
     InterpolationFunction<tgt::Camera>* clone() const;
@@ -74,7 +78,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraEndInterpolationFunction : public InterpolationFunction<tgt::Camera> {
+class VRN_CORE_API CameraEndInterpolationFunction : public InterpolationFunction<tgt::Camera> {
 public:
     CameraEndInterpolationFunction();
     InterpolationFunction<tgt::Camera>* clone() const;
@@ -84,7 +88,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraStartEndInterpolationFunction : public InterpolationFunction<tgt::Camera> {
+class VRN_CORE_API CameraStartEndInterpolationFunction : public InterpolationFunction<tgt::Camera> {
 public:
     CameraStartEndInterpolationFunction();
     InterpolationFunction<tgt::Camera>* clone() const;
@@ -94,7 +98,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraCatmullRomInterpolationFunction : public MultiPointInterpolationFunction<tgt::Camera>{
+class VRN_CORE_API CameraCatmullRomInterpolationFunction : public MultiPointInterpolationFunction<tgt::Camera>{
 public:
     CameraCatmullRomInterpolationFunction();
     MultiPointInterpolationFunction<tgt::Camera>* clone() const;
@@ -105,7 +109,7 @@ public:
     std::string getIdentifier() const;
 };
 
-class CameraSquadInterpolationFunction : public MultiPointInterpolationFunction<tgt::Camera>{
+class VRN_CORE_API CameraSquadInterpolationFunction : public MultiPointInterpolationFunction<tgt::Camera>{
 public:
     CameraSquadInterpolationFunction();
     MultiPointInterpolationFunction<tgt::Camera>* clone() const;

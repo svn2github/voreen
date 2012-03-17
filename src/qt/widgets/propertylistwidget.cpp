@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,6 @@
 #include "voreen/qt/widgets/propertylistwidget.h"
 
 #include "voreen/core/datastructures/volume/volumecontainer.h"
-#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
 #include "voreen/qt/widgets/property/qpropertywidget.h"
 #include "voreen/qt/widgets/property/processorpropertieswidget.h"
 #include "voreen/qt/widgets/property/volumehandlepropertywidget.h"
@@ -37,6 +36,16 @@
 
 #include <QVBoxLayout>
 #include <QToolButton>
+
+namespace {
+    QString whatsThisInfo = "<h3>Property List Widget</h3><p>This widget shows all properties for the selected processor(s) and allows \
+                            their editing. Furthermore, every property can be renamed (via context menu) and the (per processor) \
+                            unique identifier is visible as a hovering text.</p>\
+                            <p>The <img src=\":/voreenve/icons/eye-questionmark.png\" width=\"15\"> button on the lower right corner \
+                            toggles the Level of Detail controls. With these controls, you can select whether a certain property \
+                            or a processor should appear (<img src=\":/voreenve/icons/eye.png\" width=\"15\">) or not \
+                            (<img src=\":voreenve/icons/eye-crossedout.png\" width=\"15\">) in the Application Mode of VoreenVE.</p>";
+}
 
 namespace voreen {
 
@@ -52,9 +61,10 @@ PropertyListWidget::PropertyListWidget(QWidget* parent, ProcessorNetwork* proces
     , containerLayout_(0)
     , lodControlVisibility_(false)
 {
-
     if (processorNetwork_)
         processorNetwork_->addObserver(this);
+
+    setWhatsThis(whatsThisInfo);
 
     setWidgetResizable(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -238,7 +248,7 @@ void PropertyListWidget::createWidgets() {
     // generate processor property widgets: each processor property contains a processor's properties
     // along with a expansion header
     setUpdatesEnabled(false);
-    for (int i=0; i<processorNetwork_->numProcessors(); ++i) {
+    for (size_t i=0; i<processorNetwork_->numProcessors(); ++i) {
         Processor* proc = processorNetwork_->getProcessors().at(i);
         ProcessorPropertiesWidget* headerWidget = new ProcessorPropertiesWidget(this, proc, false, true);
         connect(headerWidget, SIGNAL(modified()), this, SLOT(processorModified()));
@@ -258,11 +268,11 @@ void PropertyListWidget::createWidgets() {
 void PropertyListWidget::hideLodControls(bool hide) {
     lodControlVisibility_ = !hide;
     if(processorNetwork_ != 0) {
-        for (int i=0; i<processorNetwork_->numProcessors(); ++i) {
+        for (size_t i=0; i<processorNetwork_->numProcessors(); ++i) {
             Processor* proc = processorNetwork_->getProcessors().at(i);
             const std::vector<Property*>& props = proc->getProperties();
 
-            for(uint ii = 0; ii < props.size(); ++ii) {
+            for (size_t ii = 0; ii < props.size(); ++ii) {
                 const std::set<PropertyWidget*> widgets = props.at(ii)->getPropertyWidgets();
                 std::set<PropertyWidget*>::const_iterator it = widgets.begin();
                 while(it != widgets.end()) {

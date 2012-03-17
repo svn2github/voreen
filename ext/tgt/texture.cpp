@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -35,7 +35,7 @@ namespace tgt {
 //------------------------------------------------------------------------------
 
 Texture::Texture(const tgt::ivec3& dimensions, GLint format, GLint internalformat,
-                GLenum dataType, Filter filter, bool textureRectangle)
+                GLenum dataType, Filter filter)
     : dimensions_(dimensions)
     , format_(format)
     , internalformat_(internalformat)
@@ -45,11 +45,11 @@ Texture::Texture(const tgt::ivec3& dimensions, GLint format, GLint internalforma
     , priority_(-1.f)
     , pixels_(0)
 {
-    init(true, textureRectangle);
+    init(true);
 }
 
 Texture::Texture(const tgt::ivec3& dimensions, GLint format,
-                GLenum dataType, Filter filter, bool textureRectangle)
+                GLenum dataType, Filter filter)
     : dimensions_(dimensions)
     , format_(format)
     , internalformat_(format)
@@ -59,11 +59,11 @@ Texture::Texture(const tgt::ivec3& dimensions, GLint format,
     , priority_(-1.f)
     , pixels_(0)
 {
-    init(true, textureRectangle);
+    init(true);
 }
 
 Texture::Texture(GLubyte* data, const tgt::ivec3& dimensions, GLint format, GLint internalformat,
-                GLenum dataType, Filter filter, bool textureRectangle)
+                GLenum dataType, Filter filter)
     : dimensions_(dimensions)
     , format_(format)
     , internalformat_(internalformat)
@@ -73,12 +73,12 @@ Texture::Texture(GLubyte* data, const tgt::ivec3& dimensions, GLint format, GLin
     , priority_(-1.f)
     , pixels_(data)
 {
-    init(false, textureRectangle);
+    init(false);
     arraySize_ = hmul(dimensions_) * bpp_;
 }
 
 Texture::Texture(GLubyte* data, const tgt::ivec3& dimensions, GLint format,
-                GLenum dataType, Filter filter, bool textureRectangle)
+                GLenum dataType, Filter filter)
     : dimensions_(dimensions)
     , format_(format)
     , internalformat_(format)
@@ -88,16 +88,16 @@ Texture::Texture(GLubyte* data, const tgt::ivec3& dimensions, GLint format,
     , priority_(-1.f)
     , pixels_(data)
 {
-    init(false, textureRectangle);
+    init(false);
     arraySize_ = hmul(dimensions_) * bpp_;
 }
 
-void Texture::init(bool allocData, bool textureRectangle) {
+void Texture::init(bool allocData) {
 #ifndef GL_TEXTURE_RECTANGLE_ARB
     textureRectangle = false;
 #endif
 
-    calcType(textureRectangle);
+    calcType();
     bpp_ = calcBpp(format_, dataType_);
 
     generateId();
@@ -109,8 +109,10 @@ void Texture::init(bool allocData, bool textureRectangle) {
 }
 
 int Texture::calcBpp(GLint format, GLenum dataType) {
-    int typeSize = 0;
+    
+    int numChannels = calcNumChannels(format);
 
+    int typeSize = 0;
     switch (dataType) {
         case GL_BYTE:
         case GL_UNSIGNED_BYTE:
@@ -132,46 +134,7 @@ int Texture::calcBpp(GLint format, GLenum dataType) {
             LWARNINGC("tgt.Texture", "unknown dataType");
     }
 
-    int numComponents = 0;
-
-    switch (format) {
-        case 1:
-        case GL_COLOR_INDEX:
-        case GL_RED:
-        case GL_GREEN:
-        case GL_BLUE:
-        case GL_ALPHA:
-        case GL_INTENSITY:
-        case GL_LUMINANCE:
-		case GL_DEPTH_COMPONENT:
-		case GL_DEPTH_COMPONENT24:
-            numComponents = 1;
-        break;
-
-        case 2:
-        case GL_LUMINANCE_ALPHA:
-            numComponents = 2;
-        break;
-
-        case 3:
-        case GL_RGB:
-        case GL_BGR:
-            numComponents = 3;
-        break;
-
-        case 4:
-        case GL_RGBA:
-        case GL_BGRA:
-		case GL_RGBA16:
-        case GL_RGBA16F_ARB:
-            numComponents = 4;
-        break;
-
-        default:
-            LWARNINGC("tgt.Texture", "unknown format");
-    }
-
-    return typeSize * numComponents;
+    return typeSize * numChannels;
 }
 
 int Texture::calcBpp(GLint internalformat) {
@@ -192,6 +155,7 @@ int Texture::calcBpp(GLint internalformat) {
         
         case 2: 
         case GL_LUMINANCE_ALPHA: 
+        case GL_INTENSITY16: 
         case GL_DEPTH_COMPONENT16: 
             bpp = 2; 
             break; 
@@ -203,6 +167,7 @@ int Texture::calcBpp(GLint internalformat) {
             break; 
         
         case GL_RGBA: 
+        case GL_RGBA8: 
         case GL_BGRA: 
         case GL_DEPTH_COMPONENT32: 
             bpp = 4; 
@@ -232,6 +197,48 @@ int Texture::calcBpp(GLint internalformat) {
     }
     
     return bpp;
+}
+
+int Texture::calcNumChannels(GLint format) {
+    
+    switch (format) {
+    case 1:
+    case GL_COLOR_INDEX:
+    case GL_RED:
+    case GL_GREEN:
+    case GL_BLUE:
+    case GL_ALPHA:
+    case GL_INTENSITY:
+    case GL_LUMINANCE:
+    case GL_DEPTH_COMPONENT:
+    case GL_DEPTH_COMPONENT24:
+    case GL_ALPHA_INTEGER_EXT:
+        return 1;
+        break;
+
+    case 2:
+    case GL_LUMINANCE_ALPHA:
+        return 2;
+        break;
+
+    case 3:
+    case GL_RGB:
+    case GL_BGR:
+        return 3;
+        break;
+
+    case 4:
+    case GL_RGBA:
+    case GL_BGRA:
+    case GL_RGBA16:
+    case GL_RGBA16F_ARB:
+        return 4;
+        break;
+
+    default:
+        LWARNINGC("tgt.Texture", "unknown format");
+        return 0;
+    }
 }
 
 int Texture::getSizeOnGPU() const {
@@ -397,6 +404,7 @@ tgt::Color Texture::texelAsFloat(size_t x, size_t y) const {
 			}
 			break;
         case GL_LUMINANCE:
+        case GL_ALPHA:
             switch(dataType_) {
                 case GL_UNSIGNED_BYTE: {
                     tgt::Vector3<uint8_t> t = tgt::vec3(texel<uint8_t>(x,y));
@@ -450,6 +458,18 @@ GLubyte* Texture::downloadTextureToBuffer() const {
 
     glGetTexImage(type_, 0, format_, dataType_, pixels);
     return pixels;
+}
+
+void Texture::downloadTextureToBuffer(GLubyte* pixels, size_t numBytesAllocated) const {
+    bind();
+
+    size_t arraySize = hmul(dimensions_) * bpp_;
+    if(numBytesAllocated < arraySize) {
+        LWARNINGC("tgt.texture", "downloadTextureToBuffer: allocated buffer is too small");
+    }
+    else {
+        glGetTexImage(type_, 0, format_, dataType_, pixels);
+    }
 }
 
 GLubyte* Texture::downloadTextureToBuffer(GLint format, GLenum dataType) const {

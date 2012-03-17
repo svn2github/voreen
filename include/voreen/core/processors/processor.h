@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,28 +30,28 @@
 #define VRN_PROCESSOR_H
 
 #include "voreen/core/properties/propertyowner.h"
-#include "tgt/event/eventlistener.h"
-#include "voreen/core/processors/profiling.h"
-#include "voreen/core/io/progressbar.h"
 #include "voreen/core/utils/observer.h"
+#include "voreen/core/processors/profiling.h"
+
+#include "tgt/exception.h"
+#include "tgt/event/eventlistener.h"
 
 #include <vector>
 
 namespace voreen {
 
-class VoreenModule;
-class ProcessorFactory;
-class Processor;
-
-class Port;
 class CoProcessorPort;
-
 class EventPropertyBase;
 class InteractionHandler;
-
+class Port;
+class Processor;
+class ProcessorFactory;
 class ProcessorWidget;
+class ProgressBar;
+class TimeToFinishReporter;
+class VoreenModule;
 
-class ProcessorObserver : public PropertyOwnerObserver {
+class VRN_CORE_API ProcessorObserver : public PropertyOwnerObserver {
 public:
     virtual void processorWidgetCreated(const Processor* processor) = 0;
     virtual void processorWidgetDeleted(const Processor* processor) = 0;
@@ -59,10 +59,13 @@ public:
     virtual void portsAndPropertiesChanged(const Processor* processor) = 0;
 };
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API Observable<ProcessorObserver>;
+#endif
 /**
  * The base class for all processor classes used in Voreen.
  */
-class Processor : public PropertyOwner, public tgt::EventListener, public Observable<ProcessorObserver> {
+class VRN_CORE_API Processor : public PropertyOwner, public tgt::EventListener, public Observable<ProcessorObserver> {
 
     friend class NetworkEvaluator;
     friend class VoreenModule;
@@ -97,19 +100,26 @@ public:
         CODE_STATE_STABLE
     };
 
+    enum ComputationStatus {
+        COMPUTATION_STATUS_NONE = 1,
+        COMPUTATION_STATUS_PROGRESSBAR = 1 << 1,
+        COMPUTATION_STATUS_TIMETOFINISH = 1 << 2,
+        COMPUTATION_STATUS_PROGRESSBAR_AND_TTF = COMPUTATION_STATUS_PROGRESSBAR | COMPUTATION_STATUS_TIMETOFINISH
+    };
+
     Processor();
 
     virtual ~Processor();
 
     /**
-     * Returns a copy of the processor.
-     */
-    virtual Processor* clone() const;
-
-    /**
      * Virtual constructor: supposed to return an instance of the concrete Processor class.
      */
     virtual Processor* create() const = 0;
+
+    /**
+     * Returns a copy of the processor.
+     */
+    virtual Processor* clone() const;
 
     /**
      * Returns the name of this class as a string.
@@ -136,13 +146,6 @@ public:
      * CODE_STATE_EXPERIMENTAL.
      */
     virtual CodeState getCodeState() const;
-
-    /**
-     * Returns a description of the processor's functionality.
-     *
-     * This method is expected to be re-implemented by each concrete subclass.
-     */
-    virtual std::string getProcessorInfo() const;
 
     /**
      * Returns true if this Processor is a utility Processor (i.e., performs smaller tasks).
@@ -248,6 +251,16 @@ public:
     Port* getPort(const std::string& name) const;
 
     /**
+     * Returns the performance record of this processor.
+     */
+    const PerformanceRecord* getPerformanceRecord() const;
+
+    /**
+     * Resets the performance record of this processor.
+     */
+    void resetPerformanceRecord();
+
+    /**
      * Processors may overwrite this function in order to gain access to
      * events that are propagated through the network.
      *
@@ -284,12 +297,9 @@ public:
     ProcessorWidget* getProcessorWidget() const;
 
     /**
-     * A derived class should return true, if its process() method
-     * is time-consuming, i.e., causes noticable delay.
-     *
-     * Normal renderers without expensive data processing should return false (default).
+     * Returns if this processor uses expensive computation.
      */
-    virtual bool usesExpensiveComputation() const;
+    Processor::ComputationStatus getExpensiveComputationStatus() const;
 
     /**
      * Updates the progress bar, if one has been assigned.
@@ -297,9 +307,18 @@ public:
      * @param progress The overall progress of the operations
      *  performed in process(). Range: [0.0, 1.0]
      *
-     * @see usesExpensiveComputation
+     * @see setUsesExpensiveComputation
      */
     void setProgress(float progress);
+
+    /**
+     * Sets the progress bar to use a different tier (i.e. if a processor uses
+     * multiple expensive computations in a single process call and wants to
+     * inform the user about the progress of each computation. \sa
+     * ProgressBar::setProgressTier or \sa TimeToFinishReporter::setProgressTier
+     * @param tier The tier which should be used from now on
+     */
+    void setProgressTier(int tier, const std::string& tierName = "");
 
     /**
      * Assigns a progress handler that the processor may use for indicating progress
@@ -325,6 +344,14 @@ public:
      */
     virtual MetaDataContainer& getMetaDataContainer() const;
 
+    /**
+     * @brief Returns the cache path for this processor.
+     * Cache path = Application cache path + Classname
+     *
+     * @see VoreenApplication::getCachePath()
+     */
+    std::string getCachePath() const;
+
 protected:
     /**
      * @brief This method is called by the NetworkEvaluator when the processor should be processed.
@@ -347,9 +374,9 @@ protected:
      *       instead of the constructor! Time-consuming operations
      *       should also happen here.
      *
-     * @throw VoreenException if the initialization failed
+     * @throw tgt::Exception if the initialization failed
      */
-    virtual void initialize() throw (VoreenException);
+    virtual void initialize() throw (tgt::Exception);
 
     /**
      * Deinitializes the processor.
@@ -359,9 +386,9 @@ protected:
      * @note All OpenGL deinitializations must be done here,
      *       instead of the destructor!
      *
-     * @throw VoreenException if the deinitialization failed
+     * @throw tgt::Exception if the deinitialization failed
      */
-    virtual void deinitialize() throw (VoreenException);
+    virtual void deinitialize() throw (tgt::Exception);
 
     /**
      * Is called by the NetworkEvaluator immediately before it calls process().
@@ -378,6 +405,12 @@ protected:
      * the superclass' function as \e last statement, if you do so.
      */
     virtual void afterProcess();
+
+    /**
+     * Should be passed with a 'true' value if the processor uses expensive
+     * computation and should therefore get a progressbar
+     */
+    void setExpensiveComputationStatus(ComputationStatus val);
 
     /**
      * Registers a port.
@@ -407,9 +440,9 @@ protected:
      *  function, unless a port is added \e after its processor
      *  has been initialized.
      *
-     * @throw VoreenException If port initialization has failed.
+     * @throw tgt::Exception If port initialization has failed.
      */
-    void initializePort(Port* port) throw (VoreenException);
+    void initializePort(Port* port) throw (tgt::Exception);
 
     /**
      * Deinitializes the passed port.
@@ -419,9 +452,9 @@ protected:
      *  function, unless a port is to be removed \e before its processor
      *  has been deinitialized.
      *
-     * @throw VoreenException If port deinitialization has failed.
+     * @throw tgt::Exception If port deinitialization has failed.
      */
-    void deinitializePort(Port* port) throw (VoreenException);
+    void deinitializePort(Port* port) throw (tgt::Exception);
 
     /// Adds an event property to this processor.
     void addEventProperty(EventPropertyBase* prop);
@@ -482,6 +515,8 @@ protected:
      */
     ProgressBar* progressBar_;
 
+    TimeToFinishReporter* ttfReporter_;
+
 private:
 
     /**
@@ -532,6 +567,9 @@ private:
 
     /// used for cycle prevention during event propagation
     bool eventVisited_;
+
+    /// Flag if this processor uses expensive computation
+    ComputationStatus expensiveComputationStatus_;
 
     /**
      * Contains the associated meta data.

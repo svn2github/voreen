@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -49,7 +49,7 @@ class TransFuncPrimitive;
  * Internally, the transfer function is represented by a two-dimensional RGBA texture of type GL_FLOAT,
  * which is updated through a framebuffer object.
  */
-class TransFuncIntensityGradient : public TransFunc {
+class VRN_CORE_API TransFuncIntensityGradient : public TransFunc {
 public:
     /**
      * Constructor

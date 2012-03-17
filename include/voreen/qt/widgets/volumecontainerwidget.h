@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,11 +37,8 @@
 
 #include "voreen/core/datastructures/volume/volumecontainer.h"
 #include "voreen/core/datastructures/volume/volume.h"
-
-#ifdef VRN_MODULE_DICOM
-#include "voreen/modules/dicom/dicomvolumereader.h"
-#include "voreen/modules/dicom/qt/dicomdialog.h"
-#endif
+#include "voreen/qt/voreenqtdefine.h"
+#include "voreen/qt/widgets/volumeiohelper.h"
 
 class QPixmap;
 class VolumeLoadButton;
@@ -67,8 +64,8 @@ protected:
 
 // ---------------------------------------------------------------------------
 
-class VolumeContainerWidget : public QWidget, public VolumeCollectionObserver  {
-    Q_OBJECT
+class VRN_QT_API VolumeContainerWidget : public QWidget, public VolumeCollectionObserver  {
+Q_OBJECT
 public:
 
     VolumeContainerWidget(VolumeContainer* container, QWidget* parent = 0);
@@ -79,23 +76,24 @@ public:
     virtual QSize sizeHint() const;
 
     /// @see VolumeCollectionObserver
-    void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
     /// @see VolumeCollectionObserver
-    void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
     /// @see VolumeCollectionObserver
-    void volumeChanged(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeChanged(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
 
-    void loadDicomFiles();
+    /// Calls showFileOpenDialog() on the internal VolumeIOHelper.
     void loadVolume();
-    void loadVolumeRawFilter();
 
 protected:
     void keyPressEvent(QKeyEvent*);
     std::string calculateSize();
 
     VolumeLoadButton* volumeLoadButton_;
+    VolumeIOHelper volumeIOHelper_;
+
     QLabel* containerInfo_;
-    std::map<Volume*, QTreeWidgetItem*> volumeItems_;
+    std::map<const Volume*, QTreeWidgetItem*> volumeItems_;
 
 private:
     void update();

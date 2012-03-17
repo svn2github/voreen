@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,10 +33,14 @@
 
 namespace voreen {
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<std::string>;
+#endif
+
 /**
- * This class offers an interpolation function for strings. Interpolation: focus on startvalue.
+ * This class VRN_CORE_API offers an interpolation function for strings. Interpolation: focus on startvalue.
  */
-class StringStartInterpolationFunction : public InterpolationFunction<std::string> {
+class VRN_CORE_API StringStartInterpolationFunction : public InterpolationFunction<std::string> {
 public:
     StringStartInterpolationFunction();
     InterpolationFunction<std::string>* clone() const;
@@ -47,9 +51,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for strings. Interpolation: focus on endvalue.
+ * This class VRN_CORE_API offers an interpolation function for strings. Interpolation: focus on endvalue.
  */
-class StringEndInterpolationFunction : public InterpolationFunction<std::string> {
+class VRN_CORE_API StringEndInterpolationFunction : public InterpolationFunction<std::string> {
 public:
     StringEndInterpolationFunction();
     InterpolationFunction<std::string>* clone() const;
@@ -60,9 +64,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for strings. Interpolation: bisection.
+ * This class VRN_CORE_API offers an interpolation function for strings. Interpolation: bisection.
  */
-class StringStartEndInterpolationFunction : public InterpolationFunction<std::string> {
+class VRN_CORE_API StringStartEndInterpolationFunction : public InterpolationFunction<std::string> {
 public:
     StringStartEndInterpolationFunction();
     InterpolationFunction<std::string>* clone() const;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,12 +32,17 @@
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/ports/volumeport.h"
 
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/buttonproperty.h"
+
+#include "voreen/core/processors/cache.h"
+
 namespace voreen {
 
 /**
  * Base class for all processors operating on volumes.
  */
-class VolumeProcessor : public Processor {
+class VRN_CORE_API VolumeProcessor : public Processor {
 public:
     VolumeProcessor();
     virtual ~VolumeProcessor();
@@ -47,7 +52,25 @@ protected:
      * Computes the matrix necessary to map a vector from the originVolume to its counterpart in
      * the destinationVolume
      */
-    tgt::mat4 computeConversionMatrix(const Volume* originVolume, const Volume* destinationVolume) const;
+    tgt::mat4 computeConversionMatrix(const VolumeHandleBase* originVolume, const VolumeHandleBase* destinationVolume) const;
+};
+
+class CachingVolumeProcessor : public VolumeProcessor {
+public:
+    CachingVolumeProcessor();
+    virtual ~CachingVolumeProcessor();
+
+protected:
+    void initialize() throw (tgt::Exception);
+    void clearCache();
+
+    virtual void beforeProcess();
+    virtual void afterProcess();
+
+    BoolProperty useCaching_;
+    ButtonProperty clearCache_;
+
+    Cache cache_;
 };
 
 }   //namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -38,18 +38,32 @@ std::string itos(int i) {
     return s.str();
 }
 
-int stoi(const std::string& s) {
-    int result = 0;
-    std::istringstream isst;
-    isst.str(s);
-    isst >> result;
-    return result;
+std::string itos(size_t i) {
+    std::stringstream s;
+    s << i;
+    return s.str();
 }
 
 std::string ftos(float f) {
     std::stringstream s;
     s << f;
     return s.str();
+}
+
+std::string dtos(double d) {
+    std::stringstream s;
+    s << d;
+    return s.str();
+}
+
+#if !defined(_MSC_VER) || (_MSC_VER < 1600) 
+
+int stoi(const std::string& s) {
+    int result = 0;
+    std::istringstream isst;
+    isst.str(s);
+    isst >> result;
+    return result;
 }
 
 float stof(const std::string& s) {
@@ -60,12 +74,6 @@ float stof(const std::string& s) {
     return result;
 }
 
-std::string dtos(double d) {
-    std::stringstream s;
-    s << d;
-    return s.str();
-}
-
 double stod(const std::string& s) {
     double result = 0.0;
     std::istringstream isst;
@@ -73,6 +81,8 @@ double stod(const std::string& s) {
     isst >> result;
     return result;
 }
+
+#endif
 
 char* strtochr(const std::string& s){
     char* result = new char[s.size()+1];
@@ -96,6 +106,40 @@ std::string strReplaceAll(const std::string& str, const std::string& from, const
         lookHere = foundHere + to.size();
     }
     return strConv;
+}
+
+std::string trim(std::string str, const std::string& charlist) {
+    //trim from beginning:
+    while(!str.empty()) {
+        char curChar = str[0];
+
+        if(charlist.find(curChar) != std::string::npos)
+            str.erase(0, 1); //delete first character
+        else
+            break;
+    }
+
+    //trim from end:
+    while(!str.empty()) {
+        char curChar = str[str.size()-1];
+
+        if(charlist.find(curChar) != std::string::npos)
+            str.erase(str.size()-1, 1); //delete last character
+        else
+            break;
+    }
+
+    return str;
+}
+
+std::vector<std::string> strSplit(const std::string& str, char delim) {
+    std::vector<std::string> elems;
+    std::stringstream ss(str);
+    std::string item;
+    while(std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
 }
 
 } // namespace

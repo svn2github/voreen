@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -80,7 +80,7 @@ protected:
      * Creates the property widget for the passed property using the passed factory and
      * adds it to the property layout
      */
-    void createAndAddPropertyWidget(Property* prop, QPropertyWidgetFactory* factory);
+    void createAndAddPropertyWidget(Property* prop);
     void createAndAddPropertyWidgetByAction(QAction*);
 
     void initializePropertyMenu();

@@ -12,7 +12,7 @@ qmake -spec macx-xcode voreenlib_core.pro
 cd voreen_core.xcodeproj
 mv project.pbxproj project.pbxproj.tmp
 sed -e 's/HEADER_SEARCH_PATHS/ALWAYS_SEARCH_USER_PATHS = NO;\
-				HEADER_SEARCH_PATHS/' project.pbxproj.tmp > project.pbxproj
+                HEADER_SEARCH_PATHS/' project.pbxproj.tmp > project.pbxproj
 rm project.pbxproj.tmp
 cd ..
 ####### end of hack
@@ -26,4 +26,6 @@ qmake -spec macx-xcode voreenve.pro
 cd ../../apps/voltool
 rm -rf voltool.xcodeproj
 qmake -spec macx-xcode voltool.pro
-
+cd ../../tools/newfile
+rm -rf newfile.xcodeproj
+qmake -spec macx-xcode newfile.pro

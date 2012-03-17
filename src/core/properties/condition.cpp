@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -114,6 +114,38 @@ const char* Condition::ValidationFailed::what() const throw() {
 template<typename T>
 const std::string NumericPropertyValidation<T>::loggerCat_("voreen.NumericPropertyValidation");
 
+template<>
+bool NumericPropertyValidation<float>::met() const throw() {
+    // if min and max make sense do a real validation
+    if (observed_->minValue_ <= observed_->maxValue_) {
+        return ((observed_->value_ >= observed_->minValue_)
+            && (observed_->value_ <= observed_->maxValue_));
+    }
+    else
+        return true;
+}
+
+template<>
+bool NumericPropertyValidation<int>::met() const throw() {
+    // if min and max make sense do a real validation
+    if (observed_->minValue_ <= observed_->maxValue_) {
+        return ((observed_->value_ >= observed_->minValue_)
+            && (observed_->value_ <= observed_->maxValue_));
+    }
+    else
+        return true;
+}
+
+template<>
+bool NumericPropertyValidation<double>::met() const throw() {
+    // if min and max make sense do a real validation
+    if (observed_->minValue_ <= observed_->maxValue_) {
+        return ((observed_->value_ >= observed_->minValue_)
+            && (observed_->value_ <= observed_->maxValue_));
+    }
+    else
+        return true;
+}
 template<typename T>
 bool NumericPropertyValidation<T>::met() const throw() {
     const T& min = observed_->minValue_;
@@ -134,39 +166,6 @@ bool NumericPropertyValidation<T>::met() const throw() {
             return false;
     }
     return true;
-}
-
-template<>
-bool NumericPropertyValidation<float>::met() const throw() {
-    // if min and max make sense do a real validation
-    if (observed_->minValue_ <= observed_->maxValue_) {
-        return ((observed_->value_ >= observed_->minValue_)
-                && (observed_->value_ <= observed_->maxValue_));
-    }
-    else
-        return true;
-}
-
-template<>
-bool NumericPropertyValidation<int>::met() const throw() {
-    // if min and max make sense do a real validation
-    if (observed_->minValue_ <= observed_->maxValue_) {
-        return ((observed_->value_ >= observed_->minValue_)
-                && (observed_->value_ <= observed_->maxValue_));
-    }
-    else
-        return true;
-}
-
-template<>
-bool NumericPropertyValidation<double>::met() const throw() {
-    // if min and max make sense do a real validation
-    if (observed_->minValue_ <= observed_->maxValue_) {
-        return ((observed_->value_ >= observed_->minValue_)
-            && (observed_->value_ <= observed_->maxValue_));
-    }
-    else
-        return true;
 }
 
 template<class T>

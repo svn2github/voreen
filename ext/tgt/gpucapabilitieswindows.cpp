@@ -1,29 +1,24 @@
 /**********************************************************************
  *                                                                    *
- * Voreen - The Volume Rendering Engine                               *
+ * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2005-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
- * This file is part of the Voreen software package. Voreen is free   *
- * software: you can redistribute it and/or modify it under the terms *
- * of the GNU General Public License version 2 as published by the    *
- * Free Software Foundation.                                          *
+ * This file is part of the tgt library. This library is free         *
+ * software; you can redistribute it and/or modify it under the terms *
+ * of the GNU Lesser General Public License version 2.1 as published  *
+ * by the Free Software Foundation.                                   *
  *                                                                    *
- * Voreen is distributed in the hope that it will be useful,          *
+ * This library is distributed in the hope that it will be useful,    *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of     *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the       *
- * GNU General Public License for more details.                       *
+ * GNU Lesser General Public License for more details.                *
  *                                                                    *
- * You should have received a copy of the GNU General Public License  *
- * in the file "LICENSE.txt" along with this program.                 *
+ * You should have received a copy of the GNU Lesser General Public   *
+ * License in the file "LICENSE.txt" along with this library.         *
  * If not, see <http://www.gnu.org/licenses/>.                        *
- *                                                                    *
- * The authors reserve all rights not expressly granted herein. For   *
- * non-commercial academic use see the license exception specified in *
- * the file "LICENSE-academic.txt". To get information about          *
- * commercial licensing please contact the authors.                   *
  *                                                                    *
  **********************************************************************/
 
@@ -44,6 +39,8 @@ const std::string DRIVER_DLL_NVIDIA = "nvoglnt.dll";
 const std::string DRIVER_DLL_ATI = "atioglxx.dll";
 
 namespace tgt {
+
+SINGLETON_CLASS_SOURCE(GpuCapabilitiesWindows)
 
 GpuCapabilitiesWindows::GpuCapabilitiesWindows()
     : loggerCat_("tgt.GpuCapabilitiesWindows")
@@ -73,7 +70,7 @@ void GpuCapabilitiesWindows::logCapabilities(bool extensionsString, bool osStrin
 }
 
 GpuCapabilitiesWindows::~GpuCapabilitiesWindows() {
-#ifdef VRN_WITH_WMI
+#ifdef TGT_WITH_WMI
     if (isWMIinited())
         WMIdeinit();
 #endif 
@@ -660,7 +657,7 @@ std::string GpuCapabilitiesWindows::wstr2str(const std::wstring& wstr) {
 
 }
 
-#endif // VRN_WITH_WMI
+#endif // TGT_WITH_WMI
 
 GpuCapabilitiesWindows::FileVersion GpuCapabilitiesWindows::getFileVersion(std::string filename) {
     LDEBUG("Reading file version of file '" << filename << "' ...");
@@ -798,10 +795,8 @@ bool GpuCapabilitiesWindows::parseFileVersionString(FileVersion &fileVersion) {
     std::string substr;
     std::istringstream converter;
 
-    int pos;
-
     // fourth (= most significant) hex digit
-    pos = verStr.find( ".", 0 );
+    std::string::size_type pos = verStr.find( ".", 0 );
     if (pos > 0 && pos < 5) {
         substr = verStr.substr( 0, pos );
         converter.clear();

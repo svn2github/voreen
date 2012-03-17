@@ -2,9 +2,8 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Copyright (C) 2005-2009 Visualization and Computer Graphics Group, *
- * Department of Computer Science, University of Muenster, Germany.   *
- * <http://viscg.uni-muenster.de>                                     *
+ * Created between 2005 and 2012 by The Voreen Team                   *
+ * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
  * software: you can redistribute it and/or modify it under the terms *
@@ -33,11 +32,11 @@
 /*****************/
 
 QToolBar {
-	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-	                                  stop:0 #777777, stop:1 black);
-	spacing: 3px;
-	border: 4px;
-	border-color: black;
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #777777, stop:1 black);
+    spacing: 3px;
+    border: 4px;
+    border-color: black;
 }
 
 QLabel#toolBarLabel {
@@ -45,18 +44,18 @@ QLabel#toolBarLabel {
 }
 
 QToolButton {
-	background: none;
+    background: none;
 }
 
 QToolBar::handle {
-	image: url(:/voreenve/widgetstyle/toolbarhandle.png);
+    image: url(:/voreenve/widgetstyle/toolbarhandle.png);
 }
 
 QToolBar::separator {
-	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-	                                  stop:1 #777777, stop:0 #aaaaaa);
-	width: 1px;
-	height: 1px;
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:1 #777777, stop:0 #aaaaaa);
+    width: 1px;
+    height: 1px;
 }
 
 /**************/
@@ -64,37 +63,37 @@ QToolBar::separator {
 /**************/
 
 QMenuBar {
-	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                                       stop:0 #777777, stop:1 black);
-/*	background-image: url(:/voreenve/widgetstyle/highlight-menu.png);
+/*  background-image: url(:/voreenve/widgetstyle/highlight-menu.png);
     background-repeat: repeat-x; */
 }
 
 QMenuBar::item {
-	color: white;
-	background-color: transparent;
+    color: white;
+        background-color: transparent;
 }
 
 QMenuBar::item:selected {
     color: white;
-	background-color: darkgray;
+    background-color: darkgray;
 }
 
 QMenuBar::item:pressed {
     color: black;
-	background-color: darkgray;
+    background-color: darkgray;
 }
 
 QMenu {
-	color: black;
-	background-color: darkgray;
-	border: 1px solid black;
+    color: black;
+    background-color: darkgray;
+    border: 1px solid black;
 }
 
 QMenu::separator {
-	background: black;
-	width: 1px;
-	height: 1px;
+    background: black;
+    width: 1px;
+    height: 1px;
 }
 
 QMenu::item:selected {
@@ -106,67 +105,67 @@ QMenu::item:selected {
 /*******************/
 
 QScrollBar:horizontal {
-	height: 16px;
-	border: 1px solid darkgray;
-	margin: 0px 17px 0px 17px;
-	background: darkgray;
+    height: 16px;
+    border: 1px solid darkgray;
+    margin: 0px 17px 0px 17px;
+    background: darkgray;
 }
 
 QScrollBar::handle:horizontal {
-	min-width: 16px;
+    min-width: 16px;
     border-radius: 4px;
-	border: 1px solid darkgray;
-	background: rgb(50,50,50);
+    border: 1px solid darkgray;
+    background: rgb(50,50,50);
 }
 
 QScrollBar::add-line:horizontal {
-	width: 16px;
-	subcontrol-position: right;
-	subcontrol-origin: margin;
-	border-radius: 4px;
-	border: 1px solid darkgray;
-	background-image: url(:/voreenve/widgetstyle/scrollbar.png);
+    width: 16px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+    border-radius: 4px;
+    border: 1px solid darkgray;
+    background-image: url(:/voreenve/widgetstyle/scrollbar.png);
 }
 
 QScrollBar::sub-line:horizontal {
-	width: 16px;
-	subcontrol-position: left;
-	subcontrol-origin: margin;
-	border-radius: 4px;
-	border: 1px solid darkgray;
-	background-image: url(:/voreenve/widgetstyle/scrollbar.png);
+    width: 16px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+    border-radius: 4px;
+    border: 1px solid darkgray;
+    background-image: url(:/voreenve/widgetstyle/scrollbar.png);
 }
 
 QScrollBar:vertical {
-	width: 16px;
-	border: 1px solid darkgray;
-	margin: 17px 0px 17px 0px;
-	background: darkgray;
+    width: 16px;
+    border: 1px solid darkgray;
+    margin: 17px 0px 17px 0px;
+    background: darkgray;
 }
 
 QScrollBar::handle:vertical {
-	min-height: 16px;
+    min-height: 16px;
     border-radius: 4px;
-	border: 1px solid darkgray;
-	background: rgb(50,50,50);
+    border: 1px solid darkgray;
+    background: rgb(50,50,50);
 }
 
 QScrollBar::add-line:vertical {
-	height: 16px;
-	subcontrol-position: bottom;
-	subcontrol-origin: margin;
-	border-radius: 4px;
-	border: 1px solid darkgray;
-	background-image: url(:/voreenve/widgetstyle/scrollbar.png);
+    height: 16px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+    border-radius: 4px;
+    border: 1px solid darkgray;
+    background-image: url(:/voreenve/widgetstyle/scrollbar.png);
 }
 
 QScrollBar::sub-line:vertical {
-	height: 16px;
-	subcontrol-position: top;
-	subcontrol-origin: margin;
-	border-radius: 4px;
-	border: 1px solid darkgray;
-	background-image: url(:/voreenve/widgetstyle/scrollbar.png);
+    height: 16px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+    border-radius: 4px;
+    border: 1px solid darkgray;
+    background-image: url(:/voreenve/widgetstyle/scrollbar.png);
 }
 
 
@@ -175,27 +174,27 @@ QScrollBar::sub-line:vertical {
 /********************/
 
 QDockWidget {
-	color: white;
-	titlebar-close-icon: url(:/voreenve/widgetstyle/closebutton.png);
+    color: white;
+    titlebar-close-icon: url(:/voreenve/widgetstyle/closebutton.png);
     titlebar-normal-icon: url(:/voreenve/widgetstyle/undockbutton.png);
 }
 
 QDockWidget::title {
-	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                                       stop:0 #777777, stop:1 black);
-	background-image: url(:/voreenve/widgetstyle/highlight-dockwidget.png);
+    background-image: url(:/voreenve/widgetstyle/highlight-dockwidget.png);
  }
 
  QDockWidget::close-button, QDockWidget::float-button {
-     border: 1px solid transparent;
-     background: transparent;
-     padding: 0px;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0px;
  }
 
  QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-     background: gray;
+    background: gray;
  }
 
  QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
-     padding: 1px -1px -1px 1px;
+    padding: 1px -1px -1px 1px;
  }

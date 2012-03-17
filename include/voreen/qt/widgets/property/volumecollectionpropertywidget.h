@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,7 +34,7 @@
 #include "voreen/core/properties/volumecollectionproperty.h"
 #include "voreen/core/datastructures/volume/volume.h"
 #include "voreen/core/properties/volumehandleproperty.h"
-#include "voreen/modules/base/processors/datasource/volumesource.h"
+#include "modules/base/processors/datasource/volumesource.h"
 
 #include "voreen/qt/widgets/property/qpropertywidget.h"
 
@@ -56,8 +56,8 @@ public:
     /**
     * These are virtual methods of the VolumeCollectionObserver Interface
     */
-    void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
-    void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
+    void volumeRemoved(const VolumeCollection* source, const VolumeHandleBase* handle);
 
     void setVolumeContainer(VolumeContainer*);
 

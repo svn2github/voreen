@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,7 +35,7 @@
 namespace voreen {
 
 struct colComp {
-    bool operator()(tgt::col3 c1, tgt::col3 c2) const {
+    bool operator()(tgt::col4 c1, tgt::col4 c2) const {
         if (c1.r < c2.r)
             return true;
         else if (c1.r == c2.r) {
@@ -55,25 +55,31 @@ struct colComp {
     }
 };
 
-/**
- * IDManager class for picking
- */
+///IDManager class for picking
 class IDManager {
 public:
     IDManager();
     void initializeTarget();
 
-    tgt::col3 registerObject(void* obj);
-    void deregisterObject(void* obj);
+    tgt::col4 registerObject(const void* obj);
+    void deregisterObject(const void* obj);
+    void deregisterObject(const tgt::col4& col);
     void clearRegisteredObjects();
-    tgt::col3 getColorFromObject(void* obj);
-    void setGLColor(void* obj);
-    void* getObjectFromColor(tgt::col3 col);
 
-    void* getObjectAtPos(tgt::ivec2 pos);
-    tgt::col3 getColorAtPos(tgt::ivec2 pos);
+    tgt::col4 getColorFromObject(const void* obj);
+    tgt::col4 getColorFromId(int id);
 
-    bool isHit(tgt::ivec2 pos, void* obj);
+    void setGLColor(const void* obj);
+    void setGLColor(int obj);
+
+    int getIdFromColor(tgt::col4 col);
+    const void* getObjectFromColor(tgt::col4 col);
+
+    int getIdAtPos(tgt::ivec2 pos);
+    const void* getObjectAtPos(tgt::ivec2 pos);
+    tgt::col4 getColorAtPos(tgt::ivec2 pos);
+
+    bool isHit(tgt::ivec2 pos, const void* obj);
 
     void activateTarget(std::string debugLabel = "");
     void deactivateTarget();
@@ -81,15 +87,15 @@ public:
     void setRenderTarget(RenderTarget* rt);
     RenderTarget* getRenderTarget();
 
-    bool isRegistered(void* obj);
-    bool isRegistered(tgt::col3 col);
+    bool isRegistered(const void* obj);
+    bool isRegistered(tgt::col4 col);
 private:
     void increaseID();
 
-    std::map<tgt::col3, void*, colComp> colorToID_;
-    std::map<void*, tgt::col3> IDToColor_;
+    std::map<tgt::col4, const void*, colComp> colorToID_;
+    std::map<const void*, tgt::col4> IDToColor_;
     RenderTarget* rt_;
-    tgt::col3 currentID_;
+    tgt::col4 currentID_;
 };
 
 

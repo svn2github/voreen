@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,12 +29,13 @@
 #ifndef VRN_TEXTPORT_H
 #define VRN_TEXTPORT_H
 
+#include "voreen/core/voreencoredefine.h"
 #include "tgt/shadermanager.h"
 #include "voreen/core/ports/port.h"
 
 namespace voreen {
 
-class TextPort : public Port {
+class VRN_CORE_API TextPort : public Port {
 public:
     explicit TextPort(PortDirection direction, const std::string& name,
                         bool allowMultipleConnections = false,
@@ -45,9 +46,12 @@ public:
 
     virtual std::string getData() const;
 
+    /// Returns true.
+    virtual bool hasData() const;
+
     virtual std::vector<std::string> getAllData() const;
 
-    std::vector< TextPort* > getConnected() const;
+    std::vector<const TextPort* > getConnected() const;
 
     /**
      * Returns true, if the port is connected

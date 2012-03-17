@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -49,8 +49,8 @@ namespace voreen {
 
 QPropertyWidget::QPropertyWidget(Property* prop, QWidget* parent, bool showNameLabel)
     : QWidget(parent)
+    , PropertyWidget(prop)
     , disconnected_(false)
-    , prop_(prop)
     , lodControl_(0)
     , nameLabel_(0)
     , showNameLabel_(showNameLabel)
@@ -93,7 +93,7 @@ void QPropertyWidget::setPropertyGuiName(std::string name) {
 
 void QPropertyWidget::addVisibilityControls() {
     lodControl_ = new QToolButton(this);
-     lodControl_->setToolTip(tr("Show property in visualization mode"));
+    lodControl_->setToolTip(tr("Show property in visualization mode"));
     lodControl_->setCheckable(true);
     lodControl_->setFixedSize(13, 13);
     if (prop_ != 0)
@@ -146,7 +146,6 @@ void QPropertyWidget::setLevelOfDetail(bool value) {
 }
 
 void QPropertyWidget::setLevelOfDetail(Property::LODSetting value) {
-
     if (disconnected_ || !prop_)
         return;
 

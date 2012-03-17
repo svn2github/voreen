@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -46,8 +46,13 @@ PropertyOwner::~PropertyOwner() {
 
 void PropertyOwner::addProperty(Property* prop) {
     tgtAssert(prop, "Null pointer passed");
+    if (prop->getID().empty()) {
+        LERROR(getName() << ": Property with empty id (type: " << prop->getClassName() << ")");
+        return;
+    }
     if (getProperty(prop->getID())) {
         LERROR(getName() << ": Duplicate property id '" << prop->getID() << "'");
+        return;
     }
     properties_.push_back(prop);
     prop->setOwner(this);

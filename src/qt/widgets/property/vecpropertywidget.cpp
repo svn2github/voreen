@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -89,7 +89,7 @@ void VecPropertyWidget<WIDGETTYPE, VECTORPROP, ELEMTYPE>::updateFromProperty() {
     const typename VECTORPROP::ElemType& steppings = vectorProp_->getStepping();
 
     if(typeid(vectorProp_) == typeid(FloatVec4Property*) || typeid(vectorProp_) == typeid(FloatVec3Property*) || typeid(vectorProp_) == typeid(FloatVec2Property*)){
-        size_t decimals = vectorProp_->getNumDecimals();
+        int decimals = vectorProp_->getNumDecimals();
         for (size_t i = 0; i < numComponents_; ++i) {
             dynamic_cast<DoubleSliderSpinBoxWidget*>(widgets_[i])->setDecimals(decimals);
         }
@@ -97,9 +97,9 @@ void VecPropertyWidget<WIDGETTYPE, VECTORPROP, ELEMTYPE>::updateFromProperty() {
 
     for (size_t i = 0; i < numComponents_; ++i) {
         widgets_[i]->blockSignals(true);
-        widgets_[i]->setValue(values[i]);
         widgets_[i]->setMaxValue(maxValues[i]);
         widgets_[i]->setMinValue(minValues[i]);
+        widgets_[i]->setValue(values[i]);
         widgets_[i]->setSingleStep(steppings[i]);
         widgets_[i]->setSliderTracking(vectorProp_->hasTracking());
         widgets_[i]->blockSignals(false);

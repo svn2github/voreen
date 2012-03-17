@@ -23,7 +23,6 @@
  **********************************************************************/
 
 #include "tgt/glut/glutcanvas.h"
-#include "tgt/glut/glutapplication.h"
 
 namespace tgt {
 
@@ -51,8 +50,6 @@ GLUTCanvas::~GLUTCanvas() {
 
 void GLUTCanvas::init() {
     glutInitDisplayMode(getDisplayMode());
-
-    atexit(onExitFunction); // FIXME: sholdn't this be part of GLUTApplication??
 
     glutInitWindowSize(size_.x, size_.y);
     glutCreateWindow(title_.c_str());
@@ -380,14 +377,5 @@ void GLUTCanvas::keyboardSpecialFunc(int key, int x, int y) {
 void GLUTCanvas::visibilityFunc(int visible) {
     Canvases_[glutGetWindow()]->visibility(visible);
 }
-
-// FIXME: sholdn't this be part of GLUTApplication??
-void GLUTCanvas::onExitFunction() {
-    for (int i = 0;  i < MAX_NUMBER_OF_WINDOWS ; ++i)
-        delete Canvases_[i];
-    deinitGL();
-    deinit();
-}
-
 
 } //namespace tgt

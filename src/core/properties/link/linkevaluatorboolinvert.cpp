@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,18 +32,16 @@
 namespace voreen {
 
 void LinkEvaluatorBoolInvert::eval(Property* src, Property* dst) throw (VoreenException) {
-    static_cast<BoolProperty*>(dst)->set(!static_cast<BoolProperty*>(src)->get());
+    const Variant& srcVar = src->getVariant();
+    const Variant dstVar(!srcVar.getBool());
+    dst->setVariant(dstVar);
 }
 
-std::string LinkEvaluatorBoolInvert::name() const {
-    return "boolInvert";
-}
+bool LinkEvaluatorBoolInvert::arePropertiesLinkable(const Property* src, const Property* dst) const {
+    tgtAssert(src, "null pointer");
+    tgtAssert(dst, "null pointer");
 
-bool LinkEvaluatorBoolInvert::arePropertiesLinkable(const Property* p1, const Property* p2) const {
-    tgtAssert(p1, "null pointer");
-    tgtAssert(p2, "null pointer");
-
-    return (dynamic_cast<const BoolProperty*>(p1) && dynamic_cast<const BoolProperty*>(p2));
+    return Variant::canConvert(src->getVariantType(), dst->getVariantType()) && dst->getVariantType() == Variant::VariantTypeBool;
 }
 
 } // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,6 +41,7 @@
  * See Engel et. al.: "Real-Time Volume Graphics" - Ch 9.1.3
  */
 const float SAMPLING_BASE_INTERVAL_RCP = 200.0;
+const float SAMPLING_BASE_INTERVAL_SLICE_RCP = 105.0;
 
 /**
  * Performs regular DVR compositing. Expects the current voxels color
@@ -74,6 +75,49 @@ vec4 compositeMIP(in vec4 curResult, in vec4 color, in float t, inout float tDep
         tDepth = t;
     }
     else result = curResult;
+    return result;
+}
+
+/// Acutally performs the MIDA raycasting compositing
+vec4 compositeMIDAhelper(in vec4 curResult, in vec4 voxel, in vec4 color, inout float f_max_i, in float t, inout float tDepth, in float gamma) {
+    vec4 result = curResult;
+    float delta_i = 0.0;
+    if (voxel.a > f_max_i) {
+        delta_i = voxel.a - f_max_i;
+    }
+    float beta_i = 1.0 - delta_i * (1.0 + gamma);
+
+    result.rgb = beta_i * result.rgb + (1.0 - beta_i * result.a) * color.a * color.rgb;
+    result.a = beta_i * result.a + (1.0 - beta_i * result.a) * color.a;
+
+    if (tDepth < 0.0)
+        tDepth = t;
+
+    return result;
+
+}
+
+/**
+ * Performs MIDA (maximum intensity difference accumulation) compositing as described in
+ * the paper "Instant Volume Visualization using Maximum Intensity Difference Accumulation"
+ * by Bruckner et al. published in Eurographics 2009
+ */
+vec4 compositeMIDA(in vec4 curResult, in vec4 voxel, in vec4 color, inout float f_max_i, in float t, inout float tDepth, in float gamma) {
+    // apply opacity correction to accomodate for variable sampling intervals
+    color.a = 1.0 - pow(1.0 - color.a, samplingStepSize_ * SAMPLING_BASE_INTERVAL_RCP);
+
+    vec4 result = curResult;
+
+    if (gamma <= 0.0) {
+        result = compositeMIDAhelper(result, voxel, color, f_max_i, t, tDepth, gamma);
+    }
+    else {
+        vec4 mipResult = compositeMIP(result, color, t, tDepth);
+        vec4 midaResult = compositeMIDAhelper(result, voxel, color, f_max_i, t, tDepth, 0.0);
+
+        result = gamma * mipResult + (1.0 - gamma) * midaResult;
+    }
+
     return result;
 }
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,29 +26,22 @@
  *                                                                    *
  **********************************************************************/
 
+
 #ifndef VRN_LINKEVALUATORIDNORMALIZED_H
 #define VRN_LINKEVALUATORIDNORMALIZED_H
 
 #include "voreen/core/properties/link/linkevaluatorbase.h"
+#include "voreen/core/voreencoredefine.h"
 
 namespace voreen {
 
-/**
- * Propagates the normalized source value to the destination property.
- * Only suitable for numeric properties.
- */
-class LinkEvaluatorIdNormalized : public LinkEvaluatorBase {
+class VRN_CORE_API LinkEvaluatorIdNormalized : public LinkEvaluatorBase {
 public:
+    void eval(Property* src, Property* dst) throw (VoreenException);
+    std::string getClassName() const;
 
-    virtual void eval(Property* src, Property* dst) throw (VoreenException);
-
-    virtual std::string name() const;
-
-    virtual std::string getClassName() const { return "LinkEvaluatorIdNormalized"; }
-
-    virtual LinkEvaluatorBase* create() const { return new LinkEvaluatorIdNormalized(); }
-
-    virtual bool arePropertiesLinkable(const Property* p1, const Property* p2) const;
+    bool arePropertiesLinkable(const Property* src, const Property* dst) const;
+    LinkEvaluatorBase* create() const;
 };
 
 } // namespace

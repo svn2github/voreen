@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -28,7 +28,6 @@
 #include <cmath>
 #include <vector>
 
-#include "tgt/config.h"
 #include "tgt/frustum.h"
 #include "tgt/types.h"
 #include "tgt/vector.h"
@@ -42,13 +41,12 @@ namespace tgt {
  * This class implements a standard Camera with a position, a focus point
  * and an up-vector which make up its orientation.
  */
-class Camera {
+class TGT_API Camera {
 public:
-    /// Selects eye for stereo viewing
-    enum Eye {
-        EYE_LEFT,
-        EYE_RIGHT,
-        EYE_MIDDLE  /// no stereo
+    enum ProjectionMode {
+        ORTHOGRAPHIC,
+        PERSPECTIVE,
+        FRUSTUM
     };
 
     /**
@@ -69,7 +67,8 @@ public:
            float ratio          =  static_cast<float>(GLCanvas::DEFAULT_WINDOW_WIDTH) /
                                    GLCanvas::DEFAULT_WINDOW_HEIGHT,
            float distn          =  0.1f,
-           float distf          =  50.f);
+           float distf          =  50.f,
+           ProjectionMode pm    =  PERSPECTIVE);
 
     virtual ~Camera();
 
@@ -120,7 +119,11 @@ public:
     /// using e.g. culling methods!
     /// @param fovy angle in degree
     void setFovy(float fovy) {
-        frust_.setFovy(fovy);
+        if(projectionMode_ == PERSPECTIVE) {
+            float oldRatio = frust_.getRatio();
+            frust_.setFovy(fovy);
+            frust_.setRatio(oldRatio);
+        }
     }
 
     /// Set aspect ratio.
@@ -128,15 +131,25 @@ public:
     /// Normals of frustum do not get updated by this method, call updateFrustum manually before
     /// using e.g. culling methods!
     void setRatio(float ratio) {
-        frust_.setRatio(ratio);
+        if(projectionMode_ == PERSPECTIVE)
+            frust_.setRatio(ratio);
     }
 
     /// Set distance from camera to nearplane.
     ///
     /// Normals of frustum do not get updated by this method, call updateFrustum manually before
-    /// using e.g. culling methods!
+    /// using e.g. culling methods!  Also, in perspective mode, changing the near distance also internally
+    //  changes the paramters "Field of Vision" and thereby "Aspect ratio", so we have to take care not to damage
+    //  those values.
     void setNearDist(float neardist) {
-        frust_.setNearDist(neardist);
+        if(projectionMode_ == PERSPECTIVE) {
+            float oldFovy = frust_.getFovy();
+            float oldRatio = frust_.getRatio();
+            frust_.setNearDist(neardist);
+            frust_.setFovy(oldFovy);
+            frust_.setRatio(oldRatio);
+        } else
+            frust_.setNearDist(neardist);
     }
 
     /// Set distance from camera to farplane.
@@ -153,6 +166,8 @@ public:
     /// using e.g. culling methods!
     void setFrustLeft(float v) {
         frust_.setLeft(v);
+        if(projectionMode_ == PERSPECTIVE)
+            frust_.setRight(-v);
     }
 
     /// Set coordiante of right clipping plane.
@@ -161,6 +176,8 @@ public:
     /// using e.g. culling methods!
     void setFrustRight(float v) {
         frust_.setRight(v);
+        if(projectionMode_ == PERSPECTIVE)
+            frust_.setLeft(-v);
     }
 
     /// Set coordiante of top clipping plane.
@@ -169,6 +186,8 @@ public:
     /// using e.g. culling methods!
     void setFrustTop(float v) {
         frust_.setTop(v);
+        if(projectionMode_ == PERSPECTIVE)
+            frust_.setBottom(-v);
     }
 
     /// Set coordiante of bottom clipping plane.
@@ -177,22 +196,24 @@ public:
     /// using e.g. culling methods!
     void setFrustBottom(float v) {
         frust_.setBottom(v);
-    }
-
-    void setEyeSeparation(float s) {
-        eyesep_ = s;
+        if(projectionMode_ == PERSPECTIVE)
+            frust_.setTop(-v);
     }
 
     void setFocalLength(float f)   {
         setFocus(getPosition() + f * getLook());
     }
 
-    float getEyeSeparation() const {
-        return eyesep_;
-    }
-
     float getFocalLength() const   {
         return distance(getFocus(), getPosition());
+    }
+
+    void setWindowRatio(float r) {
+        windowRatio_ = r;
+    }
+
+    float getWindowRatio() const {
+        return windowRatio_;
     }
 
     quat getQuat() const {
@@ -207,8 +228,23 @@ public:
         setUpVector(up);
     }
 
+    /// set projection mode
+    void setProjectionMode(ProjectionMode pm) {
+        projectionMode_ = pm;
+        // reintroduce symmetry for perspective and orthogonal mode
+        if(pm == PERSPECTIVE) {
+            setFrustRight(-getFrustLeft());
+            setFrustTop(-getFrustBottom());
+        }
+    }
+
+    /// get projection mode
+    ProjectionMode getProjectionMode() const {
+        return projectionMode_;
+    }
+
     /// actually turns on the Camera.
-    void look(Eye eye = EYE_MIDDLE);
+    void look();
 
     /// Update the frustum with the current camera parameters.
     /// This method MUST be called before a culling-method is used.  The reason this is not called
@@ -231,18 +267,16 @@ public:
     /// use this function.
     mat4 getRotateMatrix() const;
 
-    /// This method returns the matrix that we need as the projection-matrix for
-    /// off-axis-stereo-rendering
-    mat4 getStereoPerspectiveMatrix(Eye eye, float fov, float aspect, float near, float far) const;
-
     /// This method returns the frustum matrix
     virtual mat4 getFrustumMatrix() const;
 
     /// This method returns the projection matrix
     virtual mat4 getProjectionMatrix() const;
 
-protected:
+    bool operator==(const Camera& rhs) const;
+    bool operator!=(const Camera& rhs) const;
 
+protected:
     /// viewMatrix will not always be up to date according to position-, focus- and upVector.
     /// Make sure it is up to date.
     void updateVM() const {
@@ -262,40 +296,17 @@ protected:
     vec3 upVector_; /// up vector, always normalized
 
     /// A frustum is saved in order to cull objects that are not lying within the view of the
-    /// camera In stereo mode, it will always be the frustum of the eye previously used when
-    /// calling look()
+    /// camera 
     Frustum frust_;
 
-    float eyesep_; /// Eye separation for stereo viewing
+    float windowRatio_; /// Keep window ratio separate from frustum ratio
 
     /// This is the actual matrix that holds the current orientation and position of the
     /// Camera.
     mutable mat4 viewMatrix_;
     mutable bool viewMatrixValid_; /// if the model-view matrix is up-to-date
-};
 
-//------------------------------------------------------------------------------
-
-/**
- * This class implements a orthograpic camera. The only difference to an
- * camera-object is the construction of the projection matrix.
- */
-class OrthographicCamera : public Camera {
-public:
-    OrthographicCamera(const vec3& position = vec3(0.f, 0.f,  0.f),
-                       const vec3& focus    = vec3(0.f, 0.f, -1.f),
-                       const vec3& up       = vec3(0.f, 1.f,  0.f),
-                       float left           = -1.f,
-                       float right          =  1.f,
-                       float bottom         = -1.f,
-                       float top            =  1.f,
-                       float distn          = -1.f,
-                       float distf          =  1.f);
-
-    /// This method returns the projection matrix
-    virtual mat4 getProjectionMatrix() const;
-
-    virtual mat4 getFrustumMatrix() const;
+    ProjectionMode projectionMode_;
 };
 
 } //namespace tgt

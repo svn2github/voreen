@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -27,74 +27,42 @@
 
 #include <iostream>
 
-#include "tgt/config.h"
 #include "tgt/assert.h"
+#include "tgt/types.h"
 
-namespace tgt {
+#define SINGLETON_CLASS_HEADER(T) \
+public:\
+static void init() {\
+tgtAssert(!singletonClass_, "singletonClass_ has already been initialized." );\
+singletonClass_ = new T;\
+tgtAssert(singletonClass_, "singletonClass_ has not been created.");\
+}\
+\
+static void deinit() {\
+tgtAssert(singletonClass_, "singletonClass_ has already been deinitialized." );\
+delete singletonClass_;\
+singletonClass_ = 0;\
+}\
+\
+static T* getPtr() {\
+tgtAssert(singletonClass_, "singletonClass_ has not been intitialized." );\
+return singletonClass_;\
+}\
+\
+static T& getRef() {\
+tgtAssert(singletonClass_ , "singletonClass_ has not been intitialized." );\
+return *singletonClass_;\
+}\
+\
+static bool isInited() {\
+return (singletonClass_ != 0);\
+}\
+protected:\
+static T* singletonClass_;\
 
-/**
-    This class helps to build the singleton design pattern.
-    Here you have full control over construction and deconstruction
-    of the object.
-*/
-template<class T>
-class Singleton {
-public:
-    /**
-     * Init the actual singleton.
-     * Must be called BEFORE the class is used, like this:
-     *
-     * Singleton\<TextureManager\>::init(new TextureManager());
-     */
-    static void init(T* singletonClass) {
-        tgtAssert( !singletonClass_, "singletonClass_ has already been initialized." );
-        singletonClass_ = singletonClass;
-    }
+#define SINGLETON_CLASS_SOURCE(T) \
+T* T::singletonClass_ = 0;
 
-    /**
-     * Deinit the actual singleton.
-     * Must be done at last.
-     */
-    static void deinit() {
-        tgtAssert( singletonClass_ != 0, "singletonClass_ has already been deinitialized." );
-        delete singletonClass_;
-        singletonClass_ = 0;
-    }
 
-    /**
-     * Get Pointer of the actual class
-     * @return Pointer of the actual class
-     */
-    static T* getPtr() {
-        tgtAssert( singletonClass_ != 0, "singletonClass_ has not been intitialized." );
-        return singletonClass_;
-    }
-
-    /**
-     * Get reference of the actual class
-     * @return reference of the actual class
-    */
-    static T& getRef() {
-        tgtAssert( singletonClass_ != 0 , "singletonClass_ has not been intitialized." );
-        return *singletonClass_;
-    }
-
-    /**
-     * Has the actual class been inited?
-     */
-    static bool isInited() {
-        return (singletonClass_ != 0);
-    }
-
-private:
-    static T* singletonClass_;
-};
-
-/// init static pointers with 0
-template<class T>
-
-T* Singleton<T>::singletonClass_ = 0;
-
-} // namespace
 
 #endif // TGT_SINGLETON_H

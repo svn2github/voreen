@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,13 +27,15 @@
  **********************************************************************/
 
 #include "voreen/core/properties/buttonproperty.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 namespace voreen {
 
 ButtonProperty::ButtonProperty(const std::string& id, const std::string& guiText, Processor::InvalidationLevel invalidationLevel)
     : Property(id, guiText, invalidationLevel)
 {
+}
+
+ButtonProperty::ButtonProperty() {
 }
 
 ButtonProperty::~ButtonProperty() {
@@ -43,8 +45,8 @@ ButtonProperty::~ButtonProperty() {
     actions_.clear();
 }
 
-PropertyWidget* ButtonProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+Property* ButtonProperty::create() const {
+    return new ButtonProperty();
 }
 
 void ButtonProperty::onChange(const Action& action) {
@@ -65,8 +67,5 @@ void ButtonProperty::clicked() {
         (*it)->onChange();
 }
 
-std::string ButtonProperty::getTypeString() const {
-    return "Button";
-}
 
 }   // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,14 +25,14 @@
 #ifndef TGT_TIMEEVENT_H
 #define TGT_TIMEEVENT_H
 
-#include "tgt/config.h"
 #include "tgt/event/event.h"
+#include "tgt/types.h"
 
 namespace tgt {
 
 class Timer;
 
-class TimeEvent : public Event {
+class TGT_API TimeEvent : public Event {
 public:
     /// A default constructor. Note that there is no tgt::Timer set this way.
     TimeEvent();

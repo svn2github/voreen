@@ -1,0 +1,2 @@
+modules/connectedcomponents/connectedcomponents.xml
+modules/connectedcomponents/ext/connexe/COPYRIGHT:licenses/connexe

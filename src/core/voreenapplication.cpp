@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,9 +28,19 @@
 
 #include "voreen/core/voreenapplication.h"
 #include "voreen/core/voreenmodule.h"
+#include "voreen/core/coremodule.h"
+#include "voreen/core/version.h"
 #include "voreen/core/utils/cmdparser/commandlineparser.h"
+#include "voreen/core/utils/stringconversion.h"
 #include "voreen/core/network/networkevaluator.h"
+#include "voreen/core/processors/processor.h"
+#include "voreen/core/processors/processorwidget.h"
 #include "voreen/core/processors/processorwidgetfactory.h"
+#include "voreen/core/properties/property.h"
+#include "voreen/core/properties/propertywidget.h"
+#include "voreen/core/properties/propertywidgetfactory.h"
+#include "voreen/core/io/serialization/xmlserializer.h"
+#include "voreen/core/io/serialization/xmldeserializer.h"
 
 #include "tgt/init.h"
 #include "tgt/filesystem.h"
@@ -39,9 +49,9 @@
 #include "tgt/gpucapabilities.h"
 
 #ifndef VRN_NO_REGISTRATION_HEADER_GENERATION
-    #include "voreen/modules/gen_moduleregistration.h"
+    #include "modules/gen_moduleregistration.h"
 #else
-    #include "voreen/modules/moduleregistration.h"
+    #include "modules/moduleregistration.h"
 #endif
 
 #ifdef WIN32
@@ -141,7 +151,6 @@ string findDocumentationPath(const string& basePath) {
 
 #ifdef __APPLE__
 string findAppBundleResourcesPath() {
-
     CFBundleRef bundle;
 
     bundle = CFBundleGetMainBundle();
@@ -159,7 +168,6 @@ string findAppBundleResourcesPath() {
 
     delete[] path;
      return pathStr;
-
 }
 #endif
 
@@ -169,18 +177,17 @@ VoreenApplication* VoreenApplication::app_ = 0;
 const std::string VoreenApplication::loggerCat_ = "voreen.VoreenApplication";
 
 VoreenApplication::VoreenApplication(const std::string& name, const std::string& displayName,
-                                     int argc, char** argv, ApplicationType appType)
-    : appType_(appType),
-      name_(name),
-      displayName_(displayName),
-      cmdParser_(displayName),
-      processorWidgetFactory_(0),
-      logLevel_(tgt::Info),
-      initialized_(false),
-      initializedGL_(false),
-      networkEvaluator_(0),
-      schedulingTimer_(0),
-      eventHandler_()
+                                     int argc, char** argv, ApplicationFeatures appType)
+    : appFeatures_(appType)
+    , name_(name)
+    , displayName_(displayName)
+    , cmdParser_(displayName)
+    , logLevel_(tgt::Info)
+    , initialized_(false)
+    , initializedGL_(false)
+    , networkEvaluator_(0)
+    , schedulingTimer_(0)
+    , eventHandler_()
 {
     app_ = this;
     cmdParser_.setCommandLine(argc, argv);
@@ -188,13 +195,13 @@ VoreenApplication::VoreenApplication(const std::string& name, const std::string&
 
 VoreenApplication::~VoreenApplication() {
     if (initializedGL_) {
-        if (tgt::Singleton<tgt::LogManager>::isInited())
+        if (tgt::LogManager::isInited())
             LWARNING("~VoreenApplication(): OpenGL has not been deinitialized. Call deinitGL() before destruction.");
         return;
     }
 
     if (initialized_) {
-        if (tgt::Singleton<tgt::LogManager>::isInited())
+        if (tgt::LogManager::isInited())
             LWARNING("~VoreenApplication(): application has not been deinitialized. Call deinit() before destruction.");
         return;
     }
@@ -209,36 +216,29 @@ void VoreenApplication::prepareCommandParser() {
         "Overrides the detected GLSL version", "<1.10|1.20|1.30|1.40|1.50|3.30|4.00>"));
 }
 
-void VoreenApplication::init() {
+void VoreenApplication::initialize() {
 
     if (initialized_) {
-        if (tgt::Singleton<tgt::LogManager>::isInited())
+        if (tgt::LogManager::isInited())
             LWARNING("init() Application already initialized. Skip.");
         return;
     }
-
-    //
-    // tgt initialization
-    //
-    tgt::InitFeature::Features featureset
-        = tgt::InitFeature::Features(tgt::InitFeature::ALL &~ tgt::InitFeature::LOG_TO_CONSOLE);
-    tgt::init(featureset);
-
-    if (appType_ & APP_CONSOLE_LOGGING) {
-        tgt::Log* clog = new tgt::ConsoleLog();
-        clog->addCat("", true, logLevel_);
-        LogMgr.addLog(clog);
-    }
-
-    // init timer
-    schedulingTimer_ = createTimer(&eventHandler_);
-    eventHandler_.addListenerToFront(this);
 
     //
     // Command line parser
     //
     prepareCommandParser();
     cmdParser_.execute();
+
+    //
+    // tgt initialization
+    //
+    tgt::InitFeature::Features featureset;
+    if (appFeatures_ & APP_CONSOLE_LOGGING)
+        featureset = tgt::InitFeature::ALL;
+    else
+        featureset = tgt::InitFeature::Features(tgt::InitFeature::ALL &~ tgt::InitFeature::LOG_TO_CONSOLE);
+    tgt::init(featureset, logLevel_);
 
     // detect documents path first, needed for log file
 #ifdef WIN32
@@ -252,7 +252,7 @@ void VoreenApplication::init() {
 #endif
 
     // HTML logging
-    if (appType_ & APP_HTML_LOGGING) {
+    if (appFeatures_ & APP_HTML_LOGGING) {
 
 #ifdef VRN_DEPLOYMENT
         LogMgr.reinit(documentsPath_);
@@ -266,6 +266,9 @@ void VoreenApplication::init() {
         log->addCat("", true, logLevel_);
         LogMgr.addLog(log);
     }
+
+    // log version
+    VoreenVersion::logAll("voreen.VoreenApplication");
 
 #ifdef VRN_DEPLOYMENT
     LINFO("Deployment build.");
@@ -288,8 +291,7 @@ void VoreenApplication::init() {
 
     // try to find base path starting at program path
     basePath_ = tgt::FileSystem::absolutePath(findBasePath(basePath_));
-
-    LINFO("Voreen base path: " << basePath_);
+    LINFO("Base path: " << basePath_);
 
     // mac app resources path
 #ifdef __APPLE__
@@ -301,7 +303,7 @@ void VoreenApplication::init() {
 #endif
 
     // shader path
-    if (appType_ & APP_SHADER) {
+    if (appFeatures_ & APP_SHADER) {
 #if defined(__APPLE__) && defined(VRN_DEPLOYMENT)
         shaderPath_ = appBundleResourcesPath_ + "/glsl";
 #else
@@ -310,7 +312,7 @@ void VoreenApplication::init() {
     }
 
     // data path
-    if (appType_ & APP_DATA) {
+    if (appFeatures_ & APP_DATA) {
         dataPath_ = findDataPath(basePath_);
         cachePath_ = dataPath_ + "/cache";
         temporaryPath_ = dataPath_ + "/tmp";
@@ -326,33 +328,46 @@ void VoreenApplication::init() {
 #endif
     }
 
+    // log location of HTML log to console
+    if ((appFeatures_ & APP_HTML_LOGGING) && !logFile_.empty()) {
+        std::string logPath = tgt::FileSystem::absolutePath(logFile_);
+        LINFO("HTML log file: " << logPath);
+    }
+
+    // core pseudo module is always included
+    addModule(new CoreModule());
+
     //
     // Modules
     //
-    if (appType_ & APP_AUTOLOAD_MODULES) {
+    if (appFeatures_ & APP_AUTOLOAD_MODULES) {
         LDEBUG("Loading modules from module registration header");
         addAllModules(this);
         if (modules_.empty()) {
             LWARNING("No modules loaded");
         }
         else {
-            std::string modString = modules_[0]->getName();
-            for (size_t i=1; i<modules_.size(); i++)
-                modString += ", " +  modules_[i]->getName();
-            LINFO("Modules: " << modString);
+            std::vector<std::string> moduleNames;
+            for (size_t i=0; i<modules_.size(); i++)
+                moduleNames.push_back(modules_[i]->getName());
+            LINFO("Modules: " << strJoin(moduleNames, ", "));
         }
     }
     else {
         LDEBUG("Module auto loading disabled");
     }
 
+    // init timer
+    schedulingTimer_ = createTimer(&eventHandler_);
+    eventHandler_.addListenerToFront(this);
+
     initialized_ = true;
 }
 
-void VoreenApplication::deinit() {
+void VoreenApplication::deinitialize() {
 
     if (!initialized_) {
-        if (tgt::Singleton<tgt::LogManager>::isInited())
+        if (tgt::LogManager::isInited())
             LWARNING("deinit() Application not initialized. Skip.");
         return;
     }
@@ -361,9 +376,10 @@ void VoreenApplication::deinit() {
     schedulingTimer_ = 0;
 
     // clear modules
-    for (size_t i=0; i<modules_.size(); i++) {
-        LDEBUG("Deleting module '" << modules_[i]->getName() << "'");
-        delete modules_[i];
+    LDEBUG("Deleting modules ...");
+    for (int i=(int)modules_.size()-1; i>=0; i--) {
+        LDEBUG("Deleting module '" << modules_.at(i)->getName() << "'");
+        delete modules_.at(i);
     }
     modules_.clear();
 
@@ -373,21 +389,16 @@ void VoreenApplication::deinit() {
     initialized_ = false;
 }
 
-void VoreenApplication::initGL() throw (VoreenException) {
-
+void VoreenApplication::initializeGL() throw (VoreenException) {
     if (!initialized_)
         throw VoreenException("VoreenApplication::initGL(): Application not initialized");
 
     if (initializedGL_)
         throw VoreenException("VoreenApplication::initGL(): OpenGL already initialized");
 
-    if ((appType_ & APP_HTML_LOGGING) && !logFile_.empty()) {
-        std::string logPath = !LogMgr.getLogDir().empty() ? LogMgr.getLogDir() + "/" : "";
-        LINFO("Log file: " << logPath << logFile_);
-    }
-
     LDEBUG("tgt::initGL");
     tgt::initGL();
+    glewInit();
 
     if (!overrideGLSLVersion_.empty()) {
         LWARNING("Overriding detected GLSL version " << GpuCaps.getShaderVersion()
@@ -433,35 +444,35 @@ void VoreenApplication::initGL() throw (VoreenException) {
     initializedGL_ = true;
 }
 
-void VoreenApplication::deinitGL() throw (VoreenException) {
+void VoreenApplication::deinitializeGL() throw (VoreenException) {
 
     if (!initializedGL_) {
-        if (tgt::Singleton<tgt::LogManager>::isInited())
-            LWARNING("deinitGL() OpenGL not initialized. Skip.");
+        if (tgt::LogManager::isInited())
+            LWARNING("deinitializeGL() OpenGL not initialized. Skip.");
         return;
     }
 
-    // deinitialize modules
-    for (size_t i=0; i<modules_.size(); i++) {
+    LDEBUG("Deinitializing modules ...");
+    for (int i=(int)modules_.size()-1; i>=0; i--) {
 
-        if (modules_[i]->isInitialized()) {
+        if (modules_.at(i)->isInitialized()) {
             try {
-                LDEBUG("Deinitializing module '" << modules_[i]->getName() << "'");
-                modules_[i]->deinitialize();
-                modules_[i]->initialized_ = false;
+                LINFO("Deinitializing module '" << modules_.at(i)->getName() << "'");
+                modules_.at(i)->deinitialize();
+                modules_.at(i)->initialized_ = false;
             }
             catch (const VoreenException& e) {
-                LERROR("VoreenException during deinitialization of module '" << modules_[i]->getName() << "': " << e.what());
+                LERROR("VoreenException during deinitialization of module '" << modules_.at(i)->getName() << "': " << e.what());
             }
             catch (const std::exception& e) {
-                LERROR("std::exception during deinitialization of module '" << modules_[i]->getName() << "': " << e.what());
+                LERROR("std::exception during deinitialization of module '" << modules_.at(i)->getName() << "': " << e.what());
             }
             catch (...) {
-                LERROR("unknown exception during deinitialization of module '" << modules_[i]->getName() << "'");
+                LERROR("unknown exception during deinitialization of module '" << modules_.at(i)->getName() << "'");
             }
         }
         else {
-            LWARNING("Skipping deinitialization of module '" << modules_[i]->getName() << "': not initialized");
+            LWARNING("Skipping deinitialization of module '" << modules_.at(i)->getName() << "': not initialized");
         }
     }
 
@@ -483,8 +494,51 @@ void VoreenApplication::addModule(VoreenModule* module) {
         LWARNING("Module '" << module->getName() << "' has already been registered. Skipping.");
 }
 
-const std::vector<VoreenModule*> VoreenApplication::getModules() const {
+const std::vector<VoreenModule*>& VoreenApplication::getModules() const {
     return modules_;
+}
+
+const VoreenModule* VoreenApplication::getModule(const std::string& moduleName) const {
+    for (size_t i = 0 ; i < modules_.size() ; ++i) {
+        VoreenModule* module = modules_.at(i);
+        if (module->getName() == moduleName)
+            return module;
+    }
+    return 0;
+}
+
+ProcessorWidget* VoreenApplication::createProcessorWidget(Processor* processor) const {
+    tgtAssert(processor, "null pointer passed");
+    if ((appFeatures_ & APP_PROCESSOR_WIDGETS) == 0)
+        return 0;
+
+    const std::vector<VoreenModule*>& modules = getModules();
+    for (size_t m=0; m<modules.size(); m++) {
+        const std::vector<ProcessorWidgetFactory*>& factories = modules_.at(m)->getProcessorWidgetFactories();
+        for (size_t f=0; f<factories.size(); f++) {
+            ProcessorWidget* processorWidget = factories.at(f)->createWidget(processor);
+            if (processorWidget) 
+                return processorWidget;
+        }
+    }
+    return 0;
+}
+
+PropertyWidget* VoreenApplication::createPropertyWidget(Property* property) const {
+    tgtAssert(property, "null pointer passed");
+    if ((appFeatures_ & APP_PROPERTY_WIDGETS) == 0)
+        return 0;
+
+    const std::vector<VoreenModule*>& modules = getModules();
+    for (size_t m=0; m<modules.size(); m++) {
+        const std::vector<PropertyWidgetFactory*>& factories = modules_.at(m)->getPropertyWidgetFactories();
+        for (size_t f=0; f<factories.size(); f++) {
+            PropertyWidget* propertyWidget = factories.at(f)->createWidget(property);
+            if (propertyWidget) 
+                return propertyWidget;
+        }
+    }
+    return 0;
 }
 
 tgt::Timer* VoreenApplication::createTimer(tgt::EventHandler* /*handler*/) const {
@@ -493,14 +547,6 @@ tgt::Timer* VoreenApplication::createTimer(tgt::EventHandler* /*handler*/) const
 
 ProgressBar* VoreenApplication::createProgressDialog() const {
     return 0;
-}
-
-void VoreenApplication::setProcessorWidgetFactory(ProcessorWidgetFactory* factory) {
-    processorWidgetFactory_ = factory;
-}
-
-const ProcessorWidgetFactory* VoreenApplication::getProcessorWidgetFactory() const {
-    return processorWidgetFactory_;
 }
 
 std::string VoreenApplication::getBasePath() const {
@@ -559,7 +605,7 @@ std::string VoreenApplication::getModulePath(const std::string& filename) const 
         return basePath_ + "/modules" + (filename.empty() ? "" : "/" + filename);
     #endif
 #else
-    return basePath_ + "/src/modules" + (filename.empty() ? "" : "/" + filename);
+    return basePath_ + "/modules" + (filename.empty() ? "" : "/" + filename);
 #endif
 }
 
@@ -602,6 +648,14 @@ void VoreenApplication::setNetworkEvaluator(NetworkEvaluator* evaluator) {
 
 NetworkEvaluator* VoreenApplication::getNetworkEvaluator() const {
     return networkEvaluator_;
+}
+
+tgt::LogLevel VoreenApplication::getLogLevel() const {
+    return logLevel_;
+}
+
+void VoreenApplication::setLogLevel(tgt::LogLevel logLevel) {
+    logLevel_ = logLevel;
 }
 
 } // namespace

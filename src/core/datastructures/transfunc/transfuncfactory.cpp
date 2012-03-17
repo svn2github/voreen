@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,18 +35,6 @@
 #include "voreen/core/datastructures/transfunc/transfuncprimitive.h"
 
 namespace voreen {
-
-TransFuncFactory* TransFuncFactory::instance_ = 0;
-
-TransFuncFactory::TransFuncFactory() {
-}
-
-TransFuncFactory* TransFuncFactory::getInstance() {
-    if (!instance_)
-        instance_ = new TransFuncFactory();
-
-    return instance_;
-}
 
 const std::string TransFuncFactory::getTypeString(const std::type_info& type) const {
     if (type == typeid(TransFuncIntensity))

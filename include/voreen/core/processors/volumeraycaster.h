@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -53,7 +53,7 @@ namespace voreen {
  * Additionally, it provides several ray-casting-related properties
  * and handles bricked volumes.
  */
-class VolumeRaycaster : public VolumeRenderer {
+class VRN_CORE_API VolumeRaycaster : public VolumeRenderer {
 public:
     VolumeRaycaster();
 
@@ -78,7 +78,7 @@ protected:
      *
      * @see VolumeRenderer::generateHeader
      */
-    virtual std::string generateHeader(VolumeHandle* volumehandle = 0);
+    virtual std::string generateHeader(const tgt::GpuCapabilities::GlVersion* version = 0);
 
     /**
      * Sets frustum parameters necessary for depth value calculation in shaders.
@@ -98,17 +98,6 @@ protected:
     virtual void bindVolumes(tgt::Shader* shader, const std::vector<VolumeStruct> &volumes,
         const tgt::Camera* camera = 0, const tgt::vec4& lightPosition = tgt::vec4(0.f));
 
-    void showBrickingProperties(bool b);
-
-    virtual void setBrickedVolumeUniforms(tgt::Shader* shader, VolumeHandle* volumeHandle);
-    virtual void addBrickedVolumeModalities(VolumeHandle* volumeHandle, std::vector<VolumeStruct>& volumeTextures,
-                                            tgt::TextureUnit* unit1 = 0, tgt::TextureUnit* unit2 = 0);
-
-    void updateBrickingParameters(VolumeHandle* volumeHandle);
-    void changeBrickResolutionCalculator(std::string);
-    void changeBrickingUpdateStrategy(std::string);
-    void changeBrickLodSelector(std::string);
-
     FloatProperty samplingRate_;  ///< Sampling rate of the raycasting, specified relative to the size of one voxel
     FloatProperty isoValue_;      ///< The used isovalue, when isosurface raycasting is enabled
 
@@ -123,19 +112,8 @@ protected:
     FloatProperty interactionQuality_;
     BoolProperty useInterpolationCoarseness_;
 
-    StringOptionProperty brickingInterpolationMode_;   ///< Which interpolation method to use when rendering bricked volumes.
-    StringOptionProperty brickingStrategyMode_;        ///< Which bricking strategy to use when rendering bricked volumes.
-    StringOptionProperty brickingUpdateStrategy_;      ///< When to update bricks when rendering bricked volumes.
-    StringOptionProperty brickLodSelector_;
-    BoolProperty useAdaptiveSampling_;
-
     tgt::ivec2 size_;                                  ///< The size expected by the processors connected to the outports. ()
     bool switchToInteractionMode_;                     ///< Needed to switch to/from interactionmode.
-
-    bool brickingParametersChanged_;
-    std::string brickResoluationModeStr_;
-    std::string brickUpdateStrategyStr_;
-    std::string brickLodSelectorStr_;
 
     static const std::string loggerCat_; ///< category used in logging
 

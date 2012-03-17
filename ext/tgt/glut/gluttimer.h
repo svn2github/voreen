@@ -25,7 +25,6 @@
 #ifndef TGT_GLUTTIMER_H
 #define TGT_GLUTTIMER_H
 
-#include "tgt/config.h"
 #include "tgt/timer.h"
 
 namespace tgt {

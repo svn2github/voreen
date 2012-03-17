@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,16 +28,17 @@
 
 #include "voreen/core/network/processornetwork.h"
 
+#include "tgt/filesystem.h"
+#include "voreen/core/datastructures/transfunc/transfuncfactory.h"
+#include "voreen/core/datastructures/transfunc/transfuncmappingkey.h"
+#include "voreen/core/network/portconnection.h"
+#include "voreen/core/network/propertystatecollection.h"
+#include "voreen/core/ports/coprocessorport.h"
 #include "voreen/core/processors/processorfactory.h"
 #include "voreen/core/processors/renderprocessor.h"
-#include "voreen/core/ports/allports.h"
 #include "voreen/core/properties/eventproperty.h"
 #include "voreen/core/properties/link/propertylink.h"
 #include "voreen/core/properties/link/linkevaluatorfactory.h"
-#include "voreen/core/datastructures/transfunc/transfuncfactory.h"
-#include "voreen/core/datastructures/transfunc/transfuncmappingkey.h"
-#include "voreen/core/plotting/aggregationfunctionfactory.h"
-#include "voreen/core/plotting/plotpredicatefactory.h"
 #include <sstream>
 
 using std::vector;
@@ -49,7 +50,26 @@ const std::string ProcessorNetwork::loggerCat_("voreen.ProcessorNetwork");
 namespace {
 
 // Increase this counter when incompatible changes are introduced into the serialization format
-const int NETWORK_VERSION = 7;
+const int NETWORK_VERSION = 11;
+
+std::string serializeProperty(Property* p) {
+    XmlSerializer s;
+
+    p->serializeValue(s);
+
+    std::stringstream stream;
+    s.write(stream);
+    return stream.str();
+}
+
+void deserializeProperty(Property* p, std::string s) {
+    XmlDeserializer d;
+
+    std::stringstream stream(s);
+    d.read(stream);
+
+    p->deserializeValue(d);
+}
 
 } // namespace
 
@@ -130,30 +150,30 @@ void ProcessorNetwork::replaceProcessor(Processor* oldProc, Processor* newProc) 
         // "normal" ports
         const std::vector<Port*> inports = oldProc->getInports();
         for (size_t i = 0; i < inports.size(); ++i) {
-            const std::vector<Port*> connected = inports[i]->getConnected();
+            const std::vector<const Port*> connected = inports[i]->getConnected();
             for (size_t j = 0; j < connected.size(); ++j)
-                incomingPorts.push_back(connected[j]);
+                incomingPorts.push_back(const_cast<Port*>(connected[j]));
         }
 
         const std::vector<Port*> outports = oldProc->getOutports();
         for (size_t i = 0; i < outports.size(); ++i) {
-            const std::vector<Port*> connected = outports[i]->getConnected();
+            const std::vector<const Port*> connected = outports[i]->getConnected();
             for (size_t j = 0; j < connected.size(); ++j)
-                outgoingPorts.push_back(connected[j]);
+                outgoingPorts.push_back(const_cast<Port*>(connected[j]));
         }
         // coprocessor ports
         const std::vector<CoProcessorPort*> coInports = oldProc->getCoProcessorInports();
         for (size_t i = 0; i < coInports.size(); ++i) {
-            const std::vector<Port*> connected = coInports[i]->getConnected();
+            const std::vector<const Port*> connected = coInports[i]->getConnected();
             for (size_t j = 0; j < connected.size(); ++j)
-                incomingCoPorts.push_back(connected[j]);
+                incomingCoPorts.push_back(const_cast<Port*>(connected[j]));
         }
 
         const std::vector<CoProcessorPort*> coOutports = oldProc->getCoProcessorOutports();
         for (size_t i = 0; i < coOutports.size(); ++i) {
-            const std::vector<Port*> connected = coOutports[i]->getConnected();
+            const std::vector<const Port*> connected = coOutports[i]->getConnected();
             for (size_t j = 0; j < connected.size(); ++j)
-                outgoingCoPorts.push_back(connected[j]);
+                outgoingCoPorts.push_back(const_cast<Port*>(connected[j]));
         }
     }
 
@@ -268,7 +288,7 @@ Processor* ProcessorNetwork::getProcessorByName(const std::string& name) const {
     return getProcessor(name);
 }
 
-int ProcessorNetwork::numProcessors() const {
+size_t ProcessorNetwork::numProcessors() const {
     return processors_.size();
 }
 
@@ -306,33 +326,33 @@ void ProcessorNetwork::disconnectPorts(Processor* processor) {
 
     const std::vector<Port*> inports = processor->getInports();
     for (size_t i = 0; i < inports.size(); ++i) {
-        const std::vector<Port*> connected = inports[i]->getConnected();
+        const std::vector<const Port*> connected = inports[i]->getConnected();
         for (size_t j = 0; j < connected.size(); ++j) {
-            disconnectPorts(connected[j], inports[i]);
+            disconnectPorts(const_cast<Port*>(connected[j]), inports[i]);
         }
     }
 
     const std::vector<CoProcessorPort*> coProcessorInports = processor->getCoProcessorInports();
     for (size_t i = 0; i < coProcessorInports.size(); ++i) {
-        const std::vector<Port*> connected = coProcessorInports[i]->getConnected();
+        const std::vector<const Port*> connected = coProcessorInports[i]->getConnected();
         for (size_t j = 0; j < connected.size(); ++j) {
-            disconnectPorts(connected[j], coProcessorInports[i]);
+            disconnectPorts(const_cast<Port*>(connected[j]), coProcessorInports[i]);
         }
     }
 
     const std::vector<Port*> outports = processor->getOutports();
     for (size_t i = 0; i < outports.size(); ++i) {
-        const std::vector<Port*> connected = outports[i]->getConnected();
+        const std::vector<const Port*> connected = outports[i]->getConnected();
         for (size_t j = 0; j < connected.size(); ++j) {
-            disconnectPorts(outports[i], connected[j]);
+            disconnectPorts(outports[i], const_cast<Port*>(connected[j]));
         }
     }
 
     const std::vector<CoProcessorPort*> coProcessorOutports = processor->getCoProcessorOutports();
     for (size_t i = 0; i < coProcessorOutports.size(); ++i) {
-        const std::vector<Port*> connected = coProcessorOutports[i]->getConnected();
+        const std::vector<const Port*> connected = coProcessorOutports[i]->getConnected();
         for (size_t j = 0; j < connected.size(); ++j) {
-            disconnectPorts(coProcessorOutports[i], connected[j]);
+            disconnectPorts(coProcessorOutports[i], const_cast<Port*>(connected[j]));
         }
     }
 }
@@ -405,10 +425,12 @@ PropertyLink* ProcessorNetwork::createPropertyLink(Property* src, Property* dest
     // check for event properties
     if (dynamic_cast<EventPropertyBase*>(src)) {
         LWARNING("Source property " << src->getID() << " is an EventProperty and can therefore not be linked.");
+        delete linkEvaluator;
         return 0;
     }
     if (dynamic_cast<EventPropertyBase*>(dest)) {
         LWARNING("Dest property " << dest->getID() << " is an EventProperty and can therefore not be linked.");
+        delete linkEvaluator;
         return 0;
     }
 
@@ -416,6 +438,7 @@ PropertyLink* ProcessorNetwork::createPropertyLink(Property* src, Property* dest
     if (src->isLinkedWith(dest, false)) {
         LWARNING(src->getOwner()->getName() << "::" << src->getID() << " and " <<
                 dest->getOwner()->getName() << "::" << dest->getID() << " are already linked");
+        delete linkEvaluator;
         return 0;
     }
 
@@ -469,7 +492,7 @@ int ProcessorNetwork::linkProperties(const std::vector<Property*>& properties,
     for (size_t i=0; i<properties.size(); ++i) {
         Processor* owner = dynamic_cast<Processor*>(properties[i]->getOwner());
         if (!owner) {
-            LWARNING("Property is not owned by a processor: " << owner->getName() << ":" << properties[i]->getID());
+            LWARNING("Property is not owned by a processor: " << properties[i]->getOwner()->getName() << ":" << properties[i]->getID());
             continue;
         }
 
@@ -502,22 +525,22 @@ int ProcessorNetwork::linkProperties(const std::vector<Property*>& properties,
         // create a cyclic link chain, where each property is linked with its predecessor and successor
         for (size_t i=0; i<linkProperties.size()-1; ++i) {
             if (!linkProperties[i]->isLinkedWith(linkProperties[i+1])) {
-                if (createPropertyLink(linkProperties[i], linkProperties[i+1], linkEvaluator))
+                if (createPropertyLink(linkProperties[i], linkProperties[i+1], linkEvaluator->create()))
                     numLinks++;
             }
             if (!linkProperties[i+1]->isLinkedWith(linkProperties[i])) {
-                if (createPropertyLink(linkProperties[i+1], linkProperties[i], linkEvaluator))
+                if (createPropertyLink(linkProperties[i+1], linkProperties[i], linkEvaluator->create()))
                     numLinks++;
             }
         }
         // close cycle by linking last property with first
         if (linkProperties.size() > 2) {
             if (!linkProperties.back()->isLinkedWith(linkProperties.front())) {
-                if (createPropertyLink(linkProperties.back(), linkProperties.front(), linkEvaluator))
+                if (createPropertyLink(linkProperties.back(), linkProperties.front(), linkEvaluator->create()))
                     numLinks++;
             }
             if (!linkProperties.front()->isLinkedWith(linkProperties.back())) {
-                if (createPropertyLink(linkProperties.front(), linkProperties.back(), linkEvaluator))
+                if (createPropertyLink(linkProperties.front(), linkProperties.back(), linkEvaluator->create()))
                     numLinks++;
             }
         }
@@ -526,11 +549,11 @@ int ProcessorNetwork::linkProperties(const std::vector<Property*>& properties,
         for (size_t i=0; i<linkProperties.size()-1; ++i) {
             for (size_t j=i+1; j<linkProperties.size(); ++j) {
                 if (!linkProperties[i]->isLinkedWith(linkProperties[j])) {
-                    if (createPropertyLink(linkProperties[i], linkProperties[j], linkEvaluator))
+                    if (createPropertyLink(linkProperties[i], linkProperties[j], linkEvaluator->create()))
                         numLinks++;
                 }
                 if (!linkProperties[j]->isLinkedWith(linkProperties[i])) {
-                    if (createPropertyLink(linkProperties[j], linkProperties[i], linkEvaluator))
+                    if (createPropertyLink(linkProperties[j], linkProperties[i], linkEvaluator->create()))
                         numLinks++;
                 }
             }
@@ -581,12 +604,6 @@ int ProcessorNetwork::getVersion() const {
 void ProcessorNetwork::serialize(XmlSerializer& s) const {
     const_cast<ProcessorNetwork*>(this)->errorList_.clear();
 
-    s.registerFactory(ProcessorFactory::getInstance());
-    s.registerFactory(TransFuncFactory::getInstance());
-    s.registerFactory(LinkEvaluatorFactory::getInstance());
-    s.registerFactory(AggregationFunctionFactory::getInstance());
-    s.registerFactory(PlotPredicateFactory::getInstance());
-
     // meta data
     metaDataContainer_.serialize(s);
 
@@ -602,21 +619,22 @@ void ProcessorNetwork::serialize(XmlSerializer& s) const {
 
     typedef vector<Processor*> Processors;
     typedef vector<Port*> Ports;
+    typedef vector<const Port*> ConPorts;
     typedef vector<CoProcessorPort*> CoProcessorPorts;
 
     for (vector<Processor*>::const_iterator processorIt = processors_.begin(); processorIt != processors_.end(); ++processorIt) {
         Ports ports = (*processorIt)->getOutports();
         for (Ports::const_iterator portIt = ports.begin(); portIt != ports.end(); ++portIt) {
-            Ports connectedPorts = (*portIt)->getConnected();
-            for (Ports::const_iterator connectedPortIt = connectedPorts.begin(); connectedPortIt != connectedPorts.end(); ++connectedPortIt)
-                portConnections.push_back(PortConnection(*portIt, *connectedPortIt));
+            const ConPorts connectedPorts = (*portIt)->getConnected();
+            for (ConPorts::const_iterator connectedPortIt = connectedPorts.begin(); connectedPortIt != connectedPorts.end(); ++connectedPortIt)
+                portConnections.push_back(PortConnection(*portIt, const_cast<Port*>(*connectedPortIt)));
         }
 
         CoProcessorPorts coProcessorPorts = (*processorIt)->getCoProcessorOutports();
         for (CoProcessorPorts::const_iterator portIt = coProcessorPorts.begin(); portIt != coProcessorPorts.end(); ++portIt) {
-            Ports connectedPorts = (*portIt)->getConnected();
-            for (Ports::const_iterator connectedPortIt = connectedPorts.begin(); connectedPortIt != connectedPorts.end(); ++connectedPortIt)
-                coProcessorPortConnections.push_back(PortConnection(*portIt, *connectedPortIt));
+            const ConPorts connectedPorts = (*portIt)->getConnected();
+            for (ConPorts::const_iterator connectedPortIt = connectedPorts.begin(); connectedPortIt != connectedPorts.end(); ++connectedPortIt)
+                coProcessorPortConnections.push_back(PortConnection(*portIt, const_cast<Port*>(*connectedPortIt)));
         }
     }
 
@@ -625,16 +643,14 @@ void ProcessorNetwork::serialize(XmlSerializer& s) const {
 
     // Serialize PropertyLinks and add them to the network element
     s.serialize("PropertyLinks", propertyLinks_, "PropertyLink");
+
+    s.serialize("PropertyStateCollections", propertyStateCollections_, "PropertyStateCollection");
+    s.serialize("PropertyStateFileReferences", propertyStateFileReferences_, "PropertyStateFileReference");
+    s.serialize("PropertyStateDirectoryReferences", propertyStateDirectoryReferences_, "PropertyStateDirectoryReference");
 }
 
 void ProcessorNetwork::deserialize(XmlDeserializer& s) {
     errorList_.clear();
-
-    s.registerFactory(ProcessorFactory::getInstance());
-    s.registerFactory(TransFuncFactory::getInstance());
-    s.registerFactory(LinkEvaluatorFactory::getInstance());
-    s.registerFactory(AggregationFunctionFactory::getInstance());
-    s.registerFactory(PlotPredicateFactory::getInstance());
 
     // deserialize Processors
     s.deserialize("Processors", processors_, "Processor");
@@ -726,10 +742,153 @@ void ProcessorNetwork::deserialize(XmlDeserializer& s) {
         }
     }
 
+    try {
+        s.deserialize("PropertyStateCollections", propertyStateCollections_, "PropertyStateCollection");
+        s.deserialize("PropertyStateFileReferences", propertyStateFileReferences_, "PropertyStateFileReference");
+        s.deserialize("PropertyStateDirectoryReferences", propertyStateDirectoryReferences_, "PropertyStateDirectoryReference");
+    }
+    catch (XmlSerializationNoSuchDataException&) {
+        s.removeLastError();
+    }
+
+    for (size_t i = 0; i < propertyStateFileReferences_.size(); ++i) {
+        const std::string& reference = propertyStateFileReferences_[i];
+        std::vector<PropertyStateCollection*> collections;
+        std::fstream f;
+        f.open(reference.c_str(), std::ios::in);
+        XmlDeserializer d;
+        d.read(f);
+        d.deserialize("PropertyStateCollections", collections, "PropertyStateCollection");
+        f.close();
+
+        for (size_t i = 0; i < collections.size(); ++i) {
+            collections[i]->setOrigin(reference);
+            referencedStateCollections_.push_back(collections[i]);
+        }
+    }
+
+    for (size_t i = 0; i < propertyStateDirectoryReferences_.size(); ++i) {
+        const std::string& dir = propertyStateDirectoryReferences_[i];
+        const std::vector<std::string>& files = tgt::FileSystem::readDirectory(dir, false, false);
+        for (size_t j = 0; j < files.size(); ++j) {
+            const std::string& file = dir + "/" + files[j];
+            std::vector<PropertyStateCollection*> collections;
+            std::fstream f;
+            f.open(file.c_str(), std::ios::in);
+            XmlDeserializer d;
+            d.read(f);
+            d.deserialize("PropertyStateCollections", collections, "PropertyStateCollection");
+            f.close();
+
+            for (size_t k = 0; k < collections.size(); ++k) {
+                collections[k]->setOrigin(file);
+                referencedStateCollections_.push_back(collections[k]);
+            }
+        }
+
+    }
+
     // meta data
     metaDataContainer_.deserialize(s);
 
     notifyNetworkChanged();
+}
+
+void ProcessorNetwork::addPropertyStateCollection(PropertyStateCollection* collection) {
+    propertyStateCollections_.push_back(collection);
+}
+
+void ProcessorNetwork::removePropertyStateCollection(PropertyStateCollection* collection) {
+    for (size_t i = 0; i < propertyStateCollections_.size(); ++i) {
+        if (collection == propertyStateCollections_[i]) {
+            propertyStateCollections_.erase(propertyStateCollections_.begin() + i);
+            return;
+        }
+    }
+}
+
+void ProcessorNetwork::addPropertyStateCollectionReferenceFile(const std::string& reference) {
+    std::vector<PropertyStateCollection*> collections;
+    std::fstream f;
+    f.open(reference.c_str(), std::ios::in);
+    XmlDeserializer d;
+    d.read(f);
+    d.deserialize("PropertyStateCollections", collections, "PropertyStateCollection");
+    f.close();
+
+    for (size_t i = 0; i < collections.size(); ++i) {
+        collections[i]->setOrigin(reference);
+        referencedStateCollections_.push_back(collections[i]);
+    }
+
+    propertyStateFileReferences_.push_back(reference);
+}
+
+void ProcessorNetwork::removePropertyStateCollectionReferenceFile(const std::string& reference) {
+    std::vector<std::string>::iterator it = std::find(propertyStateFileReferences_.begin(), propertyStateFileReferences_.end(), reference);
+    if (it != propertyStateFileReferences_.end())
+        propertyStateFileReferences_.erase(it);
+
+    for (size_t i = 0; i < referencedStateCollections_.size(); ++i) {
+        PropertyStateCollection* collection = referencedStateCollections_[i];
+        if (collection->getOrigin() == reference) {
+            referencedStateCollections_.erase(referencedStateCollections_.begin() + i);
+            --i;
+        }
+    }
+}
+
+const std::vector<std::string>& ProcessorNetwork::getReferencedFiles() const {
+    return propertyStateFileReferences_;
+}
+
+void ProcessorNetwork::addPropertyStateCollectionReferenceDirectory(const std::string& reference) {
+    const std::vector<std::string>& files = tgt::FileSystem::readDirectory(reference, false, false);
+    for (size_t j = 0; j < files.size(); ++j) {
+        const std::string& file = reference + "/" + files[j];
+        std::vector<PropertyStateCollection*> collections;
+        std::fstream f;
+        f.open(file.c_str(), std::ios::in);
+        XmlDeserializer d;
+        d.read(f);
+        d.deserialize("PropertyStateCollections", collections, "PropertyStateCollection");
+        f.close();
+
+        for (size_t k = 0; k < collections.size(); ++k) {
+            collections[k]->setOrigin(file);
+            referencedStateCollections_.push_back(collections[k]);
+        }
+    }
+
+
+    propertyStateDirectoryReferences_.push_back(reference);
+}
+
+void ProcessorNetwork::removePropertyStateCollectionReferenceDirectory(const std::string& reference) {
+    std::vector<std::string>::iterator it = std::find(propertyStateDirectoryReferences_.begin(), propertyStateDirectoryReferences_.end(), reference);
+    if (it != propertyStateDirectoryReferences_.end())
+        propertyStateDirectoryReferences_.erase(it);
+
+    for (size_t i = 0; i < referencedStateCollections_.size(); ++i) {
+        PropertyStateCollection* collection = referencedStateCollections_[i];
+        if (strncmp(collection->getOrigin().c_str(), reference.c_str(), strlen(reference.c_str())) == 0) {
+        //if (collection->getOrigin() == reference) {
+            referencedStateCollections_.erase(referencedStateCollections_.begin() + i);
+            --i;
+        }
+    }
+}
+
+const std::vector<std::string>& ProcessorNetwork::getReferencedDirectories() const {
+    return propertyStateDirectoryReferences_;
+}
+
+const std::vector<PropertyStateCollection*>& ProcessorNetwork::getPropertyStateCollections() const {
+    return propertyStateCollections_;
+}
+
+const std::vector<PropertyStateCollection*>& ProcessorNetwork::getReferencedPropertyStateCollections() const {
+    return referencedStateCollections_;
 }
 
 void ProcessorNetwork::notifyNetworkChanged() const {
@@ -800,78 +959,6 @@ std::vector<Property*> ProcessorNetwork::getPropertiesByID(const std::string& id
 
 void ProcessorNetwork::preparePropertyRemoval(Property* property) {
     removePropertyLinks(property);
-}
-
-// -----------------------------------------------------------------------------------
-
-PortConnection::PortEntry::PortEntry(Port* port)
-    : port_(port)
-{}
-
-void PortConnection::PortEntry::serialize(XmlSerializer& s) const {
-    s.serialize("name", port_->getName());
-    s.serialize("Processor", port_->getProcessor());
-}
-
-void PortConnection::PortEntry::deserialize(XmlDeserializer& s) {
-    std::string name;
-    Processor* processor;
-
-    s.deserialize("name", name);
-    s.deserialize("Processor", processor);
-
-    // Was processor not deserialized?
-    if (!processor)
-        // Cancel port search, since we are not able to proceed...
-        return;
-
-    std::vector<Port*> ports = processor->getPorts();
-    for (size_t i=0; i<ports.size(); ++i) {
-        if (ports[i]->getName() == name) {
-            port_ = ports[i];
-            break;
-        }
-    }
-}
-
-Port* PortConnection::PortEntry::getPort() const {
-    return port_;
-}
-
-PortConnection::PortConnection(Port* outport, Port* inport)
-    : outport_(outport)
-    , inport_(inport)
-{}
-
-PortConnection::PortConnection()
-    : outport_(0)
-    , inport_(0)
-{}
-
-void PortConnection::serialize(XmlSerializer& s) const {
-    s.serialize("Outport", outport_);
-    s.serialize("Inport", inport_);
-}
-
-void PortConnection::deserialize(XmlDeserializer& s) {
-    s.deserialize("Outport", outport_);
-    s.deserialize("Inport", inport_);
-}
-
-void PortConnection::setOutport(Port* value) {
-    outport_ = PortEntry(value);
-}
-
-Port* PortConnection::getOutport() const {
-    return outport_.getPort();
-}
-
-void PortConnection::setInport(Port* value) {
-    inport_ = PortEntry(value);
-}
-
-Port* PortConnection::getInport() const {
-    return inport_.getPort();
 }
 
 } // namespace voreen

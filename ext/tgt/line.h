@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,7 +25,6 @@
 #ifndef TGT_LINE_H
 #define TGT_LINE_H
 
-#include "tgt/config.h"
 #include "tgt/vector.h"
 
 namespace tgt {

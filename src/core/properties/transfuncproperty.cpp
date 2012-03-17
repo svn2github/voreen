@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,7 +32,6 @@
 #include "voreen/core/datastructures/transfunc/transfuncintensity.h"
 #include "voreen/core/datastructures/transfunc/transfuncintensitygradient.h"
 #include "voreen/core/datastructures/transfunc/transfuncmappingkey.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 #include "voreen/core/datastructures/volume/volumehandle.h"
 
@@ -46,13 +45,34 @@ TransFuncProperty::TransFuncProperty(const std::string& ident, const std::string
     , volumeHandle_(0)
     , editors_(editors)
     , lazyEditorInstantiation_(lazyEditorInstantiation)
-{
-}
+{}
+
+TransFuncProperty::TransFuncProperty() 
+    : TemplateProperty<TransFunc*>("", "", 0, Processor::INVALID_RESULT)
+    , volumeHandle_(0)
+{}
 
 TransFuncProperty::~TransFuncProperty() {
     if (value_) {
         LWARNING(getFullyQualifiedGuiName() << " has not been deinitialized before destruction.");
     }
+}
+
+Property* TransFuncProperty::create() const {
+    return new TransFuncProperty();
+}
+
+Variant TransFuncProperty::getVariant(bool) const {
+    return Variant(get());
+}
+
+void TransFuncProperty::setVariant(const Variant& val, bool) {
+    set(val.getTransFunc()->clone());
+    notifyChange();
+}
+
+int TransFuncProperty::getVariantType() const {
+    return Variant::VariantTypeTransFunc;
 }
 
 void TransFuncProperty::enableEditor(TransFuncProperty::Editors editor) {
@@ -120,7 +140,7 @@ void TransFuncProperty::set(TransFunc* tf) {
     delete oldValue;
 }
 
-void TransFuncProperty::setVolumeHandle(VolumeHandle* handle) {
+void TransFuncProperty::setVolumeHandle(const VolumeHandleBase* handle) {
 
     if (volumeHandle_ != handle) {
 
@@ -128,7 +148,7 @@ void TransFuncProperty::setVolumeHandle(VolumeHandle* handle) {
         if (volumeHandle_) {
 
             // Resize texture of tf according to bitdepth of volume
-            int bits = volumeHandle_->getVolume()->getBitsStored() / volumeHandle_->getVolume()->getNumChannels();
+            int bits = volumeHandle_->getRepresentation<Volume>()->getBitsStored() / volumeHandle_->getRepresentation<Volume>()->getNumChannels();
             if (bits > 16)
                 bits = 16; // handle float data as if it was 16 bit to prevent overflow
 
@@ -146,7 +166,7 @@ void TransFuncProperty::setVolumeHandle(VolumeHandle* handle) {
     }
 }
 
-VolumeHandle* TransFuncProperty::getVolumeHandle() const {
+const VolumeHandleBase* TransFuncProperty::getVolumeHandle() const {
     return volumeHandle_;
 }
 
@@ -177,11 +197,7 @@ void TransFuncProperty::deserialize(XmlDeserializer& s) {
     set(tf);
 }
 
-PropertyWidget* TransFuncProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
-}
-
-void TransFuncProperty::initialize() throw (VoreenException) {
+void TransFuncProperty::initialize() throw (tgt::Exception) {
 
     TemplateProperty<TransFunc*>::initialize();
 
@@ -192,7 +208,7 @@ void TransFuncProperty::initialize() throw (VoreenException) {
     }
 }
 
-void TransFuncProperty::deinitialize() throw (VoreenException) {
+void TransFuncProperty::deinitialize() throw (tgt::Exception) {
     if (value_) {
         delete value_;
         value_ = 0;
@@ -200,10 +216,6 @@ void TransFuncProperty::deinitialize() throw (VoreenException) {
     }
 
     TemplateProperty<TransFunc*>::deinitialize();
-}
-
-std::string TransFuncProperty::getTypeString() const {
-    return "TransferFunction";
 }
 
 } // namespace voreen

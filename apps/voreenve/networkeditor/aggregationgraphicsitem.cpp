@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -341,9 +341,23 @@ QList<QAction*> AggregationGraphicsItem::getProcessorWidgetContextMenuActions() 
             processorWidgetMap_.insert(action, proc->getProcessorWidget());
             if (proc->getProcessorWidget()->isVisible())
                 action->setChecked(true);
-            result.append(action);
+
+            if (result.size() == 0)
+                result.append(action);
+            else {
+                int i = 0;
+                for (; i < result.size(); ++i) {
+                    if (result.at(i)->text().compare(action->text()) > 0)
+                        break;
+                }
+                result.insert(i, action);
+
+            }
+
+            //result.append(action);
         }
     }
+
     return result;
 }
 

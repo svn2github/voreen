@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,10 +33,14 @@
 
 namespace voreen {
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<float>;
+#endif
+
 /**
- * This class offers an interpolation function for float-values. Interpolation: focus on startvalue.
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: focus on startvalue.
  */
-class FloatStartInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatStartInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatStartInterpolationFunction();
@@ -48,9 +52,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: focus on endvalue.
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: focus on endvalue.
  */
-class FloatEndInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatEndInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatEndInterpolationFunction();
@@ -62,9 +66,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: bisection.
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: bisection.
  */
-class FloatStartEndInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatStartEndInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatStartEndInterpolationFunction();
@@ -76,9 +80,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: linear.
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: linear.
  */
-class FloatLinearInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatLinearInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatLinearInterpolationFunction();
@@ -90,9 +94,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: Catmull-Rom spline.
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: Catmull-Rom spline.
  */
-class FloatCatmullRomInterpolationFunction : public MultiPointInterpolationFunction<float> {
+class VRN_CORE_API FloatCatmullRomInterpolationFunction : public MultiPointInterpolationFunction<float> {
 
 public:
         FloatCatmullRomInterpolationFunction();
@@ -104,9 +108,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quadratic (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quadratic (easing in).
  */
-class FloatInQuadInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInQuadInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInQuadInterpolationFunction();
@@ -118,9 +122,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: cubicular (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: cubicular (easing in).
  */
-class FloatInCubicInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInCubicInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInCubicInterpolationFunction();
@@ -132,9 +136,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quartetic (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quartetic (easing in).
  */
-class FloatInQuartInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInQuartInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInQuartInterpolationFunction();
@@ -146,9 +150,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quintic (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quintic (easing in).
  */
-class FloatInQuintInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInQuintInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInQuintInterpolationFunction();
@@ -160,9 +164,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: sineousidal (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: sineousidal (easing in).
  */
-class FloatInSineInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInSineInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInSineInterpolationFunction();
@@ -174,9 +178,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: exponential (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: exponential (easing in).
  */
-class FloatInExponentInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInExponentInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInExponentInterpolationFunction();
@@ -188,9 +192,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: circular (easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: circular (easing in).
  */
-class FloatInCircInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInCircInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInCircInterpolationFunction();
@@ -202,9 +206,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quadratic (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quadratic (easing out).
  */
-class FloatOutQuadInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutQuadInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutQuadInterpolationFunction();
@@ -216,9 +220,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: cubicular (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: cubicular (easing out).
  */
-class FloatOutCubicInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutCubicInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutCubicInterpolationFunction();
@@ -230,9 +234,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quartetic (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quartetic (easing out).
  */
-class FloatOutQuartInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutQuartInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutQuartInterpolationFunction();
@@ -244,9 +248,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quintic (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quintic (easing out).
  */
-class FloatOutQuintInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutQuintInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutQuintInterpolationFunction();
@@ -258,9 +262,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: sineousidal (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: sineousidal (easing out).
  */
-class FloatOutSineInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutSineInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutSineInterpolationFunction();
@@ -272,9 +276,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: exponential (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: exponential (easing out).
  */
-class FloatOutExponentInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutExponentInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutExponentInterpolationFunction();
@@ -286,9 +290,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: circular (easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: circular (easing out).
  */
-class FloatOutCircInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutCircInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutCircInterpolationFunction();
@@ -300,9 +304,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quadratic (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quadratic (first easing in, then easing out).
  */
-class FloatInOutQuadInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutQuadInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutQuadInterpolationFunction();
@@ -314,9 +318,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: cubicular (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: cubicular (first easing in, then easing out).
  */
-class FloatInOutCubicInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutCubicInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutCubicInterpolationFunction();
@@ -328,9 +332,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quartetic (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quartetic (first easing in, then easing out).
  */
-class FloatInOutQuartInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutQuartInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutQuartInterpolationFunction();
@@ -342,9 +346,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quintic (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quintic (first easing in, then easing out).
  */
-class FloatInOutQuintInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutQuintInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutQuintInterpolationFunction();
@@ -356,9 +360,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: sineousidal (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: sineousidal (first easing in, then easing out).
  */
-class FloatInOutSineInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutSineInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutSineInterpolationFunction();
@@ -370,9 +374,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: exponential (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: exponential (first easing in, then easing out).
  */
-class FloatInOutExponentInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutExponentInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutExponentInterpolationFunction();
@@ -384,9 +388,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: circular (first easing in, then easing out).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: circular (first easing in, then easing out).
  */
-class FloatInOutCircInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatInOutCircInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatInOutCircInterpolationFunction();
@@ -398,9 +402,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quadratic (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quadratic (first easing out, then easing in).
  */
-class FloatOutInQuadInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInQuadInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInQuadInterpolationFunction();
@@ -412,9 +416,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: cubicular (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: cubicular (first easing out, then easing in).
  */
-class FloatOutInCubicInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInCubicInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInCubicInterpolationFunction();
@@ -426,9 +430,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quartetic (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quartetic (first easing out, then easing in).
  */
-class FloatOutInQuartInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInQuartInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInQuartInterpolationFunction();
@@ -440,9 +444,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: quintic (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: quintic (first easing out, then easing in).
  */
-class FloatOutInQuintInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInQuintInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInQuintInterpolationFunction();
@@ -454,9 +458,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: sineousidal (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: sineousidal (first easing out, then easing in).
  */
-class FloatOutInSineInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInSineInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInSineInterpolationFunction();
@@ -468,9 +472,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: exponential (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: exponential (first easing out, then easing in).
  */
-class FloatOutInExponentInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInExponentInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInExponentInterpolationFunction();
@@ -482,9 +486,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for float-values. Interpolation: circular (first easing out, then easing in).
+ * This class VRN_CORE_API offers an interpolation function for float-values. Interpolation: circular (first easing out, then easing in).
  */
-class FloatOutInCircInterpolationFunction : public InterpolationFunction<float> {
+class VRN_CORE_API FloatOutInCircInterpolationFunction : public InterpolationFunction<float> {
 
 public:
     FloatOutInCircInterpolationFunction();

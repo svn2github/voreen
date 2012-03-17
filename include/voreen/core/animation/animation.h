@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,6 +34,7 @@
 #include <queue>
 #include "voreen/core/network/processornetwork.h"
 #include "voreen/core/animation/animationobserver.h"
+#include "voreen/core/coremodule.h"
 
 namespace voreen {
 
@@ -41,11 +42,15 @@ class AnimationObserver;
 class ProcessorNetwork;
 class AnimatedProcessor;
 class UndoableAnimation;
+class SerializableFactory;
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API Observable<AnimationObserver>;
+#endif
 /**
  * Mainclass to create an animation.
  */
-class Animation : public Serializable, public ProcessorNetworkObserver, public Observable<AnimationObserver> {
+class VRN_CORE_API Animation : public Serializable, public ProcessorNetworkObserver, public Observable<AnimationObserver> {
 public:
     /**
      * Constructor: creates a new animation for a given processornetwork.
@@ -168,11 +173,18 @@ protected:
 
 private:
     friend class XmlDeserializer;
+    friend class CoreModule;
 
     /**
      * Default constructor.
      */
     Animation();
+
+    /**
+     * Construct all factories used for animation serialization.
+     * Is called by the CoreModule.
+     */
+    static std::vector<SerializableFactory*> getSerializerFactories();
 
     /**
      * Pointer to the corresponding rendernetwork.
@@ -215,6 +227,8 @@ private:
      * (only interesting if the program is multithreaded).
      */
     bool isRendering_;
+
+
 };
 
 } // namespace voreen

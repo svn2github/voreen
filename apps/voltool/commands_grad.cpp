@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -61,23 +61,23 @@ bool CommandGrad::execute(const std::vector<std::string>& parameters) {
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
     //load volume dataset
-    Volume* sourceDataset_;
-    Volume* targetDataset_ = 0;
+    const VolumeHandleBase* sourceDataset_;
+    VolumeHandle* targetDataset_ = 0;
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[1]);
-    sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[1]);
+    sourceDataset_ = volumeCollection->first();
 
     if (parameters[0] == "simple")
-        targetDataset_ = calcGradients<tgt::col4>(sourceDataset_);
+        targetDataset_ = calcGradientsCentralDifferences<uint8_t>(sourceDataset_);
     else if (parameters[0] == "26")
         targetDataset_ = calcGradients26(sourceDataset_);
     else if (parameters[0] == "sobel")
-        targetDataset_ = calcGradientsSobel<tgt::col4>(sourceDataset_);
+        targetDataset_ = calcGradientsSobel<uint8_t>(sourceDataset_);
 
     if (targetDataset_) {
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters[2], targetDataset_);
+        serializer->write(parameters[2], targetDataset_);
         delete targetDataset_;
     }
     else {
@@ -114,11 +114,11 @@ bool CommandFilterGrad::execute(const std::vector<std::string>& parameters) {
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
     //load volume dataset
-    Volume* sourceDataset_;
-    Volume* targetDataset_ = 0;
+    const VolumeHandleBase* sourceDataset_;
+    VolumeHandle* targetDataset_ = 0;
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[2]);
-    sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[2]);
+    sourceDataset_ = volumeCollection->first();
 
     if (parameters[0] == "simple")
         targetDataset_ = filterGradients(sourceDataset_);
@@ -148,7 +148,7 @@ bool CommandFilterGrad::execute(const std::vector<std::string>& parameters) {
     if (targetDataset_) {
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters[3], targetDataset_);
+        serializer->write(parameters[3], targetDataset_);
         delete targetDataset_;
     }
     else {

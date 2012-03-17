@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,6 @@
 #include "voreen/core/properties/fontproperty.h"
 
 #include "voreen/core/properties/condition.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 #include "voreen/core/voreenapplication.h"
 
 #include "tgt/filesystem.h"
@@ -44,11 +43,21 @@ FontProperty::FontProperty(const std::string& id, const std::string& guiText, tg
         value_ = new tgt::Font(VoreenApplication::app()->getFontPath("VeraMono.ttf"), 12, tgt::Font::TextureFont, 999);
 }
 
+FontProperty::FontProperty() {
+    value_ = 0;
+}
+
 FontProperty::~FontProperty() {
     delete value_;
 }
 
+Property* FontProperty::create() const {
+    return new FontProperty();
+}
+
 void FontProperty::serialize(XmlSerializer& s) const {
+    Property::serialize(s);
+
     tgtAssert(value_, "no font object");
     s.serialize("fontType", tgt::Font::getFontTypeName(value_->getFontType()));
     s.serialize("fontSize", value_->getSize());
@@ -59,6 +68,8 @@ void FontProperty::serialize(XmlSerializer& s) const {
 }
 
 void FontProperty::deserialize(XmlDeserializer& s) {
+    Property::deserialize(s);
+
     int fontSize;
     std::string fontName;
     std::string fontTypeName;
@@ -84,14 +95,6 @@ void FontProperty::deserialize(XmlDeserializer& s) {
         delete value_;
         set(new tgt::Font(VoreenApplication::app()->getFontPath(fontName), fontSize, fontType, lineWidth, textAlignment, verticalTextAlignment));
     }
-}
-
-PropertyWidget* FontProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
-}
-
-std::string FontProperty::getTypeString() const {
-    return "Font";
 }
 
 } // namespace

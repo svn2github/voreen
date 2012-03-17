@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -53,12 +53,8 @@
 #include "voreen/core/io/serialization/abstractserializable.h"
 #include "voreen/core/io/serialization/serializablefactory.h"
 #include "voreen/core/io/serialization/xmlprocessor.h"
-#include "voreen/core/plotting/plotcell.h"
 
 namespace voreen {
-
-// forward declaration
-struct PlotSelectionEntry;
 
 /**
  * @c XmlDeserializer is responsible for deserializing XML documents to memory data.
@@ -109,7 +105,7 @@ struct PlotSelectionEntry;
  * @see XmlSerializerBase
  * @see Serializable
  */
-class XmlDeserializer : public XmlSerializerBase
+class VRN_CORE_API XmlDeserializer : public XmlSerializerBase
 {
 public:
     /**
@@ -130,6 +126,23 @@ public:
      * Returns the absolute path to the XML file the document was read from.
      */
     std::string getDocumentPath() const;
+
+    /**
+     * Try to deserialize the given @c key/data pair.
+     * If there is no such data the defaultValue is returned.
+     */
+    template<typename T>
+    void optionalDeserialize(const std::string& key, T& data, const T& defaultValue) 
+        throw (SerializationException) 
+    {
+        try {
+            deserialize(key, data);
+        }
+        catch (XmlSerializationNoSuchDataException e) { 
+            data = defaultValue;
+            removeLastError();
+        }   
+    } 
 
     /**
      * Deserializes the given @c key/data pair.
@@ -193,7 +206,7 @@ public:
      * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
      * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
      */
-    void deserialize(const std::string& key, signed short& data)
+    void deserialize(const std::string& key, short& data)
         throw (SerializationException);
 
     /**
@@ -206,7 +219,7 @@ public:
      * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
      * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
      */
-    void deserialize(const std::string& key, unsigned short& data)
+    void deserialize(const std::string& key, int& data)
         throw (SerializationException);
 
     /**
@@ -219,7 +232,7 @@ public:
      * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
      * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
      */
-    void deserialize(const std::string& key, signed int& data)
+    void deserialize(const std::string& key, long& data)
         throw (SerializationException);
 
     /**
@@ -232,33 +245,7 @@ public:
      * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
      * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
      */
-    void deserialize(const std::string& key, unsigned int& data)
-        throw (SerializationException);
-
-    /**
-     * Deserializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data variable to store deserialized data
-     *
-     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
-     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
-     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
-     */
-    void deserialize(const std::string& key, signed long& data)
-        throw (SerializationException);
-
-    /**
-     * Deserializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data variable to store deserialized data
-     *
-     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
-     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
-     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
-     */
-    void deserialize(const std::string& key, unsigned long& data)
+    void deserialize(const std::string& key, size_t& data)
         throw (SerializationException);
 
     /**
@@ -532,32 +519,6 @@ public:
      * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
      */
     void deserialize(const std::string& key, tgt::Matrix4d& data)
-        throw (SerializationException);
-
-    /**
-     * Deserializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data variable to store deserialized data
-     *
-     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
-     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
-     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
-     */
-
-    void deserialize(const std::string& key, PlotCellValue& data)
-        throw (SerializationException);
-    /**
-     * Deserializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data variable to store deserialized data
-     *
-     * @throws XmlSerializationNoSuchDataException if no data with the given key can be found.
-     * @throws XmlSerializationFormatException if a XML node is incorrect formatted.
-     * @throws XmlSerializationDuplicateIdException if multiple XML nodes share same id attribute
-     */
-    void deserialize(const std::string& key, PlotSelectionEntry& data)
         throw (SerializationException);
 
     /**
@@ -909,7 +870,7 @@ private:
      *         in case of trying to allocate memory for an @c AbstractSerializable
      */
     template<class T>
-    inline T* allocateMemory(signed short* data, const std::string* type = 0)
+    inline T* allocateMemory(short* data, const std::string* type = 0)
         throw (SerializationException);
 
     /**
@@ -926,7 +887,7 @@ private:
      *         in case of trying to allocate memory for an @c AbstractSerializable
      */
     template<class T>
-    inline T* allocateMemory(unsigned short* data, const std::string* type = 0)
+    inline T* allocateMemory(int* data, const std::string* type = 0)
         throw (SerializationException);
 
     /**
@@ -943,57 +904,7 @@ private:
      *         in case of trying to allocate memory for an @c AbstractSerializable
      */
     template<class T>
-    inline T* allocateMemory(signed int* data, const std::string* type = 0)
-        throw (SerializationException);
-
-    /**
-     * Allocates new memory of given type on the heap and returns a pointer to it.
-     *
-     * @tparam data type of memory to allocate
-     *
-     * @param data parameter is needed to determine how to allocate memory
-     *
-     * @return pointer to allocated memory
-     *
-     * @throws XmlSerializationMemoryAllocationException
-     *         in case of trying to allocate memory for an @c AbstractSerializable
-     */
-    template<class T>
-    inline T* allocateMemory(unsigned int* data, const std::string* type = 0)
-        throw (SerializationException);
-
-    /**
-     * Allocates new memory of given type on the heap and returns a pointer to it.
-     *
-     * @tparam data type of memory to allocate
-     *
-     * @param data parameter is needed to determine how to allocate memory
-     * @param type parameter is needed to allocate memory for an @c AbstractSerializable by factory
-     *
-     * @return pointer to allocated memory
-     *
-     * @throws XmlSerializationMemoryAllocationException
-     *         in case of trying to allocate memory for an @c AbstractSerializable
-     */
-    template<class T>
-    inline T* allocateMemory(signed long* data, const std::string* type = 0)
-        throw (SerializationException);
-
-    /**
-     * Allocates new memory of given type on the heap and returns a pointer to it.
-     *
-     * @tparam data type of memory to allocate
-     *
-     * @param data parameter is needed to determine how to allocate memory
-     * @param type parameter is needed to allocate memory for an @c AbstractSerializable by factory
-     *
-     * @return pointer to allocated memory
-     *
-     * @throws XmlSerializationMemoryAllocationException
-     *         in case of trying to allocate memory for an @c AbstractSerializable
-     */
-    template<class T>
-    inline T* allocateMemory(unsigned long* data, const std::string* type = 0)
+    inline T* allocateMemory(long* data, const std::string* type = 0)
         throw (SerializationException);
 
     /**
@@ -1597,12 +1508,9 @@ template<class T> inline T* XmlDeserializer::allocateMemory(bool*, const std::st
 template<class T> inline T* XmlDeserializer::allocateMemory(char*, const std::string*)           throw (SerializationException) { return new T(); }
 template<class T> inline T* XmlDeserializer::allocateMemory(signed char*, const std::string*)    throw (SerializationException) { return new T(); }
 template<class T> inline T* XmlDeserializer::allocateMemory(unsigned char*, const std::string*)  throw (SerializationException) { return new T(); }
-template<class T> inline T* XmlDeserializer::allocateMemory(signed short*, const std::string*)   throw (SerializationException) { return new T(); }
-template<class T> inline T* XmlDeserializer::allocateMemory(unsigned short*, const std::string*) throw (SerializationException) { return new T(); }
-template<class T> inline T* XmlDeserializer::allocateMemory(signed int*, const std::string*)     throw (SerializationException) { return new T(); }
-template<class T> inline T* XmlDeserializer::allocateMemory(unsigned int*, const std::string*)   throw (SerializationException) { return new T(); }
-template<class T> inline T* XmlDeserializer::allocateMemory(signed long*, const std::string*)    throw (SerializationException) { return new T(); }
-template<class T> inline T* XmlDeserializer::allocateMemory(unsigned long*, const std::string*)  throw (SerializationException) { return new T(); }
+template<class T> inline T* XmlDeserializer::allocateMemory(short*, const std::string*)          throw (SerializationException) { return new T(); }
+template<class T> inline T* XmlDeserializer::allocateMemory(int*, const std::string*)            throw (SerializationException) { return new T(); }
+template<class T> inline T* XmlDeserializer::allocateMemory(long*, const std::string*)           throw (SerializationException) { return new T(); }
 template<class T> inline T* XmlDeserializer::allocateMemory(float*, const std::string*)          throw (SerializationException) { return new T(); }
 template<class T> inline T* XmlDeserializer::allocateMemory(double*, const std::string*)         throw (SerializationException) { return new T(); }
 template<class T> inline T* XmlDeserializer::allocateMemory(long double*, const std::string*)    throw (SerializationException) { return new T(); }

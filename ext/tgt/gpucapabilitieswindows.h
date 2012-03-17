@@ -1,29 +1,24 @@
 /**********************************************************************
  *                                                                    *
- * Voreen - The Volume Rendering Engine                               *
+ * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2005-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
- * This file is part of the Voreen software package. Voreen is free   *
- * software: you can redistribute it and/or modify it under the terms *
- * of the GNU General Public License version 2 as published by the    *
- * Free Software Foundation.                                          *
+ * This file is part of the tgt library. This library is free         *
+ * software; you can redistribute it and/or modify it under the terms *
+ * of the GNU Lesser General Public License version 2.1 as published  *
+ * by the Free Software Foundation.                                   *
  *                                                                    *
- * Voreen is distributed in the hope that it will be useful,          *
+ * This library is distributed in the hope that it will be useful,    *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of     *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the       *
- * GNU General Public License for more details.                       *
+ * GNU Lesser General Public License for more details.                *
  *                                                                    *
- * You should have received a copy of the GNU General Public License  *
- * in the file "LICENSE.txt" along with this program.                 *
+ * You should have received a copy of the GNU Lesser General Public   *
+ * License in the file "LICENSE.txt" along with this library.         *
  * If not, see <http://www.gnu.org/licenses/>.                        *
- *                                                                    *
- * The authors reserve all rights not expressly granted herein. For   *
- * non-commercial academic use see the license exception specified in *
- * the file "LICENSE-academic.txt". To get information about          *
- * commercial licensing please contact the authors.                   *
  *                                                                    *
  **********************************************************************/
 
@@ -56,9 +51,10 @@ namespace tgt {
  *
  * @note WMI is only used if TGT_WITH_WMI is defined
  */
-class GpuCapabilitiesWindows : public tgt::GpuCapabilities {
+class TGT_API GpuCapabilitiesWindows : public tgt::GpuCapabilities {
+SINGLETON_CLASS_HEADER(GpuCapabilitiesWindows)
+
 public:
-    
     /**
      * Holds several representations of a Windows file version.
      *
@@ -230,7 +226,7 @@ private:
 
 } // namespace tgt
 
-#define GpuCapsWin tgt::Singleton<tgt::GpuCapabilitiesWindows>::getRef()
+#define GpuCapsWin tgt::GpuCapabilitiesWindows::getRef()
 
 #endif //_MSC_VER
 

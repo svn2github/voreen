@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,8 @@
 
 #include "voreen/core/datastructures/volume/volumeatomic.h"
 #include "voreen/core/datastructures/volume/volume.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
+#include "voreen/core/datastructures/volume/volumederiveddata.h"
 
 #include <string>
 #include <iostream>
@@ -38,18 +40,192 @@
 
 namespace voreen {
 
-/// Histogram base class
-class Histogram {
+//template<typename T, int ND>
+//    class HistogramGeneric {
+//    public:
+//        int getNumBuckets(int dim) const { 
+//            if((dim >= 0) && (dim < ND))
+//                return bucketCounts_[dim]; 
+//            else {
+//                tgtAssert(false, "Dimension-index out of range!");
+//                return 0;
+//            }
+//        }
+//
+//        int getNumBuckets() const {  
+//            return numBuckets_;
+//        }
+//        uint64_t getNumSamples() const {
+//            return numSamples_;
+//        }
+//
+//        uint64_t getBucket(int b) const { 
+//            if(b < numBuckets_)
+//                return buckets_[b]; 
+//            else {
+//                tgtAssert(false, "Index out of range!");
+//                return 0;
+//            }
+//        }
+//
+//        void increaseBucket(int b) {
+//            if(b < numBuckets_) {
+//                buckets_[b]++; 
+//                numSamples_++;
+//            }
+//            else 
+//                tgtAssert(false, "Index out of range!");
+//        }
+//
+//        T getMinValue(int dim) const {
+//            return minValues_[dim];
+//        }
+//
+//        T getMaxValue(int dim) const {
+//            return minValues_[dim];
+//        }
+//
+//        uint64_t getMaxBucket() {
+//            //TODO: optimize?
+//            uint64_t max = 0;
+//            for(int i=0; i<getNumBuckets(); i++) 
+//                if(buckets_[i] > max)
+//                    max = buckets_[i];
+//
+//            return max;
+//        }
+//
+//    protected:
+//        void addSample(...) {
+//            va_list args;
+//            int nd = ND;
+//            va_start(args, nd); 
+//
+//            T values[ND];
+//            for(int i=0; i<ND; i++) {
+//                values[i] = va_arg(args, T);
+//            }
+//
+//            va_end(args);
+//
+//            int c[ND];
+//            for(int i=0; i<ND; i++) 
+//                c[i] = mapValueToBucket(values[i], i);
+//
+//            int b = getBucketNumber(c);
+//            increaseBucket(b);
+//        }
+//
+//        int mapValueToBucket(T v, int dim) const {
+//            if(v < minValues_[dim]) {
+//                //TODO: out of range
+//                return 0;
+//            }
+//            else if(v > maxValues_[dim]) {
+//                //TODO: out of range
+//                return (bucketCounts_[dim] - 1);
+//            }
+//            else {
+//                v -= minValues_[dim];
+//                return static_cast<int>(bucketCounts_[dim] * (v / (maxValues_[dim] - minValues_[dim])));
+//                //TODO: clamp?
+//            }
+//        }
+//
+//        int getBucketNumber(const int* c) const {
+//            int n = 0;
+//            int helper = 1;
+//            for(int i=0; i<ND; i++) {
+//                if((c[i] >= 0) && (c[i] < bucketCounts_[i])) {
+//                    n += helper * c[i];
+//                    helper *= bucketCounts_[i];
+//                }
+//                else {
+//                    //TODO
+//                }
+//            }
+//            return n;
+//        }
+//
+//        HistogramGeneric(.../* T minValue, T maxValue, int bucketCounts for each dimension */) : numBuckets_(0), buckets_(0), numSamples_(0) {
+//            va_list args;
+//            int nd = ND*3;
+//            va_start(args, nd); 
+//
+//            for(int i=0; i<ND; i++) {
+//                minValues_[i] = va_arg(args, T);
+//                maxValues_[i] = va_arg(args, T);
+//                bucketCounts_[i] = va_arg(args, int);
+//            }
+//
+//            va_end(args);
+//
+//            numBuckets_ = 1;
+//            for(int i=0; i<ND; i++) 
+//                numBuckets_ *= bucketCounts_[i];
+//
+//            buckets_ = new uint64_t[getNumBuckets()];
+//
+//            for(int i=0; i<getNumBuckets(); i++) 
+//                buckets_[i] = 0;
+//        }
+//
+//    private:
+//        T minValues_[ND];
+//        T maxValues_[ND];
+//        int bucketCounts_[ND];
+//        int numBuckets_;
+//
+//        uint64_t* buckets_;
+//        uint64_t numSamples_;
+//    };
+//
+//template <typename T>
+//class Histogram1DGeneric : public HistogramGeneric<T, 1> {
+//    public:
+//        Histogram1DGeneric(T minValue, T maxValue, int bucketCount) : HistogramGeneric<T, 1>(minValue, maxValue, bucketCount) {}
+//
+//        void addSample(T value) {
+//            HistogramGeneric<T, 1>::addSample(value);
+//        }
+//        T getMinValue() const {
+//            return getMinValue(0);
+//        }
+//
+//        T getMaxValue() const {
+//            return getMaxValue(0);
+//        }
+//    private:
+//};
+//
+//class Histogram1D : public Histogram1DGeneric<float> {
+//    public:
+//        Histogram1D(float minValue, float maxValue, int bucketCount) : Histogram1DGeneric<float>(minValue, maxValue, bucketCount) {}
+//};
+//
+//Histogram1D createHistogram1DFromVolume(const VolumeHandleBase* handle, int bucketCount);
 
-};
-
-// ----------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//Old Historam classes (will be replaced)
 
 /// 1D Intensity Histogram.
-class HistogramIntensity : public Histogram {
+class VRN_CORE_API HistogramIntensity : public VolumeDerivedData {
 public:
     /// Create new histogram with bucketCount buckets from volume
     HistogramIntensity(const Volume* volume, int bucketCount);
+
+    /// Copy constructor.
+    HistogramIntensity(const HistogramIntensity& h);
+
+    /// Empty default constructor required by VolumeDerivedData interface.
+    HistogramIntensity();
+
+    /**
+     * Creates a histogram with a bucket count of 256.
+     *
+     * @see VolumeDerivedData
+     */
+    virtual VolumeDerivedData* createFrom(const VolumeHandleBase* handle) const;
 
     size_t getBucketCount() const;
 
@@ -74,20 +250,21 @@ public:
     /// Returns normalized logarithmic histogram value at bucket nearest to i
     float getLogNormalized(float i) const;
 
-    /// Returns the significant range of the histogram, i.e.
-    /// the minimal / maximal non-zero bucket
-    tgt::ivec2 getSignificantRange() const;
+    /// @see VolumeDerivedData
+    virtual void serialize(XmlSerializer& s) const;
+
+    /// @see VolumeDerivedData
+    virtual void deserialize(XmlDeserializer& s);
 
 protected:
-    std::vector<int> hist_;
+    std::vector<int> histValues_;
     int maxValue_;
-    tgt::ivec2 significantRange_;
 };
 
 // ----------------------------------------------------------------------------
 
 /// 2D histogram using intensity and gradient length.
-class HistogramIntensityGradient : public Histogram {
+class VRN_CORE_API HistogramIntensityGradient : public VolumeDerivedData {
 public:
     /**
      * Calculate 2D Histogram.
@@ -98,8 +275,18 @@ public:
      * @param bucketCountg Gradient strength bucket count
      * @param scale should the histogram scaled to maximum gradient length in the dataset?
      */
-    HistogramIntensityGradient(const Volume* volumeGrad, const Volume* volumeIntensity,
+    HistogramIntensityGradient(const VolumeHandleBase* volumeGrad, const VolumeHandleBase* volumeIntensity,
                                int bucketCounti, int bucketCountg, bool scale = false);
+
+    /// Empty default constructor required by VolumeDerivedData interface.
+    HistogramIntensityGradient();
+
+    /**
+     * Returns 0, since histogram construction requires an additional gradient volume.
+     *
+     * @see VolumeDerivedData
+     */
+    virtual VolumeDerivedData* createFrom(const VolumeHandleBase* handle) const;
 
     /// Returns voxels in bucket.
     int getValue(int i, int g) const;
@@ -126,8 +313,14 @@ public:
 
     float getScaleFactor() const;
 
+    /// @see VolumeDerivedData (currently unimplemented)
+    virtual void serialize(XmlSerializer& s) const;
+
+    /// @see VolumeDerivedData (currently unimplemented)
+    virtual void deserialize(XmlDeserializer& s);
+
 protected:
-    std::vector<std::vector<int> > hist_;  ///< 2D array representing the histogram (first index = intensity)
+    std::vector<std::vector<int> > histValues_;  ///< 2D array representing the histogram (first index = intensity)
     int maxValue_;
     tgt::ivec2 significantRangeIntensity_;
     tgt::ivec2 significantRangeGradient_;

@@ -1,3 +1,27 @@
+/**********************************************************************
+ *                                                                    *
+ * tgt - Tiny Graphics Toolbox                                        *
+ *                                                                    *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
+ * Department of Computer Science, University of Muenster, Germany.   *
+ * <http://viscg.uni-muenster.de>                                     *
+ *                                                                    *
+ * This file is part of the tgt library. This library is free         *
+ * software; you can redistribute it and/or modify it under the terms *
+ * of the GNU Lesser General Public License version 2.1 as published  *
+ * by the Free Software Foundation.                                   *
+ *                                                                    *
+ * This library is distributed in the hope that it will be useful,    *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the       *
+ * GNU Lesser General Public License for more details.                *
+ *                                                                    *
+ * You should have received a copy of the GNU Lesser General Public   *
+ * License in the file "LICENSE.txt" along with this library.         *
+ * If not, see <http://www.gnu.org/licenses/>.                        *
+ *                                                                    *
+ **********************************************************************/
+
 #ifndef TGT_TYPES_H
 #define TGT_TYPES_H
 
@@ -60,25 +84,26 @@
     TGT_UNUSED
 */
 
-#include "tgt/config.h"
-
 /**
  * This is needed for .dll or .so support respectively
  */
-
-#ifdef TGT_BUILD_DLL
-    #ifdef WIN32
-        #define TGT_API __declspec(dllexport)
-    #else //WIN32 - so it is UNIX -> I assume gcc
-        #define TGT_API __attribute__ ((externally_visible))
-    #endif //WIN32
-#else //TGT_BUILD_DLL
-    #ifdef WIN32
-        #define TGT_API __declspec(dllimport)
-    #else //WIN32 - so it is UNIX -> I assume gcc
-        #define TGT_API __attribute__ ((externally_visible))
-    #endif //WIN32
-#endif //TGT_BUILD_DLL
+#ifdef VRN_DYNAMIC_LIBS
+    #ifdef TGT_BUILD_DLL
+        #ifdef WIN32
+            #define TGT_API __declspec(dllexport)
+        #else //WIN32 - so it is UNIX -> I assume gcc
+            #define TGT_API __attribute__ ((visibility ("default")))
+        #endif //WIN32
+    #else //TGT_BUILD_DLL
+        #ifdef WIN32
+            #define TGT_API __declspec(dllimport)
+        #else //WIN32 - so it is UNIX -> I assume gcc
+            #define TGT_API 
+        #endif //WIN32
+    #endif //TGT_BUILD_DLL
+#else
+    #define TGT_API // building static library -> do nothing
+#endif
 
 /**
  * With this macro you can get rid of annoying "unused parameter" warnings
@@ -90,9 +115,9 @@
     #define TGT_UNUSED
 #endif
 
-#ifdef _MSC_VER
-    #pragma warning( disable : 4100 )
-#endif
+//#ifdef _MSC_VER
+//    #pragma warning( disable : 4100 )
+//#endif
 
 
 // For size_t
@@ -109,8 +134,8 @@ typedef unsigned long ulong;
 	typedef unsigned int uint;
 #endif
 
-#ifdef _MSC_VER
-    // For nasty microsoft compiler
+#if defined(_MSC_VER) && (_MSC_VER < 1600) 
+    // MSVC++ prior to Visual Studio 2010 does not provide stdint.h
     #define _USE_MATH_DEFINES
 
     #include <windows.h>
@@ -293,7 +318,7 @@ typedef unsigned long ulong;
 
     #endif /* __STDC_CONSTANT_MACROS */
 
-#else // So it must be UNIX
+#else // So it must be UNIX or VS2010 (or later)
 
     /*
         The ISO C99 standard specifies that in C++ implementations limit

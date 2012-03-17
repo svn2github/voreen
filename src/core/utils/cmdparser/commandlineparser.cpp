@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -176,7 +176,7 @@ void CommandlineParser::execute() {
     // the nameless command is avaiable as well.
 
     // First step: Test, if we have nameless arguments even if we don't have a nameless command. Otherwise bail out
-    if ((argumentsForNameless.size() != 0) && (commandForNamelessArguments_ == 0))
+    if (!argumentsForNameless.empty() && (commandForNamelessArguments_ == 0))
         exitWithError("No appropriate command avaiable for nameless parameters");
 
     // Second step: Check if every command is happy with the parameters assigned to it
@@ -212,7 +212,7 @@ void CommandlineParser::execute() {
     }
 
     // Third step: Execute the nameless command if there are any arguments available
-    if (argumentsForNameless.size() != 0) {
+    if (!argumentsForNameless.empty()) {
         bool correct = commandForNamelessArguments_->checkParameters(argumentsForNameless);
 
         if (correct)

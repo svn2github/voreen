@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,12 +29,16 @@
 #ifndef VRN_APPLICATION_H
 #define VRN_APPLICATION_H
 
+#include "voreen/core/voreencoredefine.h"
+#include "voreen/core/properties/property.h"
+#include "voreen/core/properties/propertyowner.h"
 #include "voreen/core/utils/cmdparser/commandlineparser.h"
 
 #include <string>
 #include "tgt/logmanager.h"
 #include "tgt/event/eventlistener.h"
 #include "tgt/event/eventhandler.h"
+#include "tgt/timer.h"
 
 namespace tgt {
     class EventHandler;
@@ -43,22 +47,23 @@ namespace tgt {
 namespace voreen {
 
 class Processor;
-class ProcessorWidgetFactory;
-class ProgressBar;
+class ProcessorWidget;
+class Property;
+class PropertyWidget;
 class VoreenModule;
 class NetworkEvaluator;
+class ProgressBar;
 
 /**
  * Represents basic properties of a Voreen application. There should only be one instance of
  * this class, which can be access via the static method app().
  */
-class VoreenApplication : private tgt::EventListener {
-
+class VRN_CORE_API VoreenApplication : private tgt::EventListener {
     friend class Processor;
 
 public:
     /// Features used in this application
-    enum ApplicationType {
+    enum ApplicationFeatures {
         APP_NONE                =  0,       ///< nothing
         APP_SHADER              =  1,       ///< detect shader path
         APP_DATA                =  2,       ///< detect data path
@@ -66,13 +71,13 @@ public:
         APP_HTML_LOGGING        =  8,       ///< activate logging to a HTML file
         APP_AUTOLOAD_MODULES    =  16,      ///< loads all modules listed in the module registration header
                                             ///  'moduleregistration.h' or 'gen_moduleregistration.h', resp.
+        APP_PROCESSOR_WIDGETS   =  32,      ///< activate creation of processor widgets
+        APP_PROPERTY_WIDGETS    =  64,      ///< activate creation of property widgets
         APP_ALL                 =  0xFFFF,  ///< all features
-        APP_DEFAULT = APP_ALL &~ APP_CONSOLE_LOGGING   ///< default: all features except HTML logging
+        APP_DEFAULT = APP_ALL &~ APP_HTML_LOGGING   ///< default: all features except HTML logging
     };
 
     /**
-     * Calls init().
-     *
      * @param name Short name of the application in lowercase ("voreenve")
      * @param displayName Nice-looking name of the application ("VoreenVE")
      * @param argc Number of arguments as retrieved from main()
@@ -83,7 +88,7 @@ public:
      *  Otherwise, modules need to be instantiated "manually" and passed to addModule().
      */
     VoreenApplication(const std::string& name, const std::string& displayName,
-                      int argc, char** argv, ApplicationType appType = APP_DEFAULT);
+                      int argc, char** argv, ApplicationFeatures appType = APP_DEFAULT);
 
     /**
      * Calls deinit().
@@ -129,13 +134,13 @@ public:
      * @note This function should be called right after object construction,
      *  especially before calling initGL().
      */
-    virtual void init();
+    virtual void initialize();
 
     /**
      * Deinitializes the application and deletes the module objects,
      * to be called right before object destruction.
      */
-    virtual void deinit();
+    virtual void deinitialize();
 
     /**
      * Do OpenGL-specific initialization and initialize registered modules.
@@ -144,14 +149,14 @@ public:
      *
      * @throws VoreenException if OpenGL initialization failed
      */
-    virtual void initGL() throw (VoreenException);
+    virtual void initializeGL() throw (VoreenException);
 
     /**
      * Do OpenGL-specific deinitialization and deinitialize all registered modules.
      *
      * @throws VoreenException if OpenGL deinitialization failed.
      */
-    virtual void deinitGL() throw (VoreenException);
+    virtual void deinitializeGL() throw (VoreenException);
 
 
     //
@@ -166,11 +171,36 @@ public:
     /**
      * Returns all registered modules.
      */
-    const std::vector<VoreenModule*> getModules() const;
+    const std::vector<VoreenModule*>& getModules() const;
+
+    /**
+     * Returns the VoreenModule specified by the name or 0 if no such module exists.
+     */
+    const VoreenModule* getModule(const std::string& moduleName) const;
 
     //
     // Factory methods
     //
+
+    /**
+     * Creates and returns a ProcessorWidget for the passed processor by delegation to 
+     * the ProcessorWidgetFactories of the registered modules. If no factory is able 
+     * to create a widget for the passed processor, the null pointer is returned.
+     *
+     * @note The creation of ProcessorWidgets can be disabled via the ApplicationFeatures.
+     *  In this case, the method always returns null.
+     */
+    virtual ProcessorWidget* createProcessorWidget(Processor* processor) const; 
+
+    /**
+     * Creates and returns a PropertyWidget for the passed property by delegation to 
+     * the PropertyWidgetFactories of the registered modules. If no factory is able 
+     * to create a widget for the passed property, the null pointer is returned.
+     *
+     * @note The creation of PropertyWidgets can be disabled via the ApplicationFeatures.
+     *  In this case, the method always returns null.
+     */
+    virtual PropertyWidget* createPropertyWidget(Property* property) const; 
 
     /**
      * Factory method for timers.
@@ -192,25 +222,6 @@ public:
      *  the null pointer.
      */
     virtual ProgressBar* createProgressDialog() const;
-
-    //
-    // Factories
-    //
-
-    /**
-     * Sets a toolkit specific factory that is used by the processors
-     * for creating their processor widgets. Processor widgets are created
-     * by Processor::initialize, if a factory is available.
-     */
-    void setProcessorWidgetFactory(ProcessorWidgetFactory* factory);
-
-    /**
-     * Returns a toolkit specific factory that is used by the processors
-     * for creating their processor widgets.
-     *
-     * If no factory has been assigned, the null pointer is returned.
-     */
-    const ProcessorWidgetFactory* getProcessorWidgetFactory() const;
 
     ///
     /// Paths
@@ -289,7 +300,7 @@ public:
 
     /**
      * Constructs an absolute path consisting of the module source directory
-     * (typically voreen/src/modules) and the given filename.
+     * (typically voreen/modules) and the given filename.
      */
     std::string getModulePath(const std::string& filename = "") const;
 
@@ -320,6 +331,14 @@ public:
     std::string getAppBundleResourcesPath(const std::string& filename = "") const;
 #endif
 
+    /**
+     * Returns the application's log level, which Info by default
+     * but can overwritten via command line.
+     */
+    tgt::LogLevel getLogLevel() const;
+
+    void setLogLevel(tgt::LogLevel logLevel);
+
 protected:
     /**
      * This function triggers a non-blocking network processing,
@@ -336,12 +355,10 @@ protected:
 
     static VoreenApplication* app_;
 
-    ApplicationType appType_;
+    ApplicationFeatures appFeatures_;
     std::string name_;
     std::string displayName_;
     CommandlineParser cmdParser_;
-
-    ProcessorWidgetFactory* processorWidgetFactory_;
 
     std::string basePath_;
     std::string cachePath_;

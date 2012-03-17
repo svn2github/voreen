@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,10 +33,14 @@
 
 namespace voreen {
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<bool>;
+#endif
+
 /**
- * This class offers an interpolation function for bool-values. Interpolation: focus on startvalue.
+ * This class VRN_CORE_API offers an interpolation function for bool-values. Interpolation: focus on startvalue.
  */
-class BoolStartInterpolationFunction : public InterpolationFunction<bool> {
+class VRN_CORE_API BoolStartInterpolationFunction : public InterpolationFunction<bool> {
 public:
     BoolStartInterpolationFunction();
     InterpolationFunction<bool>* clone() const;
@@ -47,9 +51,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for bool-values. Interpolation: focus on endvalue.
+ * This class VRN_CORE_API offers an interpolation function for bool-values. Interpolation: focus on endvalue.
  */
-class BoolEndInterpolationFunction : public InterpolationFunction<bool> {
+class VRN_CORE_API BoolEndInterpolationFunction : public InterpolationFunction<bool> {
 public:
     BoolEndInterpolationFunction();
     InterpolationFunction<bool>* clone() const;
@@ -60,9 +64,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for bool-values. Interpolation: bisection.
+ * This class VRN_CORE_API offers an interpolation function for bool-values. Interpolation: bisection.
  */
-class BoolStartEndInterpolationFunction : public InterpolationFunction<bool> {
+class VRN_CORE_API BoolStartEndInterpolationFunction : public InterpolationFunction<bool> {
 public:
     BoolStartEndInterpolationFunction();
     InterpolationFunction<bool>* clone() const;

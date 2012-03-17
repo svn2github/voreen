@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,28 +33,44 @@
 
 #include "voreen/qt/progressdialog.h"
 
+#include "voreen/qt/voreenqtdefine.h"
 #include <QString>
 
 class QMainWindow;
 
 namespace voreen {
 
-class PyVoreenQt;
+class VoreenModuleQt;
 
-class VoreenApplicationQt : public VoreenApplication {
+class VRN_QT_API VoreenApplicationQt : public VoreenApplication {
 public:
     VoreenApplicationQt(const std::string& name, const std::string& displayName,
-                        int argc, char** argv, ApplicationType appType = APP_DEFAULT);
+                        int argc, char** argv, ApplicationFeatures appType = APP_DEFAULT);
     ~VoreenApplicationQt();
 
-    virtual void init();
+    virtual void initialize();
+    virtual void deinitialize();
 
-    virtual void initGL() throw (VoreenException);
+    virtual void initializeGL() throw (VoreenException);
+    virtual void deinitializeGL() throw (VoreenException);
 
     /**
      * Allows access to the global instance of this class.
      */
     static VoreenApplicationQt* qtApp();
+
+    /**
+     * Registers a Voreen Qt module.
+     */
+    void addQtModule(VoreenModuleQt* module);
+
+    /**
+     * Returns all registered Voreen Qt modules.
+     */
+    const std::vector<VoreenModuleQt*>& getQtModules() const;
+
+    // Returns the VoreenModuleQt specified by the name or 0 if no such module exists
+    VoreenModuleQt* getQtModule(const std::string& moduleName) const;
 
     void setMainWindow(QMainWindow* mainWindow);
 
@@ -79,15 +95,14 @@ public:
      */
     virtual std::string getShaderPathQt(const std::string& filename = "") const;
 
+    static const std::string loggerCat_;
 
 private:
     static VoreenApplicationQt* qtApp_;
     QMainWindow* mainWindow_;
     std::string shaderPathQt_;
 
-#ifdef VRN_MODULE_PYTHON
-    PyVoreenQt* pythonQt_;
-#endif
+    std::vector<VoreenModuleQt*> qtModules_;
 };
 
 } // namespace

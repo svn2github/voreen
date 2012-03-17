@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -57,7 +57,7 @@ class VolumeHandle;
 class HistogramThread : public QThread {
 Q_OBJECT
 public:
-    HistogramThread(Volume* volume, int count, QObject* parent = 0);
+    HistogramThread(const Volume* volume, int count, QObject* parent = 0);
     void run();
 
 signals:
@@ -69,7 +69,7 @@ signals:
     void setHistogram(HistogramIntensity*);
 
 private:
-    Volume* volume_;
+    const Volume* volume_;
     int count_;
 };
 
@@ -164,19 +164,19 @@ public:
      *
      * @param volumeHandle volume that is associated with this transfer function
      */
-    void volumeChanged(VolumeHandle* volumeHandle);
+    void volumeChanged(const VolumeHandleBase* volumeHandle);
 
     /**
      * Implementation of the VolumeHandleObserver interface.
      * Causes calculations to be performed on new handle.
      */
-    virtual void volumeChange(const VolumeHandle* source);
+    virtual void volumeChange(const VolumeHandleBase* source);
 
     /**
      * Implementation of the VolumeHandleObserver interface.
      * Clears the currently assigned volume handle.
      */
-    virtual void volumeHandleDelete(const VolumeHandle* source);
+    virtual void volumeHandleDelete(const VolumeHandleBase* source);
 
     /**
      * Sets the lower and upper threshold to the given values.
@@ -481,7 +481,11 @@ protected:
     HistogramThread* histogramThread_; ///< thread for calcultating the histogram in the background
     bool histogramNeedsUpdate_;        ///< volume was changed, histogram must be re-calculated
 
-    VolumeHandle* volumeHandle_; ///< the currently assigned volume handle
+    const VolumeHandleBase* volumeHandle_; ///< the currently assigned volume handle
+
+protected slots:
+    void setHistogram(HistogramIntensity* histogram);
+
 };
 
 } // namespace voreen

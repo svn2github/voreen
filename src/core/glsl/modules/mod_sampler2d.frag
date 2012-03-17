@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -40,55 +40,30 @@ struct TEXTURE_PARAMETERS {
     mat4 matrix_;            // texture coordinate transformation
 };
 
-// definitions for textures of type GL_TEXTURE_2D
-#if defined(VRN_TEXTURE_2D)
-    #define SAMPLER2D_TYPE sampler2D
+#define SAMPLER2D_TYPE sampler2D
 
-    // Texture lookup function for 2D textures,
-    // expecting texture coordinates as pixel coordinates, i.e, [(0,0) , textureSize].
-    vec4 textureLookup2D(in sampler2D myTexture, in TEXTURE_PARAMETERS texParams, in vec2 texCoords) {
-        vec2 texCoordsNormalized = texCoords * texParams.dimensionsRCP_;
-        vec2 texCoordsTransformed = (texParams.matrix_ * vec4(texCoordsNormalized, 0.0, 1.0)).xy;
-        #if defined(GLSL_VERSION_130)
-            return texture(myTexture, texCoordsTransformed);
-        #else
-            return texture2D(myTexture, texCoordsTransformed);
-        #endif
-    }
-
-    // Texture lookup function for 2D textures,
-    // expecting normalized texture coordinates, i.e., [0,1].
-    vec4 textureLookup2Dnormalized(in sampler2D myTexture, in TEXTURE_PARAMETERS texParams, in vec2 texCoords) {
-        vec2 texCoordsTransformed = (texParams.matrix_ * vec4(texCoords, 0.0, 1.0)).xy;
-        #if defined(GLSL_VERSION_130)
-            return texture(myTexture, texCoordsTransformed);
-        #else
-            return texture2D(myTexture, texCoordsTransformed);
-        #endif
-    }
-
-// definitions for textures of type GL_TEXTURE_RECTANGLE_ARB
-#elif defined(VRN_TEXTURE_RECTANGLE)
-
-    #extension GL_ARB_texture_rectangle : enable
-
-    #define SAMPLER2D_TYPE sampler2DRect
-
-    // texture lookup function for 2D textures
-    // texture coordinates have to be passed as fragment coordinates!
-    vec4 textureLookup2Dnormalized(in sampler2DRect texture, in TEXTURE_PARAMETERS texParams, in vec2 texCoords) {
-        vec2 texCoordsTransformed = (texParams.matrix_ * vec4(texCoords, 0.0, 1.0)).xy;
-        return texture2DRect(texture, texCoordsTransformed * texParams.dimensions_);
-    }
-
-    // texture lookup function for 2D textures
-    // texture coordinates have to be passed as pixel coordinates.
-    vec4 textureLookup2D(in sampler2DRect texture, in TEXTURE_PARAMETERS texParams, in vec2 texCoords) {
-        vec2 texCoordsTransformed = (texParams.matrix_ * vec4(texCoords, 0.0, 1.0)).xy;
-        return texture2DRect(texture, texCoordsTransformed);
-    }
-
+// Texture lookup function for 2D textures,
+// expecting texture coordinates as pixel coordinates, i.e, [(0,0) , textureSize].
+vec4 textureLookup2D(in sampler2D myTexture, in TEXTURE_PARAMETERS texParams, in vec2 texCoords) {
+    vec2 texCoordsNormalized = texCoords * texParams.dimensionsRCP_;
+    vec2 texCoordsTransformed = (texParams.matrix_ * vec4(texCoordsNormalized, 0.0, 1.0)).xy;
+#if defined(GLSL_VERSION_130)
+    return texture(myTexture, texCoordsTransformed);
+#else
+    return texture2D(myTexture, texCoordsTransformed);
 #endif
+}
+
+// Texture lookup function for 2D textures,
+// expecting normalized texture coordinates, i.e., [0,1].
+vec4 textureLookup2Dnormalized(in sampler2D myTexture, in TEXTURE_PARAMETERS texParams, in vec2 texCoords) {
+    vec2 texCoordsTransformed = (texParams.matrix_ * vec4(texCoords, 0.0, 1.0)).xy;
+#if defined(GLSL_VERSION_130)
+    return texture(myTexture, texCoordsTransformed);
+#else
+    return texture2D(myTexture, texCoordsTransformed);
+#endif
+}
 
 // Standard texture lookup function for RenderPort images.
 // Texture coordinates are expected in fragment coordinates, i.e, [(0,0) , viewportSize].

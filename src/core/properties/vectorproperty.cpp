@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,7 +27,6 @@
  **********************************************************************/
 
 #include "voreen/core/properties/vectorproperty.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 namespace voreen {
 
@@ -38,12 +37,35 @@ FloatVec2Property::FloatVec2Property(const std::string& id, const std::string& g
         invalidationLevel)
 {}
 
-PropertyWidget* FloatVec2Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+FloatVec2Property::FloatVec2Property() 
+    : NumericProperty<tgt::vec2>("", "", tgt::vec2(0.f), tgt::vec2(0.f), tgt::vec2(1.f), tgt::vec2(0.01f),
+        Processor::INVALID_RESULT)
+{}
+
+Property* FloatVec2Property::create() const {
+    return new FloatVec2Property();
 }
 
-std::string FloatVec2Property::getTypeString() const {
-    return "FloatVector2";
+Variant FloatVec2Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = ((get() - getMinValue()) / (getMaxValue() - getMinValue())).x;
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatVec2Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getVec2());
+}
+
+int FloatVec2Property::getVariantType() const {
+    return Variant::VariantTypeVec2;
 }
 
 //---------------------------------------------------------------------------
@@ -55,13 +77,35 @@ FloatVec3Property::FloatVec3Property(const std::string& id, const std::string& g
         invalidationLevel)
 {}
 
+FloatVec3Property::FloatVec3Property() 
+    : NumericProperty<tgt::vec3>("", "", tgt::vec3(0.f), tgt::vec3(0.f), tgt::vec3(1.f), tgt::vec3(0.01f),
+        Processor::INVALID_RESULT)
+{}
 
-PropertyWidget* FloatVec3Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+Property* FloatVec3Property::create() const {
+    return new FloatVec3Property();
 }
 
-std::string FloatVec3Property::getTypeString() const {
-    return "FloatVector3";
+Variant FloatVec3Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = ((get() - getMinValue()) / (getMaxValue() - getMinValue())).x;
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatVec3Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getVec3());
+}
+
+int FloatVec3Property::getVariantType() const {
+    return Variant::VariantTypeVec3;
 }
 
 //---------------------------------------------------------------------------
@@ -73,12 +117,35 @@ FloatVec4Property::FloatVec4Property(const std::string& id, const std::string& g
         invalidationLevel)
 {}
 
-PropertyWidget* FloatVec4Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+FloatVec4Property::FloatVec4Property() 
+    : NumericProperty<tgt::vec4>("", "", tgt::vec4(0.f), tgt::vec4(0.f), tgt::vec4(1.f), tgt::vec4(0.01f),
+        Processor::INVALID_RESULT)
+{}
+
+Property* FloatVec4Property::create() const {
+    return new FloatVec4Property();
 }
 
-std::string FloatVec4Property::getTypeString() const {
-    return "FloatVector4";
+Variant FloatVec4Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = ((get() - getMinValue()) / (getMaxValue() - getMinValue())).x;
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void FloatVec4Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + ratio * (getMaxValue() - getMinValue()));
+    }
+    else
+        set(val.getVec4());
+}
+
+int FloatVec4Property::getVariantType() const {
+    return Variant::VariantTypeIVec4;
 }
 
 //---------------------------------------------------------------------------
@@ -90,12 +157,37 @@ IntVec2Property::IntVec2Property(const std::string& id, const std::string& guiTe
             invalidationLevel)
 {}
 
-PropertyWidget* IntVec2Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+IntVec2Property::IntVec2Property() 
+    : NumericProperty<tgt::ivec2>("", "", tgt::ivec2(0), tgt::ivec2(0), tgt::ivec2(100), tgt::vec2(1),
+        Processor::INVALID_RESULT)
+{}
+
+Property* IntVec2Property::create() const {
+    return new IntVec2Property();
 }
 
-std::string IntVec2Property::getTypeString() const {
-    return "IntVector2";
+Variant IntVec2Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = (static_cast<float>((get() - getMinValue()).x) / static_cast<float>((getMaxValue() - getMinValue()).x));
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void IntVec2Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        int x = static_cast<int>(ratio * (getMaxValue().x + getMinValue().x));
+        int y = static_cast<int>(ratio * (getMaxValue().y + getMinValue().y));
+        set(getMinValue() + tgt::ivec2(x,y));
+    }
+    else
+        set(val.getIVec2());
+}
+
+int IntVec2Property::getVariantType() const {
+    return Variant::VariantTypeIVec2;
 }
 
 //---------------------------------------------------------------------------
@@ -107,12 +199,38 @@ IntVec3Property::IntVec3Property(const std::string& id, const std::string& guiTe
         invalidationLevel)
 {}
 
-PropertyWidget* IntVec3Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+IntVec3Property::IntVec3Property() 
+    : NumericProperty<tgt::ivec3>("", "", tgt::ivec3(0), tgt::ivec3(0), tgt::ivec3(100), tgt::vec3(1),
+        Processor::INVALID_RESULT)
+{}
+
+Property* IntVec3Property::create() const {
+    return new IntVec3Property();
 }
 
-std::string IntVec3Property::getTypeString() const {
-    return "IntVector3";
+Variant IntVec3Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = (static_cast<float>((get() - getMinValue()).x) / static_cast<float>((getMaxValue() - getMinValue()).x));
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void IntVec3Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        int x = static_cast<int>(ratio * (getMaxValue().x + getMinValue().x));
+        int y = static_cast<int>(ratio * (getMaxValue().y + getMinValue().y));
+        int z = static_cast<int>(ratio * (getMaxValue().z + getMinValue().z));
+        set(getMinValue() + tgt::ivec3(x,y,z));
+    }
+    else
+        set(val.getIVec3());
+}
+
+int IntVec3Property::getVariantType() const {
+    return Variant::VariantTypeIVec3;
 }
 
 //---------------------------------------------------------------------------
@@ -124,12 +242,39 @@ IntVec4Property::IntVec4Property(const std::string& id, const std::string& guiTe
         invalidationLevel)
 {}
 
-PropertyWidget* IntVec4Property::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+IntVec4Property::IntVec4Property() 
+    : NumericProperty<tgt::ivec4>("", "", tgt::ivec4(0), tgt::ivec4(0), tgt::ivec4(100), tgt::vec4(1),
+        Processor::INVALID_RESULT)
+{}
+
+Property* IntVec4Property::create() const {
+    return new IntVec4Property();
 }
 
-std::string IntVec4Property::getTypeString() const {
-    return "IntVector4";
+Variant IntVec4Property::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = (static_cast<float>((get() - getMinValue()).x) / static_cast<float>((getMaxValue() - getMinValue()).x));
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void IntVec4Property::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        int x = static_cast<int>(ratio * (getMaxValue().x + getMinValue().x));
+        int y = static_cast<int>(ratio * (getMaxValue().y + getMinValue().y));
+        int z = static_cast<int>(ratio * (getMaxValue().z + getMinValue().z));
+        int w = static_cast<int>(ratio * (getMaxValue().w + getMinValue().w));
+        set(getMinValue() + tgt::ivec4(x,y,z,w));
+    }
+    else
+        set(val.getIVec4());
+}
+
+int IntVec4Property::getVariantType() const {
+    return Variant::VariantTypeIVec4;
 }
 
 } // namespace voreen

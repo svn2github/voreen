@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -51,7 +51,7 @@ enum ColumnPosition {
  * this arrow is pulled over another LinkDialogPropertyGraphicsItem,
  * it will determine if the associated \sa Propertys are linkable.
  * If so, the arrow will be drawn in green color, if not the red color
- * is used.</br>
+ * is used.
  * If a valid arrow is created, this arrow will be published via the
  * <code>createdArrow(LinkDialogArrowGraphicsItem*)</code> signal.
  */

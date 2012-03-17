@@ -1,0 +1,44 @@
+<ModuleDescription>Contains plotting processors.</ModuleDescription>
+<Processor name="BarPlot">
+    <Description>This processor is able to plot bars. These bars can be grouped, merged or stacked.</Description>
+</Processor>
+<Processor name="LinePlot">
+    <Description>This processor is able to plot lines and candlesticks.</Description>
+</Processor>
+<Processor name="HemispherePlot">
+    <Description>Shows the Hemisphere of the Plotdata.</Description>
+</Processor>
+<Processor name="ImageAnalyzer">
+    <Description>Shows some information about the input image.</Description>
+</Processor>
+<Processor name="PlotDataExport">
+    <Description>This Processor export a PlotDataObject to CSV-, TXT-, XML- or HTML-File.</Description>
+</Processor>
+<Processor name="PlotDataFitFunction">
+    <Description>interpolate the Data on the PlotData.inPort.</Description>
+</Processor>
+<Processor name="PlotDataGroup">
+    <Description>Group the Data on the PlotData.inPort.</Description>
+</Processor>
+<Processor name="PlotDataMerge">
+    <Description>Merge the Data on both Inport to the Outport.</Description>
+</Processor>
+<Processor name="PlotDataSelect">
+    <Description>Select, Sort or Filter the Data on the PlotData.inPort.</Description>
+</Processor>
+<Processor name="PlotDataSource">
+    <Description>This processor loads a CSV File and provides its contents as plot data table.</Description>
+</Processor>
+<Processor name="PlotFunctionDiscret">
+    <Description>interpolate the Data on the PlotPort.PlotFunction.inPort.</Description>
+</Processor>
+<Processor name="PlotFunctionSource">
+    <Description>Creates a plot function from a string</Description>
+</Processor>
+<Processor name="ScatterPlot">
+    <Description>This processor is able to create 2D and 3D Scatterplots.</Description>
+</Processor>
+<Processor name="SurfacePlot">
+    <Description>This processor is able to create 3D surfaceplots and heightmaps.</Description>
+</Processor>
+

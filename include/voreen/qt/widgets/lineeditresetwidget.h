@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,12 +29,9 @@
 #ifndef LINEEDITHRESETWIDGET_H
 #define LINEEDITHRESETWIDGET_H
 
-#include <QWidget>
 #include <QLineEdit>
-#include <QToolButton>
 
 class QToolButton;
-class QLineEdit;
 
 namespace voreen {
 
@@ -46,10 +43,11 @@ public:
 protected:
     void resizeEvent(QResizeEvent *);
 
-private:
-    QToolButton* clearButton;
 private slots:
     void updateClearButton(const QString &text);
+
+private:
+    QToolButton* clearButton_;
 };
 
 } //namespace voreen

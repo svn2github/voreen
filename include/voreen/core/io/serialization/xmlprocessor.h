@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_IXMLPROCESSOR_H
 
 #include "tinyxml/tinyxml.h"
+#include "voreen/core/voreencoredefine.h"
 
 namespace voreen {
 
@@ -40,7 +41,7 @@ namespace voreen {
  * @see XmlSerializer
  * @see XmlDeserializer
  */
-class XmlProcessor {
+class VRN_CORE_API XmlProcessor {
 public:
     /**
      * Virtual default destructor.

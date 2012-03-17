@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_GROUPPROPERTYWIDGET_H
 
 #include "voreen/qt/widgets/property/qpropertywidget.h"
+#include <QGroupBox>
 
 class QTabWidget;
 class QPushButton;
@@ -43,6 +44,9 @@ public:
     void addWidget(QPropertyWidget*, const QString);
     void addWidget(QPropertyWidget*, QWidget*, const QString);
     virtual void updateFromProperty();
+
+    /// Check if there is a visible property (used to hide grouping widget in user mode if necessary)
+    bool isAnyPropertyVisible(Property::LODSetting lod);
 
 protected slots:
     void hideGroup(bool);

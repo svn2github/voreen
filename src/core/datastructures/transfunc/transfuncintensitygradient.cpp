@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,7 +34,7 @@
 #include "tgt/gpucapabilities.h"
 #include "tgt/framebufferobject.h"
 
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     #include <IL/il.h>
 #endif
 
@@ -53,7 +53,7 @@ TransFuncIntensityGradient::TransFuncIntensityGradient(int width, int height)
     loadFileFormats_.push_back("tfig");
 
     saveFileFormats_.push_back("tfig");
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     saveFileFormats_.push_back("png");
 #endif
 
@@ -123,7 +123,6 @@ bool TransFuncIntensityGradient::saveTfig(const std::string& filename) {
     bool success = true;
     try {
         XmlSerializer s(filename);
-        s.registerFactory(TransFuncFactory::getInstance());
         s.serialize("TransFuncIntensityGradient", this);
 
         s.write(stream);
@@ -155,7 +154,7 @@ bool TransFuncIntensityGradient::saveImage(const std::string& filename) {
     size_t dotPosition = filename.rfind(".");
     fileExtension = filename.substr(dotPosition+1);
 
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     //IL does _NOT_ overwrite files by default
     ilEnable(IL_FILE_OVERWRITE);
     //download texture and save as png:
@@ -184,7 +183,7 @@ bool TransFuncIntensityGradient::saveImage(const std::string& filename) {
 #else
     LERROR("Saving of " << filename  << " failed: No DevIL support.");
     return false;
-#endif // VRN_WITH_DEVIL
+#endif // VRN_MODULE_DEVIL
 }
 
 
@@ -217,7 +216,6 @@ bool TransFuncIntensityGradient::loadTfig(const std::string& filename) {
     bool success = true;
     try {
         XmlDeserializer d(filename);
-        d.registerFactory(TransFuncFactory::getInstance());
         d.read(stream);
         d.deserialize("TransFuncIntensityGradient", *this);
         stream.close();
@@ -324,7 +322,7 @@ void TransFuncIntensityGradient::paint() {
 
 void TransFuncIntensityGradient::paintForSelection() {
     for (size_t i = 0; i < primitives_.size(); ++i)
-        primitives_[i]->paintForSelection(i);
+        primitives_[i]->paintForSelection(static_cast<GLubyte>(i));
 }
 
 void TransFuncIntensityGradient::paintInEditor() {
@@ -343,7 +341,7 @@ TransFuncPrimitive* TransFuncIntensityGradient::getPrimitiveForClickedControlPoi
     if (primitives_.empty())
         return 0;
 
-    int min = 0;
+    size_t min = 0;
     // A distance of 2 can never happen because the canvas is normalized to [0,1]x[0,1],
     // so this value is huge enough.
     float mindist = 2.f;

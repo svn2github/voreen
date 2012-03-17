@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,11 +36,14 @@ namespace voreen {
 
 class VolumeCollection;
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API TemplateProperty<VolumeCollection*>;
+#endif
+
 /**
  * Property encapsulating a VolumeCollection object.
  */
-class VolumeCollectionProperty : public TemplateProperty<VolumeCollection*> {
-
+class VRN_CORE_API VolumeCollectionProperty : public TemplateProperty<VolumeCollection*> {
 public:
     /**
      * Constructor.
@@ -51,11 +54,12 @@ public:
      */
     VolumeCollectionProperty(const std::string& id, const std::string& guiText, VolumeCollection* const value = 0,
         Processor::InvalidationLevel invalidationLevel = Processor::INVALID_PARAMETERS);
+    VolumeCollectionProperty();
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    /// @see Property::createWidget
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "VolumeCollectionProperty"; }
+    virtual std::string getTypeDescription() const { return "VolumeCollection"; }
 
     /// @see Property::serialize
     virtual void serialize(XmlSerializer& s) const;
@@ -63,9 +67,13 @@ public:
     /// @see Property::deserialize
     virtual void deserialize(XmlDeserializer& s);
 
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
+
 protected:
     /// Deletes the assigned collection.
-    virtual void deinitialize() throw (VoreenException);
+    virtual void deinitialize() throw (tgt::Exception);
 
 };
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -38,7 +38,7 @@ namespace voreen {
  *
  * @see MetaDataBase
  */
-class PositionMetaData : public MetaDataBase {
+class VRN_CORE_API PositionMetaData : public MetaDataBase {
 public:
     /**
      * Creates a @c PositionMetaData object storing the given position.
@@ -49,6 +49,11 @@ public:
     PositionMetaData(const int& x = 0, const int& y = 0);
     virtual ~PositionMetaData();
 
+    virtual std::string getClassName() const { return "PositionMetaData"; }
+    virtual Serializable* create() const;
+    virtual MetaDataBase* clone() const;
+    virtual std::string toString() const;
+
     /**
      * @see Serializable::serialize
      */
@@ -58,16 +63,6 @@ public:
      * @see Serializable::deserialize
      */
     virtual void deserialize(XmlDeserializer& s);
-
-    /**
-     * @see SerializableFactory::getTypeString
-     */
-    virtual const std::string getTypeString(const std::type_info& type) const;
-
-    /**
-     * @see SerializableFactory::createType
-     */
-    virtual Serializable* createType(const std::string& typeString);
 
     /**
      * Sets the x position.

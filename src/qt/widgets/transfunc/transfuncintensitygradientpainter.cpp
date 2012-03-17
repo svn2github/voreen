@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,7 +33,7 @@
 #include "voreen/core/datastructures/volume/gradient.h"
 #include "voreen/core/datastructures/volume/histogram.h"
 #include "voreen/core/datastructures/volume/volume.h"
-#include "voreen/core/datastructures/volume/volumeoperator.h"
+#include "voreen/core/datastructures/volume/operators/volumeoperatorresample.h"
 
 #include "tgt/qt/qtcanvas.h"
 #include "tgt/glcanvas.h"
@@ -104,20 +104,20 @@ void TransFuncIntensityGradientPainter::mouseMoveEvent(tgt::MouseEvent* event) {
             dragging_ = true;
         }
         // test whether the movement is correct
-        bool inside = selectedPrimitive_->move(offset);
+        /*bool inside = */selectedPrimitive_->move(offset);
         // one or more control points are moved outside of the canvas
         // -> do not allow movement and reset mouse cursor to position before movement
-        if (!inside) {
-            tgt::QtCanvas* canvas = static_cast<tgt::QtCanvas*>(getCanvas());
-            QPoint p(static_cast<int>(mouseCoord_.x * size.x),
-                     static_cast<int>((1.f - mouseCoord_.y) * size.y));
-            p = canvas->mapToGlobal(p);
-            QCursor::setPos(p);
-        }
-        else {
+        //if (!inside) {
+            //tgt::QtCanvas* canvas = static_cast<tgt::QtCanvas*>(getCanvas());
+            //QPoint p(static_cast<int>(mouseCoord_.x * size.x),
+                     //static_cast<int>((1.f - mouseCoord_.y) * size.y));
+            //p = canvas->mapToGlobal(p);
+            //QCursor::setPos(p);
+        //}
+        //else {
             mouseCoord_ = pos;
             updateTF();
-        }
+        //}
     }
 
     getCanvas()->update();
@@ -437,16 +437,17 @@ void TransFuncIntensityGradientPainter::setHistogramVisible(bool v) {
 }
 
 void TransFuncIntensityGradientPainter::createHistogram() {
-    Volume* gradientVolume = 0;
-    Volume* intensityVolume = 0;
+    const VolumeHandleBase* gradientVolume = 0;
+    const VolumeHandleBase* intensityVolume = 0;
 
     int bucketsg;
     int bucketsi;
-    int numChannels = volume_->getNumChannels();
+    size_t numChannels = volume_->getNumChannels();
+    const Volume* vol = volume_->getRepresentation<Volume>();
     if (numChannels == 4) {
         // gradients are already stored in the volume
         gradientVolume = volume_;
-        if ((volume_->getBitsStored() / numChannels) > 8)
+        if ((vol->getBitsStored() / numChannels) > 8)
             bucketsg = 512;
         else
             bucketsg = 256;
@@ -459,13 +460,12 @@ void TransFuncIntensityGradientPainter::createHistogram() {
         } else {
             // HACK!
             tgt::ivec3 newDims = tgt::ivec3(tgt::vec3(volume_->getDimensions()) / (tgt::max(volume_->getDimensions()) / 128.f));
-            VolumeOperatorResample voResample(newDims, Volume::LINEAR);
-            intensityVolume = voResample.apply<Volume*>(volume_);
+            intensityVolume = VolumeOperatorResample::APPLY_OP(volume_, newDims, Volume::LINEAR);
         }
-        gradientVolume = calcGradients<tgt::col3>(intensityVolume);
+        gradientVolume = calcGradientsCentralDifferences<uint8_t>(intensityVolume);
 
         bucketsg = 256;
-        if ((intensityVolume->getBitsStored() / numChannels) > 8)
+        if ((vol->getBitsStored() / numChannels) > 8)
             bucketsi = 512;
         else
             bucketsi = 256;
@@ -483,7 +483,8 @@ void TransFuncIntensityGradientPainter::createHistogram() {
 }
 
 void TransFuncIntensityGradientPainter::createHistogramTexture() {
-    tgt::ivec3 dims = tgt::ivec3(histogram_->getBucketCountIntensity(), histogram_->getBucketCountGradient(), 1);
+    tgt::ivec3 dims = tgt::ivec3(static_cast<int>(histogram_->getBucketCountIntensity()),
+        static_cast<int>(histogram_->getBucketCountGradient()), 1);
 
     delete histogramTex_;
     histogramTex_ = new tgt::Texture(dims, GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE, tgt::Texture::LINEAR);
@@ -509,7 +510,7 @@ void TransFuncIntensityGradientPainter::updateHistogramTexture() {
     histogramTex_->uploadTexture();
 }
 
-void TransFuncIntensityGradientPainter::volumeChanged(Volume* newVolume) {
+void TransFuncIntensityGradientPainter::volumeChanged(const VolumeHandleBase* newVolume) {
     volume_ = newVolume;
 
     histogramBrightness_ = 1.f;

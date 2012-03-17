@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,6 +27,8 @@
  **********************************************************************/
 
 #include "voreen/core/datastructures/geometry/meshlistgeometry.h"
+#include "voreen/core/io/serialization/xmlserializer.h"
+#include "voreen/core/io/serialization/xmldeserializer.h"
 
 namespace voreen {
 
@@ -96,8 +98,35 @@ MeshGeometry& MeshListGeometry::operator[](size_t index) {
     return meshes_[index];
 }
 
-void MeshListGeometry::render() {
-    for (iterator it = begin(); it != end(); ++it)
+const MeshGeometry& MeshListGeometry::operator[](size_t index) const {
+    tgtAssert(index < meshes_.size(), "Invalid index");
+    return meshes_[index];
+}
+
+void MeshListGeometry::getBoundingBox(tgt::vec3& llf, tgt::vec3& urb) const {
+    llf = tgt::vec3(FLT_MAX);
+    urb = tgt::vec3(-FLT_MAX);
+    for (size_t i = 0; i < getMeshCount(); ++i) {
+        const MeshGeometry& mesh = getMesh(i);
+        for (size_t j = 0; j < mesh.getFaceCount(); ++j) {
+            const FaceGeometry& face = mesh.getFace(j);
+            for (size_t k = 0; k < face.getVertexCount(); ++k) {
+                const VertexGeometry& vertex = face.getVertex(k);
+                const tgt::vec3& coords = vertex.getCoords();
+
+                llf.x = std::min(llf.x, coords.x);
+                urb.x = std::max(urb.x, coords.x);
+                llf.y = std::min(llf.y, coords.y);
+                urb.y = std::max(urb.y, coords.y);
+                llf.z = std::min(llf.z, coords.z);
+                urb.z = std::max(urb.z, coords.z);
+            }
+        }
+    }
+}
+
+void MeshListGeometry::render() const {
+    for (const_iterator it = begin(); it != end(); ++it)
         it->render();
 }
 
@@ -114,6 +143,15 @@ MeshListGeometry MeshListGeometry::clip(const tgt::vec4& clipplane, double epsil
             closingFaces.addMesh(closingFace);
     }
     return closingFaces;
+}
+
+void MeshListGeometry::serialize(XmlSerializer& s) const {
+    s.serialize("meshes", meshes_);
+}
+
+void MeshListGeometry::deserialize(XmlDeserializer& s) {
+    s.deserialize("meshes", meshes_);
+    setHasChanged(true);
 }
 
 } // namespace

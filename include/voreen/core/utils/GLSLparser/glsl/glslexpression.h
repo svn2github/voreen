@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,13 +30,28 @@
 #define VRN_GLSLEXPRESSION_H
 
 #include "voreen/core/utils/GLSLparser/glsl/glslparsetreenode.h"
+#include "voreen/core/utils/GLSLparser/glsl/glslvalue.h"
 
 namespace voreen {
 
 namespace glslparser {
 
+/**
+ * NOTE: do not confuse this class GLSLExpression with the item [expression]
+ * in GLSL grammar! This class is only for performing semantic actions on (i.e.
+ * evaluating) the parse tree when it is traversed by an appropriate visitor.
+ * The parse tree is constructed by the parsers' <code>expandParseTree()</code>
+ * method. That method "packs" the grammar (i.e. its production) into a parse
+ * tree.
+ */
 class GLSLExpression : public GLSLNode {
 public:
+    GLSLExpression()
+        : GLSLNode(GLSLTerminals::ID_UNKNOWN),
+        token_(0)
+    {
+    }
+
     GLSLExpression(const Token& token)
         : GLSLNode(token.getTokenID()),
         token_(token.getCopy())
@@ -57,19 +72,32 @@ protected:
 
 // ============================================================================
 
-class GLSLParenthesisExpression : public GLSLExpression {
+class GLSLPrimaryExpression : public GLSLExpression {
 public:
-    GLSLParenthesisExpression(GLSLExpression* const expr)
+    GLSLPrimaryExpression(GLSLExpression* const expr)
         : GLSLExpression(Token(GLSLTerminals::ID_LPAREN)),
         expr_(expr)
     {
     }
 
-    virtual ~GLSLParenthesisExpression() {
+    GLSLPrimaryExpression(const Token& token)
+        : GLSLExpression(token),
+        expr_(0)
+    {
+    }
+
+    virtual ~GLSLPrimaryExpression() {
         delete expr_;
     }
 
-    virtual int getNodeType() const { return GLSLNodeTypes::NODE_PARENTHESIS_EXPRESSION; }
+    virtual int getNodeType() const { return GLSLNodeTypes::NODE_PRIMARY_EXPRESSION; }
+
+    /**
+     * @return  Returns only non-null value if the primary expression is
+     *          a parenthesis expression, i.e. the ID of getToken() is
+     *          ID_LPAREN
+     */
+    GLSLExpression* getExpression() const { return expr_; }
 
 protected:
     GLSLExpression* const expr_;
@@ -77,83 +105,81 @@ protected:
 
 // ============================================================================
 
-class GLSLPostfixOperation : public GLSLExpression {
+class GLSLPostfixExpression : public GLSLExpression {
 public:
-    GLSLPostfixOperation(Token* const token, GLSLExpression* const operand)
+    GLSLPostfixExpression(Token* const token, GLSLPostfixExpression* const operand)
         : GLSLExpression(*token),
-        operand_(operand)
+        operand_(operand),
+        field_(0),
+        intExpression_(0)
     {
     }
 
-    virtual ~GLSLPostfixOperation() {
-        delete operand_;
+    GLSLPostfixExpression(GLSLExpression* const expr)
+        : GLSLExpression(),
+        operand_(expr),
+        field_(0),
+        intExpression_(0)
+    {
     }
 
-    virtual int getNodeType() const { return GLSLNodeTypes::NODE_POSTFIX_OPERATION; }
+    GLSLPostfixExpression(GLSLPostfixExpression* const operand, IdentifierToken* const field)
+        : GLSLExpression(Token(GLSLTerminals::ID_DOT)),
+        operand_(operand),
+        field_(dynamic_cast<IdentifierToken* const>(field->getCopy())),
+        intExpression_(0)
+    {
+    }
 
-protected:
-    GLSLExpression* const operand_;
-};
-
-// ============================================================================
-
-class GLSLArrayOperation : public GLSLExpression {
-public:
-    GLSLArrayOperation(GLSLExpression* const arr, GLSLExpression* const intExpr)
+    GLSLPostfixExpression(GLSLPostfixExpression* const arr, GLSLExpression* const intExpr)
         : GLSLExpression(Token(GLSLTerminals::ID_LBRACKET)),
-        arr_(arr),
+        operand_(arr),
+        field_(0),
         intExpression_(intExpr)
     {
     }
 
-    virtual ~GLSLArrayOperation() {
-        delete arr_;
+    virtual ~GLSLPostfixExpression() {
+        delete operand_;
+        delete field_;
         delete intExpression_;
     }
 
-    virtual int getNodeType() const { return GLSLNodeTypes::NODE_ARRAY_OPERATION; }
+    virtual int getNodeType() const { return GLSLNodeTypes::NODE_POSTFIX_EXPRESSION; }
 
-protected:
-    GLSLExpression* const arr_;
-    GLSLExpression* const intExpression_;
-};
+    /**
+     * Returns only a value != NULL, if the ID of the token returned by getToken()
+     * returns ID_DOT.
+     */
+    IdentifierToken* getField() { return field_; }
 
-// ============================================================================
+    /**
+     * Returns only a value != NULL, if the ID of the token returned by getToken()
+     * returns ID_LBRACKET.
+     */
+    GLSLExpression* getIntExpression() { return intExpression_; }
 
-class GLSLFieldSelection : public GLSLExpression {
-public:
-    GLSLFieldSelection(GLSLExpression* const operand, IdentifierToken* const field)
-        : GLSLExpression(Token(GLSLTerminals::ID_DOT)),
-        operand_(operand),
-        field_(dynamic_cast<IdentifierToken* const>(field->getCopy()))
-    {
-    }
-
-    virtual ~GLSLFieldSelection() {
-        delete operand_;
-        delete field_;
-    }
-
-    virtual int getNodeType() const { return GLSLNodeTypes::NODE_FIELD_SELECTION; }
+    GLSLExpression* getOperand() { return operand_; }
 
 protected:
     GLSLExpression* const operand_;
     IdentifierToken* const field_;
+    GLSLExpression* const intExpression_;
 };
 
 // ============================================================================
 
 class GLSLUnaryExpression : public GLSLExpression {
 public:
-    GLSLUnaryExpression(GLSLExpression* const expr)
-        : GLSLExpression(*expr),
-        expression_(0)
+    GLSLUnaryExpression(GLSLPostfixExpression* const expr)
+        : GLSLExpression(),
+        expression_(expr)
     {
     }
 
-    GLSLUnaryExpression(Token* const token, GLSLExpression* const expression)
+    GLSLUnaryExpression(Token* const token, GLSLUnaryExpression* const expr)
         : GLSLExpression(*token),
-        expression_(expression)
+        expression_(expr)
     {
     }
 
@@ -162,6 +188,8 @@ public:
     }
 
     virtual int getNodeType() const { return GLSLNodeTypes::NODE_UNARY_EXPRESSION; }
+
+    GLSLExpression* getExpression() { return expression_; }
 
 protected:
     GLSLExpression* const expression_;
@@ -184,6 +212,9 @@ public:
     }
 
     virtual int getNodeType() const { return GLSLNodeTypes::NODE_BINARY_EXPRESSION; }
+
+    GLSLExpression* getLHS() { return lhs_; }
+    GLSLExpression* getRHS() { return rhs_; }
 
 protected:
     GLSLExpression* const lhs_;
@@ -208,6 +239,9 @@ public:
     }
 
     virtual int getNodeType() const { return GLSLNodeTypes::NODE_ASSIGNMENT_EXPRESSION; }
+
+    GLSLUnaryExpression* getLValue() const { return lvalue_; }
+    GLSLExpression* getRValue() const { return rvalue_; }
 
 protected:
     GLSLUnaryExpression* const lvalue_;
@@ -246,7 +280,7 @@ protected:
 class GLSLExpressionList : public GLSLExpression {
 public:
     GLSLExpressionList(GLSLExpression* const expr)
-        : GLSLExpression(*(expr->getToken()))
+        : GLSLExpression(Token(GLSLTerminals::ID_COMMA))
     {
         addExpression(expr);
     }
@@ -262,6 +296,8 @@ public:
         if (expr != 0)
             expressions_.push_back(expr);
     }
+
+    const std::vector<GLSLExpression*>& getExpressions() { return expressions_; }
 
 protected:
     std::vector<GLSLExpression*> expressions_;

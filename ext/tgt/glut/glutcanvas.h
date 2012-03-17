@@ -25,7 +25,6 @@
 #ifndef TGT_GLUTCANVAS_H
 #define TGT_GLUTCANVAS_H
 
-#include "tgt/config.h"
 #include "tgt/glcanvas.h"
 #include "tgt/event/keyevent.h"
 #include "tgt/glut/glutmouse.h"
@@ -184,12 +183,6 @@ public:
     static void reshapeFunc( int width,  int height );
     static void idleFunc();
     static void visibilityFunc(int visible);
-
-    /**
-     * Cleanly exit from glut's mainloop
-     */
-    static void onExitFunction();
-
 
 protected:
 

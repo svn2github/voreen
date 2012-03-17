@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -58,7 +58,7 @@ CameraPropertyWidget::CameraPropertyWidget(CameraProperty* prop, QWidget* parent
 }
 
 void CameraPropertyWidget::updateFromProperty() {
-    if (cameraWidget_)
+    if (cameraWidget_ && cameraWidget_->isVisible())
         cameraWidget_->updateFromCamera();
 }
 
@@ -76,11 +76,11 @@ void CameraPropertyWidget::toggleWidgetVisibility() {
 
 void CameraPropertyWidget::customizeEditorWindow() {
     editorWindow_->adjustSize();
-    editorWindow_->setFixedSize(editorWindow_->size());
+    //editorWindow_->setFixedSize(editorWindow_->size());
 }
 
 QWidget* CameraPropertyWidget::createEditorWindowWidget() {
-    cameraWidget_ = new CameraWidget(property_, 0.05f, 15.f, parentWidget());
+    cameraWidget_ = new CameraWidget(property_, 0.05f, 500.f, parentWidget());
     cameraWidget_->createWidgets();
     cameraWidget_->createConnections();
 

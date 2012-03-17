@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -42,7 +42,7 @@ class Property;
 /**
  * This class manages all animations for one processor.
  */
-class AnimatedProcessor : public Serializable {
+class VRN_CORE_API AnimatedProcessor : public Serializable {
 
 public:
     /**

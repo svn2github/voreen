@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -46,18 +46,23 @@ class ProgressBar;
  * usually given by an accompanying <tt>.dat</tt>. DatVolumeReader reads this information and
  * uses RawVolumeReader to read the actual data.
  */
-class RawVolumeReader : public VolumeReader {
+class VRN_CORE_API RawVolumeReader : public VolumeReader {
 public:
+
+    virtual std::string getClassName() const    { return "RawVolumeReader"; }
+    virtual std::string getFormatDescription() const  { return "Raw volume data"; }
+
     /**
      * Contains hints about the volume dataset.
      */
-    struct ReadHints {
+    struct VRN_CORE_API ReadHints {
         ReadHints(tgt::ivec3 dimensions = tgt::ivec3(0),
                   tgt::vec3 spacing = tgt::vec3(0.f),
                   int bitsStored = 0,
                   const std::string& objectModel = "I",
                   const std::string& format = "UCHAR",
-                  int headerskip = 0,
+                  int timeframe = 0,
+                  size_t headerskip = 0,
                   bool bigEndianByteOrder = false);
 
         tgt::ivec3 dimensions_;       ///< number of voxels in x-, y- and z-direction
@@ -65,10 +70,12 @@ public:
         int bitsStored_;              ///< number of bits stored in this dataset per voxel
         std::string objectModel_;     ///< \c I (intensity) or \c RGBA
         std::string format_;          ///< voxel data format
-        uint64_t headerskip_;         ///< number of bytes to skip at the beginning of the raw file
+        int timeframe_;               ///< zero-based time frame in volume with multiple time frames
+        size_t headerskip_;           ///< number of bytes to skip at the beginning of the raw file
         bool bigEndianByteOrder_;     ///< data is saved in big endian format an needs to be converted
         tgt::mat4 transformation_;    ///< 4x4-matrix for affine transformation of volume
         Modality modality_;
+        std::string hash_;
         float timeStep_;
         float spreadMin_;             ///< minimum value in the volume to use for spreading data range to [0; 1]
         float spreadMax_;             ///< maximum value in the volume to use for spreading data range to [0; 1]
@@ -89,8 +96,8 @@ public:
      * @param spacing non-uniform voxel scaling
      * @param bitsStored number of bits stored in this dataset per voxel
      * @param objectModel \c I (intensity) or \c RGBA
-     * @param format voxel data format, one of \c UCHAR, \c USHORT, \c USHORT_12 (for CT datasets),
-     *        \c FLOAT, \c FLOAT8 and \c FLOAT16 (the last two will be converted to UCHAR and USHORT).
+     * @param format voxel data format, one of \c UCHAR, \c USHORT, \c USHORT_12 (for CT datasets), \c FLOAT
+     * @param timeframe zero-based time frame in volume with multiple time frames
      * @param headerskip number of bytes to skip at the beginning of the raw file
      * @param bigEndian if set to true, the data is converted from big endian to little endian byte order
      */
@@ -99,6 +106,7 @@ public:
                       int bitsStored,
                       const std::string& objectModel = "I",
                       const std::string& format = "UCHAR",
+                      int timeframe = 0,
                       int headerskip = 0,
                       bool bigEndian = false);
 
@@ -131,6 +139,9 @@ public:
         throw(tgt::FileException, std::bad_alloc);
 
 private:
+    ReadHints extractReadHintsFromOrigin(const VolumeOrigin& origin) const;
+    std::string encodeReadHintsIntoSearchString(const ReadHints& hints) const;
+
     ReadHints hints_;
 
     static const std::string loggerCat_;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -54,7 +54,7 @@ class Processor;
  * Since InteractionHandler derives from PropertyOwner, a derived class
  * may also use "normal" (non-event) properties.
  */
-class InteractionHandler : public PropertyOwner, public tgt::EventListener {
+class VRN_CORE_API InteractionHandler : public PropertyOwner, public tgt::EventListener {
 
     friend class Processor;
     friend class EventPropertyBase;

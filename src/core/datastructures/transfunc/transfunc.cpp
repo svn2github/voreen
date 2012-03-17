@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #include "voreen/core/datastructures/transfunc/transfunc.h"
 
 #include "tgt/gpucapabilities.h"
+#include "tgt/shadermanager.h"
 
 namespace voreen {
 
@@ -43,7 +44,7 @@ TransFunc::TransFunc(int width, int height, int depth,
     , filter_(filter)
     , textureInvalid_(true)
 {
-    fitDimensions(dimensions_.x, dimensions_.y, dimensions_.z);
+    //fitDimensions(dimensions_.x, dimensions_.y, dimensions_.z);
 }
 
 TransFunc::~TransFunc() {
@@ -92,7 +93,7 @@ void TransFunc::updateTexture() {
 void TransFunc::createTex() {
     delete tex_;
 
-    tex_ = new tgt::Texture(dimensions_, format_, dataType_, filter_, false);
+    tex_ = new tgt::Texture(dimensions_, format_, dataType_, filter_);
     tex_->setWrapping(tgt::Texture::CLAMP);
     LGL_ERROR;
 }
@@ -106,11 +107,32 @@ tgt::Texture* TransFunc::getTexture() {
 
 std::string TransFunc::getSamplerType() const {
     if (dimensions_.z > 1)
-        return "sampler3D";
+        return "TransFunc3D";
     else if (dimensions_.y > 1)
-        return "sampler2D";
+        return "TransFunc2D";
     else
-        return "sampler1D";
+        return "TransFunc1D";
+}
+
+void TransFunc::setUniform(tgt::Shader* shader, const std::string& uniform, const GLint texUnit) {
+    tgtAssert(shader, "Null pointer passed");
+    bool oldIgnoreError = shader->getIgnoreUniformLocationError();
+    shader->setIgnoreUniformLocationError(true);
+    shader->setUniform(uniform + ".texture_", texUnit);
+
+    if(getNumDimensions() == 1) {
+        shader->setUniform(uniform + ".domainLower_", getDomain(0).x);
+        shader->setUniform(uniform + ".domainUpper_", getDomain(0).y);
+    }
+    else if(getNumDimensions() == 2) {
+        shader->setUniform(uniform + ".domainLower_", tgt::vec2(getDomain(0).x, getDomain(1).x));
+        shader->setUniform(uniform + ".domainUpper_", tgt::vec2(getDomain(0).y, getDomain(1).y));
+    }
+    else {
+        LERROR("Unhandled dimensionality in glsl TransFunc object");
+    }
+
+    shader->setIgnoreUniformLocationError(oldIgnoreError);
 }
 
 std::string TransFunc::getShaderDefines() const {
@@ -139,26 +161,6 @@ tgt::ivec3 TransFunc::getDimensions() const {
 }
 
 void TransFunc::fitDimensions(int& width, int& height, int& depth) const {
-    if (!GpuCaps.isNpotSupported()) {
-        int k = 1;
-        while (k < width)
-            k <<= 1;
-        if (k != width)
-            width = k;
-
-        k = 1;
-        while (k < height)
-            k <<= 1;
-        if (k != height)
-            height = k;
-
-        k = 1;
-        while (k < depth)
-            k <<= 1;
-        if (k != depth)
-            depth = k;
-    }
-
     int maxTexSize;
     if (depth == 1)
         maxTexSize = GpuCaps.getMaxTextureSize();

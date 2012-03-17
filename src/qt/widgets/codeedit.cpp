@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,15 +32,15 @@
 #include <QTextBlock>
 
 CodeEdit::CodeEdit(QWidget* parent) : QPlainTextEdit(parent) {
-    statusArea = new StatusArea(this);
-    QFont font;
-    font.setFamily("Courier New");
-    font.setStyleHint(QFont::TypeWriter);
-    font.insertSubstitution("Courier New", "monospace");
-    font.setFixedPitch(true);
-    font.setPointSize(9);
-    setFont(font);
-    QFontMetrics metrics(font);
+    statusArea_ = new StatusArea(this);
+
+    font_.setFamily("Courier New");
+    font_.setStyleHint(QFont::TypeWriter);
+    font_.insertSubstitution("Courier New", "monospace");
+    font_.setFixedPitch(true);
+    font_.setPointSize(9);
+    setFont(font_);
+    QFontMetrics metrics(font_);
     setTabStopWidth(metrics.width(" ")*4);
 
     connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateStatusAreaWidth(int)));
@@ -49,6 +49,10 @@ CodeEdit::CodeEdit(QWidget* parent) : QPlainTextEdit(parent) {
 
     updateStatusAreaWidth(0);
     highlightCurrentLine();
+}
+
+CodeEdit::~CodeEdit() {
+    delete statusArea_;
 }
 
 int CodeEdit::statusAreaWidth() {
@@ -70,19 +74,26 @@ void CodeEdit::updateStatusAreaWidth(int /* newBlockCount */) {
 
 void CodeEdit::updateStatusArea(const QRect& rect, int dy) {
     if (dy)
-        statusArea->scroll(0, dy);
+        statusArea_->scroll(0, dy);
     else
-        statusArea->update(0, rect.y(), statusArea->width(), rect.height());
+        statusArea_->update(0, rect.y(), statusArea_->width(), rect.height());
 
     if (rect.contains(viewport()->rect()))
         updateStatusAreaWidth(0);
+}
+
+void CodeEdit::updateFontSize(unsigned char s) {
+    font_.setPointSize(s);
+    setFont(font_);
+    QFontMetrics metrics(font_);
+    setTabStopWidth(metrics.width(" ")*4);
 }
 
 void CodeEdit::resizeEvent(QResizeEvent* e) {
     QPlainTextEdit::resizeEvent(e);
 
     QRect cr = contentsRect();
-    statusArea->setGeometry(QRect(cr.left(), cr.top(), statusAreaWidth(), cr.height()));
+    statusArea_->setGeometry(QRect(cr.left(), cr.top(), statusAreaWidth(), cr.height()));
 }
 
 void CodeEdit::highlightCurrentLine() {
@@ -104,7 +115,7 @@ void CodeEdit::highlightCurrentLine() {
 }
 
 void CodeEdit::statusAreaPaintEvent(QPaintEvent* event) {
-    QPainter painter(statusArea);
+    QPainter painter(statusArea_);
     painter.fillRect(event->rect(), Qt::lightGray);
 
     QTextBlock block = firstVisibleBlock();
@@ -116,7 +127,7 @@ void CodeEdit::statusAreaPaintEvent(QPaintEvent* event) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString::number(blockNumber + 1);
             painter.setPen(Qt::black);
-            painter.drawText(0, top, statusArea->width(), fontMetrics().height(),
+            painter.drawText(0, top, statusArea_->width(), fontMetrics().height(),
                     Qt::AlignRight, number);
         }
 

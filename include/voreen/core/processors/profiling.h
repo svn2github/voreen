@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -39,26 +39,46 @@
 #include <stack>
 #include <time.h>
 
+#include "voreen/core/voreencoredefine.h"
+
 namespace voreen {
 
-class PerformanceSample  {
+class VRN_CORE_API PerformanceSample  {
 public:
+    PerformanceSample();
+    PerformanceSample(PerformanceSample* sample);
     PerformanceSample(PerformanceSample* parent, std::string name);
 
     PerformanceSample* addChild(std::string name);
-    void print(int level = 0) const;
+    PerformanceSample* addChild(PerformanceSample sample);
+    void print(int level = 0, std::string recordName = "") const;
 
     void setTime(float time);
     float getTime() const;
 
+    std::string getName() const;
+
+    float getChildTime(std::string) const;
     float getChildrenTime() const;
+
+    PerformanceSample* getChild(std::string);
+    std::vector<PerformanceSample*> getChildren();
     PerformanceSample* getParent() const { return parent_; }
+
+    PerformanceSample operator+ (PerformanceSample);
+
+    int getMeasurementCount();
+    void setMeasurementCount(int);
+    void increaseMeasurementCount();
+
+    void normalize();
 
 protected:
     PerformanceSample* parent_;
     std::vector<PerformanceSample> children_;
     std::string name_;
     float time_;
+    int measurements_;
 
     static const std::string loggerCat_;
 };
@@ -68,7 +88,7 @@ class ProfilingBlock;
 /**
  * @brief Holds profiling info for an object.
  */
-class PerformanceRecord {
+class VRN_CORE_API PerformanceRecord {
     friend class ProfilingBlock;
 public:
     PerformanceRecord();
@@ -76,12 +96,16 @@ public:
 
     const std::vector<PerformanceSample*> getSamples() const;
     PerformanceSample* getLastSample() const;
+    void deleteSamples();
+    void setName(std::string);
+    std::string getName() const;
 
 protected:
     void startBlock(const ProfilingBlock* const pb);
     void endBlock(const ProfilingBlock* const pb);
 
     PerformanceSample* current_;
+    std::string name_;
 
     //history:
     std::vector<PerformanceSample*> samples_;
@@ -92,7 +116,7 @@ protected:
  *
  * Use macro PROFILING_BLOCK("NAME") to measure runtime of a block.
  */
-class ProfilingBlock {
+class VRN_CORE_API ProfilingBlock {
 public:
     ProfilingBlock(std::string name, PerformanceRecord& pr);
     ~ProfilingBlock();

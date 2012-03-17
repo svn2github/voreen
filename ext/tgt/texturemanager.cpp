@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -50,6 +50,8 @@ namespace tgt {
 //------------------------------------------------------------------------------
 
 const std::string TextureManager::loggerCat_("tgt.Texture.Manager");
+    
+SINGLETON_CLASS_SOURCE(TextureManager)
 
 TextureManager::TextureManager()
 {}
@@ -61,13 +63,8 @@ TextureManager::~TextureManager() {
 }
 
 Texture* TextureManager::loadIgnorePath(const std::string& completeFilename, Texture::Filter filter, bool compress,
-                              bool keepPixels, bool createOGLTex, bool useCache, bool textureRectangle)
+                              bool keepPixels, bool createOGLTex, bool useCache)
 {
-    if (textureRectangle && !GpuCaps.areTextureRectanglesSupported() ) {
-        LERROR("Texture Rectangles not supported!");
-        return 0;
-    }
-
     size_t found;
     std::string path, filename;
 
@@ -101,10 +98,10 @@ Texture* TextureManager::loadIgnorePath(const std::string& completeFilename, Tex
         LDEBUG("Found matching reader: " << readers_[ending]->getName());
 
         t = readers_[ending]->loadTexture(completeFilename, filter, compress,
-                                            keepPixels, createOGLTex, textureRectangle);
+                                            keepPixels, createOGLTex);
         if (!t) {
             t = readers_[ending]->loadTexture(filename, filter, compress,
-                                    keepPixels, createOGLTex, textureRectangle);
+                                    keepPixels, createOGLTex);
         }
         if ((t) && (useCache)) {
             reg(t, filename);
@@ -115,14 +112,8 @@ Texture* TextureManager::loadIgnorePath(const std::string& completeFilename, Tex
 }
 
 Texture* TextureManager::load(const std::string& filename, Texture::Filter filter, bool compress,
-                              bool keepPixels, bool createOGLTex, bool useCache, bool textureRectangle)
+                              bool keepPixels, bool createOGLTex, bool useCache)
 {
-
-    if (textureRectangle && !GpuCaps.areTextureRectanglesSupported()) {
-        LERROR("Texture Rectangles not supported!");
-        return 0;
-    }
-
     if (compress && !GpuCaps.isTextureCompressionSupported())
         compress = false;
 
@@ -143,12 +134,12 @@ Texture* TextureManager::load(const std::string& filename, Texture::Filter filte
 
         std::string completeFilename = completePath(filename);
         t = readers_[ending]->loadTexture(completeFilename, filter, compress,
-                                          keepPixels, createOGLTex, textureRectangle);
+                                          keepPixels, createOGLTex);
 
         // else try just the filename without path
         if (!t && completeFilename != filename) {
             t = readers_[ending]->loadTexture(filename, filter, compress,
-                                              keepPixels, createOGLTex, textureRectangle);
+                                              keepPixels, createOGLTex);
         }
 
         if (t && useCache)

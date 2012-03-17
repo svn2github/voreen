@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -26,12 +26,13 @@
 #define TGT_FRAMEBUFFEROBJECT_H
 
 #include "tgt/texture.h"
+#include "tgt/types.h"
 
 #include <map>
 
 namespace tgt {
 
-class FramebufferObject {
+class TGT_API FramebufferObject {
 public:
     FramebufferObject();
     virtual ~FramebufferObject();

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -45,7 +45,7 @@ namespace voreen {
 class HistogramIntensityGradient;
 class TransFuncIntensityGradient;
 class TransFuncPrimitive;
-class Volume;
+class VolumeHandleBase;
 
 /**
  * Painter implementation for drawing onto a tgt::QtCanvas for editing 2D transfer functions.
@@ -163,7 +163,7 @@ public:
      *
      * @param newVolume the current rendered volume
      */
-    void volumeChanged(Volume* newVolume);
+    void volumeChanged(const VolumeHandleBase* newVolume);
 
     /**
      * Enables or disables display of the histogram. It creates the histogram texture if
@@ -311,7 +311,7 @@ private:
     bool showGrid_;                         ///< should a grid displayed in the widget?
     bool histogramLogarithmic_;             ///< ist the histogram logarithmic or not?
     float histogramBrightness_;             ///< brightness of the histogram
-    Volume* volume_;                        ///< the volume that belongs to the transfer function edited in this widget
+    const VolumeHandleBase* volume_;            ///< the volume that belongs to the transfer function edited in this widget
     HistogramIntensityGradient* histogram_; ///< the histogram calculated from the visualized volume
     tgt::Texture* histogramTex_;            ///< texture created out of the histogramdata
     bool dragging_;                         ///< is the user dragging a primitive or a control point of a primitive?

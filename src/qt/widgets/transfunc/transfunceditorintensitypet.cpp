@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -433,7 +433,7 @@ void TransFuncEditorIntensityPet::updateTransferFunction() {
 
 void TransFuncEditorIntensityPet::updateFromProperty() {
     // check whether the volume associated with the TransFuncProperty has changed
-    VolumeHandle* newHandle = property_->getVolumeHandle();
+    const VolumeHandleBase* newHandle = property_->getVolumeHandle();
     if (newHandle != volumeHandle_) {
         volumeHandle_ = newHandle;
         volumeChanged();
@@ -471,8 +471,8 @@ void TransFuncEditorIntensityPet::updateFromProperty() {
 }
 
 void TransFuncEditorIntensityPet::volumeChanged() {
-    if (volumeHandle_ && volumeHandle_->getVolume()) {
-        int bits = volumeHandle_->getVolume()->getBitsStored() / volumeHandle_->getVolume()->getNumChannels();
+    if (volumeHandle_ && volumeHandle_->getRepresentation<Volume>()) {
+        int bits = volumeHandle_->getRepresentation<Volume>()->getBitsStored() / volumeHandle_->getRepresentation<Volume>()->getNumChannels();
         int maxNew = static_cast<int>(pow(2.f, static_cast<float>(bits))) - 1;
         if (maxNew != maximumIntensity_) {
             maximumIntensity_ = maxNew;
@@ -504,7 +504,7 @@ void TransFuncEditorIntensityPet::volumeChanged() {
     }
 
     // propagate new volume to histogrampainter
-    histogramPainter_->setHistogram(new HistogramIntensity((volumeHandle_ ? volumeHandle_->getVolume() : 0), maximumIntensity_ + 1));
+    histogramPainter_->setHistogram(new HistogramIntensity((volumeHandle_ ? volumeHandle_->getRepresentation<Volume>() : 0), maximumIntensity_ + 1));
     // resize histogram painter
     histogramPainter_->setMinimumSize(200, 150);
 

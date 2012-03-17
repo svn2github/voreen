@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,7 @@
 
 #include "voreen/core/utils/GLSLparser/symbol.h"
 
+#include <list>
 #include <map>
 
 namespace voreen {
@@ -40,8 +41,8 @@ namespace glslparser {
 template<class T = Symbol>
 class SymbolTable {
 public:
-    SymbolTable();
-    SymbolTable(SymbolTable<T>* const parent);
+    SymbolTable(const std::string& name);
+    SymbolTable(const std::string& name, SymbolTable<T>* const parent);
 
     virtual ~SymbolTable();
 
@@ -58,7 +59,7 @@ public:
      * Return a pointer to the symbol with the given name from the table
      * if it exists.
      */
-    T* findSymbol(const std::string& symbol) const;
+    T* findSymbol(const std::string& symbol, const bool localOnly = true) const;
 
     /**
      * Inserts the given symbol into the table, if it is not NULL and if it
@@ -71,9 +72,21 @@ public:
      */
     bool removeSymbol(T* const symbol);
 
+    const std::string& getName() const { return name_; }
+
+    void addChildTable(SymbolTable<T>* const child) {
+        if ((child) && (child != this))
+            children_.push_back(child);
+    }
+
+    const std::list<SymbolTable<T>*>& getChildTables() const { return children_; }
+
+    SymbolTable<T>* getParentTable() const { return parent_; }
+
 protected:
+    const std::string name_;
     SymbolTable<T>* parent_;
-    //std::list<SymbolTable<T>*> children_;
+    std::list<SymbolTable<T>*> children_;
 
     typedef std::map<std::string, T*> SymbolMap;
     SymbolMap symbols_;
@@ -82,19 +95,26 @@ protected:
 // ----------------------------------------------------------------------------
 
 template<class T>
-SymbolTable<T>::SymbolTable()
-    : parent_(0)
+SymbolTable<T>::SymbolTable(const std::string& name)
+    : name_(name),
+    parent_(0)
 {
 }
 
 template<class T>
-SymbolTable<T>::SymbolTable(SymbolTable<T>* const parent)
-    : parent_(parent)
+SymbolTable<T>::SymbolTable(const std::string& name, SymbolTable<T>* const parent)
+    : name_(name),
+    parent_(parent)
 {
+    if (parent_)
+        parent_->addChildTable(this);
 }
 
 template<class T>
 SymbolTable<T>::~SymbolTable() {
+    for (typename std::list<SymbolTable<T>*>::iterator it = children_.begin(); it != children_.end(); ++it)
+        delete *it;
+
     for (typename SymbolMap::iterator it = symbols_.begin(); it != symbols_.end(); ++it)
         delete it->second;
 }
@@ -114,12 +134,12 @@ bool SymbolTable<T>::deleteSymbol(const std::string& symbol) {
 }
 
 template<class T>
-T* SymbolTable<T>::findSymbol(const std::string& symbol) const {
+T* SymbolTable<T>::findSymbol(const std::string& symbol, const bool localOnly) const {
 
     typename SymbolMap::const_iterator it = symbols_.find(symbol);
     if (it != symbols_.end())
         return it->second;
-    else if (parent_ != 0)
+    else if ((parent_ != 0) && (! localOnly))
         return parent_->findSymbol(symbol);
     else
         return 0;

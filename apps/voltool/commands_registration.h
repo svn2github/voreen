@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,8 +31,9 @@
 
 #include "voreen/core/utils/cmdparser/command.h"
 #include "voreen/core/datastructures/volume/volumeatomic.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
 
-#include "tgt/math.h"
+#include "tgt/tgt_math.h"
 
 namespace voreen {
 
@@ -43,7 +44,7 @@ public:
     bool execute(const std::vector<std::string>& parameters) = 0;
 
 protected:
-    tgt::vec3 transformFromVoxelToWorldCoords(tgt::vec3 point, Volume* vol);
+    tgt::vec3 transformFromVoxelToWorldCoords(tgt::vec3 point, const VolumeHandleBase* vol);
 };
 
 class CommandRegistrationUniformScaling : public CommandRegistration {

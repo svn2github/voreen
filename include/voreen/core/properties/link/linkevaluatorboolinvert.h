@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,19 +30,19 @@
 #define VRN_LINKEVALUATORBOOLINVERT_H
 
 #include "voreen/core/properties/link/linkevaluatorbase.h"
+#include "voreen/core/voreencoredefine.h"
 
 namespace voreen {
 
 /**
  * Propagates an inverted boolean value.
  */
-class LinkEvaluatorBoolInvert : public LinkEvaluatorBase {
+class VRN_CORE_API LinkEvaluatorBoolInvert : public LinkEvaluatorBase {
 public:
-    virtual void eval(Property* src, Property* dst) throw (VoreenException);
+    void eval(Property* src, Property* dst) throw (VoreenException);
 
-    virtual std::string name() const;
-    virtual std::string getClassName() const { return "LinkEvaluatorBoolInvert"; }
-    virtual LinkEvaluatorBase* create() const { return new LinkEvaluatorBoolInvert(); }
+    std::string getClassName() const { return "LinkEvaluatorBoolInvert"; }
+    LinkEvaluatorBase* create() const { return new LinkEvaluatorBoolInvert(); }
 
     virtual bool arePropertiesLinkable(const Property* p1, const Property* p2) const;
 };

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -45,6 +45,7 @@
 #include <fstream>
 
 #include "voreen/core/properties/vectorproperty.h"
+#include "voreen/core/properties/floatproperty.h"
 
 namespace voreen {
 
@@ -55,7 +56,7 @@ class FloatVec3PropertyWidget;
 class CameraWidget : public QWidget {
     Q_OBJECT
 public:
-    CameraWidget(CameraProperty* camera, float minDist = 0.01f, float maxDist = 50.f, QWidget* parent = 0);
+    CameraWidget(CameraProperty* camera, float minDist = 0.01f, float maxDist = 500.f, QWidget* parent = 0);
     ~CameraWidget();
 
     void updateFromCamera();
@@ -86,6 +87,17 @@ public slots:
     void enableX(bool b);
     void enableY(bool b);
     void enableZ(bool b);
+
+    void switchProjection(int m);
+    void frustumChangeLeft(double v);
+    void frustumChangeRight(double v);
+    void frustumChangeBottom(double v);
+    void frustumChangeTop(double v);
+    void frustumChangeNear(double v);
+    void frustumChangeFar(double v);
+    void fovChange(double v);
+    void ratioChange(double v);
+    void resetCameraProjection();
 
     virtual void createWidgets();
     virtual void createConnections();
@@ -158,6 +170,8 @@ private:
     QGroupBox* motionBox_;
     QGroupBox* trackballBox_;
     QComboBox* comboOrientation_;
+    QGroupBox* frustumBox_;
+    QGroupBox* perspectiveBox_;
     QSlider* slDistance_;
 
     QCheckBox* rotateAroundX_;
@@ -165,6 +179,18 @@ private:
     QCheckBox* rotateAroundZ_;
     QCheckBox* continueSpin_;
     QBasicTimer* timer_;
+
+    QComboBox* comboProjection_;
+
+    FloatProperty* leftProp_;
+    FloatProperty* rightProp_;
+    FloatProperty* bottomProp_;
+    FloatProperty* topProp_;
+    FloatProperty* nearProp_;
+    FloatProperty* farProp_;
+
+    FloatProperty* fovyProp_;
+    FloatProperty* ratioProp_;
 
     float dist_;
     bool rotateX_;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -106,13 +106,13 @@ void Grammar::addTerminal(const std::string& name, const int symbolID,
 }
 
 void Grammar::addProduction(const std::string& head, const std::string& body) {
-    size_t pos = 0, prevPos = 0;
     std::vector<std::string> bodyVec;
 
     // Split the string at positions containing space characters and pass
     // it on to the overload method.
     //
     if (! body.empty()) {
+        size_t pos = 0, prevPos = 0;
         do {
             prevPos = pos;
             pos = body.find(' ', pos);

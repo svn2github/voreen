@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -33,7 +33,9 @@ Frustum::Frustum(float fovy, float ratio, float nearDist, float farDist)
   : nearDist_(nearDist),
     farDist_ (farDist)
 {
-    setFovy(fovy);
+    float halfheight = tanf(0.5f * deg2rad(fovy)) * nearDist_;
+    tnear_ =  halfheight;
+    bnear_ = -halfheight;
     setRatio(ratio);
 }
 
@@ -46,6 +48,11 @@ Frustum::Frustum(float left, float right, float bottom, float top, float nearDis
     farDist_(farDist)
 {}
 
+bool Frustum::operator==(const Frustum& rhs) const {
+    return (rhs.lnear_ == lnear_) && (rhs.rnear_ == rnear_) && (rhs.bnear_ == bnear_) && (rhs.tnear_ == tnear_) &&
+        (rhs.nearDist_ == nearDist_) && (rhs.farDist_ == farDist_);
+}
+
 void Frustum::update(Camera* c) {
     campos_ = c->getPosition();
 
@@ -57,7 +64,6 @@ void Frustum::update(Camera* c) {
     nearp_ = campos_ + cam2near;
     farp_  = campos_ + normals_[FARN] * farDist_;
 
-    vec3 up = c->getUpVector();
     vec3 strafe = c->getStrafe();
     vec3 tmp;
 	
@@ -94,7 +100,7 @@ bool Frustum::isCulledXZ(const Bounds& bounds) const {
         for (size_t j = 0; j < 4; j++) {
             vec3 pos = (i < 4) ? campos_
                 : ((i == 4) ? nearp() : farp());
-            if (dot(getNormal(i), points[j] - pos) >= 0.f)
+            if (dot(getNormal(static_cast<int>(i)), points[j] - pos) >= 0.f)
                 ++outside;
         }
         if (outside == 4)
@@ -124,7 +130,7 @@ bool Frustum::isCulled(const Bounds& bounds) const {
             vec3 pos = (i < 4) ? campos_
                 : ((i == 4) ? nearp() : farp());
 
-            if (dot(getNormal(i), points[j] - pos) >= 0.f)
+            if (dot(getNormal(static_cast<int>(i)), points[j] - pos) >= 0.f)
                 ++outside;
         }
         if (outside == 8)
@@ -156,6 +162,120 @@ bool Frustum::isCulled(const vec3& v) const {
         // all tests survived? then the point is visible
         return false;
     }
+}
+
+void Frustum::setFovy(float fovy) {
+    float halfheight = tanf(0.5f * deg2rad(fovy)) * nearDist_;
+    //float oldRatio = getRatio();
+    tnear_ =  halfheight;
+    bnear_ = -halfheight;
+
+    // update left and right to reflect previous ratio
+    //setRatio(oldRatio);
+}
+
+void Frustum::setRatio(float ratio) {
+    float halfwidth = 0.5f * (tnear_-bnear_) * ratio;
+    lnear_ = -halfwidth;
+    rnear_ =  halfwidth;
+    bnear_ = -halfwidth / ratio;
+    tnear_ =  halfwidth / ratio;
+}
+
+void Frustum::setNearDist(float nearDist) {
+    nearDist_ = nearDist;
+}
+
+const vec3& Frustum::campos() const {
+    return campos_;
+}
+
+const vec3& Frustum::farp() const {
+    return farp_;
+}
+
+const vec3& Frustum::nearp() const {
+    return nearp_;
+}
+
+const vec3& Frustum::farn() const {
+    return normals_[FARN];
+}
+
+const vec3& Frustum::nearn() const {
+    return normals_[NEARN];
+}
+
+const vec3& Frustum::topn() const {
+    return normals_[TOPN];
+}
+
+const vec3& Frustum::bottomn() const {
+    return normals_[BOTTOMN];
+}
+
+const vec3& Frustum::rightn() const {
+    return normals_[RIGHTN];
+}
+
+const vec3& Frustum::leftn() const {
+    return normals_[LEFTN];
+}
+
+void Frustum::setBottom(float v) {
+    bnear_ = v;
+}
+
+void Frustum::setTop(float v) {
+    tnear_ = v;
+}
+
+void Frustum::setRight(float v) {
+    rnear_ = v;
+}
+
+void Frustum::setLeft(float v) {
+    lnear_ = v;
+}
+
+void Frustum::setFarDist(float farDist) {
+    farDist_ = farDist;
+}
+
+float Frustum::getBottom() const {
+    return bnear_;
+}
+
+float Frustum::getFovy() const {
+    return rad2deg(atanf(tnear_/nearDist_) - atanf(bnear_/nearDist_) );
+}
+
+float Frustum::getRatio() const {
+    return (rnear_ - lnear_)/(tnear_ - bnear_);
+}
+
+float Frustum::getNearDist() const {
+    return nearDist_;
+}
+
+float Frustum::getFarDist() const {
+    return farDist_;
+}
+
+float Frustum::getLeft() const {
+    return lnear_;
+}
+
+float Frustum::getRight() const {
+    return rnear_;
+}
+
+float Frustum::getTop() const {
+    return tnear_;
+}
+
+const vec3& Frustum::getNormal(int num) const {
+    return normals_[num];
 }
 
 }; // namespace tgt

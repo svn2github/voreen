@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -49,7 +49,7 @@ VolumeContainer::~VolumeContainer() {
     clear();
 }
 
-void VolumeContainer::add(VolumeHandle* volumeHandle) {
+void VolumeContainer::add(VolumeHandleBase* volumeHandle) {
     VolumeCollection::add(volumeHandle);
 }
 
@@ -57,7 +57,7 @@ void VolumeContainer::add(const VolumeCollection* volumeCollection) {
     VolumeCollection::add(volumeCollection);
 }
 
-void VolumeContainer::remove(const VolumeHandle* handle) {
+void VolumeContainer::remove(const VolumeHandleBase* handle) {
     if (contains(handle)) {
         VolumeCollection::remove(handle); // also notifies the observers
         delete handle;
@@ -65,19 +65,19 @@ void VolumeContainer::remove(const VolumeHandle* handle) {
 }
 
 void VolumeContainer::remove(const VolumeCollection* volumeCollection) {
-
     tgtAssert(volumeCollection, "Unexpected null pointer");
 
     // the passed parameter might be object itself,
     // therefore we have to copy over the volume handles to a
     // temporary vector
-    std::vector<VolumeHandle*> deleteList;
+    std::vector<VolumeHandleBase*> deleteList;
     for (size_t i=0; i<volumeCollection->size(); ++i) {
         deleteList.push_back(volumeCollection->at(i));
     }
 
-    for (size_t i=0; i<deleteList.size(); ++i)
-        remove(deleteList[i]);
+    for (size_t i=0; i<deleteList.size(); ++i) {
+        remove(deleteList[i]); // also notifies the observers
+    }
 }
 
 void VolumeContainer::clear() {
@@ -85,95 +85,7 @@ void VolumeContainer::clear() {
         remove(first());
 }
 
-VolumeCollection* VolumeContainer::loadVolume(const std::string& filename)
-    throw (tgt::FileException, std::bad_alloc) {
-
-    VolumeSerializerPopulator serializerPopulator;
-    VolumeCollection* volumeCollection = 0;
-    try {
-        volumeCollection = serializerPopulator.getVolumeSerializer()->load(filename);
-    }
-    catch (tgt::FileException e) {
-        LWARNING(e.what());
-        throw e;
-    }
-    catch (std::bad_alloc) {
-        LWARNING("std::Error BAD ALLOCATION");
-        throw std::bad_alloc();
-    }
-
-    if (volumeCollection) {
-        // detect duplicates (volumes already loaded from one of the passed origins)
-        VolumeCollection duplicates;
-        for (size_t i=0; i<volumeCollection->size(); ++i) {
-            VolumeCollection* tempCol = selectOrigin(volumeCollection->at(i)->getOrigin());
-            duplicates.add(tempCol);
-            delete tempCol;
-        }
-
-        // add loaded collection
-        VolumeCollection::add(volumeCollection);
-
-        // remove duplicates
-        for (size_t i=0; i<duplicates.size(); i++)
-            LINFO("Replacing duplicate volume " << duplicates.at(i)->getOrigin().getPath());
-        remove(&duplicates);
-    }
-
-    return volumeCollection;
-}
-
-VolumeHandle* VolumeContainer::loadRawVolume(const std::string& filename, const std::string& objectModel,
-    const std::string& format, const tgt::ivec3& dimensions, const tgt::vec3& spacing, int headerskip, bool bigEndian)
-    throw (tgt::FileException, std::bad_alloc)
-{
-
-    ProgressBar* progress = VoreenApplication::app()->createProgressDialog();
-    RawVolumeReader rawReader(progress);
-    rawReader.setReadHints(dimensions, spacing, 0, objectModel, format, headerskip, bigEndian);
-
-    VolumeCollection* collection = 0;
-    try {
-        collection = rawReader.read(filename);
-    }
-    catch (tgt::FileException e) {
-        LWARNING(e.what());
-        delete progress;
-        throw e;
-    }
-    catch (std::bad_alloc) {
-        LWARNING("std::Error BAD ALLOCATION");
-        delete progress;
-        throw std::bad_alloc();
-    }
-
-    VolumeHandle* handle = 0;
-    if (collection && !collection->empty()) {
-        tgtAssert(collection->size() == 1, "More than one raw volume returned");
-        handle = collection->first();
-    }
-    delete collection;
-
-    if (handle) {
-        // detect duplicates (volumes already loaded from one of the passed origins)
-        VolumeCollection* duplicates = selectOrigin(handle->getOrigin());
-
-        // add loaded collection
-        VolumeCollection::add(handle);
-
-        // remove duplicates
-        for (size_t i=0; i<duplicates->size(); i++)
-            LINFO("Replacing duplicate volume " << duplicates->at(i)->getOrigin().getPath());
-        remove(duplicates);
-        delete duplicates;
-    }
-
-    delete progress;
-
-    return handle;
-}
-
-void VolumeContainer::release(const VolumeHandle* handle) {
+void VolumeContainer::release(const VolumeHandleBase* handle) {
     VolumeCollection::remove(handle);
 }
 

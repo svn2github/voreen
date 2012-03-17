@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,8 +30,11 @@
 
 #include "voreen/core/utils/GLSLparser/glsl/glsllexer.h"
 
+#include "voreen/core/utils/GLSLparser/glsl/glslcondition.h"
 #include "voreen/core/utils/GLSLparser/glsl/glslfunctioncall.h"
+#include "voreen/core/utils/GLSLparser/glsl/glslfunctiondefinition.h"
 #include "voreen/core/utils/GLSLparser/glsl/glslstructspecifier.h"
+#include "voreen/core/utils/GLSLparser/glsl/glsltranslation.h"
 
 namespace voreen {
 
@@ -72,22 +75,60 @@ void GLSLParser::expandParseTree(const int productionID,
                                  const std::vector<Parser::ParserSymbol*>& reductionBody)
 {
     switch (productionID) {
-        // TODO: implement classes for the following reductions
-        //
-        /*
         case 0:  // [$START$] ::= [program]
         case 1:  // [program] ::= [translation-unit]
+            // Nothing to do: top-most node on stack will remain an object
+            // wrapping the [translation-unit]
+            break;
 
         case 2:  // [translation-unit] ::= [external-declaration]
+            if (reductionBody.size() == 1)
+            {
+                GLSLExternalDeclaration* const extDecl = popNode<GLSLExternalDeclaration>();
+                if (extDecl)
+                    pushNode(new GLSLTranslation(extDecl));
+            }
+            break;
+
         case 3:  // [translation-unit] ::= [translation-unit] [external-declaration]
+            if (reductionBody.size() == 2)
+            {
+                GLSLExternalDeclaration* const extDecl = popNode<GLSLExternalDeclaration>();
+                GLSLTranslation* const trans = popNode<GLSLTranslation>();
+                if ((extDecl) && (trans))
+                {
+                    trans->addExternalDeclaration(extDecl);
+                    pushNode(trans);
+                }
+            }
+            break;
 
         case 4:  // [external-declaration] ::= [function-definition]
         case 5:  // [external-declaration] ::= [declaration]
         case 6:  // [external-declaration] ::= [enhanced-declaration]
+            // No modification on parse tree required, because the
+            // production bodies correspond to C++ classes which inherit
+            // from the C++ class representing the production head.
+            break;
+
         case 7:  // [function-definition] ::= [function-prototype] [compound-statement-no-new-scope]
+            if (reductionBody.size() == 2) {
+                GLSLCompoundStatement* const statements = popNode<GLSLCompoundStatement>();
+                GLSLFunctionPrototype* const function = popNode<GLSLFunctionPrototype>();
+
+                if ((function) && (statements))
+                    pushNode(new GLSLFunctionDefinition(function, statements));
+                else
+                    std::cout << "GLSLParser::expandParseTree(): error in case 7!\n";
+            }
+            break;
 
         case 8:  // [statement] ::= [compound-statement]
         case 9:  // [statement] ::= [simple-statement]
+            // No further modification on parse tree required, because the
+            // production bodies correspond to C++ classes which inherit
+            // from the C++ class representing the production head.
+            break;
 
         case 10:  // [simple-statement] ::= [declaration-statement]
         case 11:  // [simple-statement] ::= [expression-statement]
@@ -96,56 +137,263 @@ void GLSLParser::expandParseTree(const int productionID,
         case 14:  // [simple-statement] ::= [case-label]
         case 15:  // [simple-statement] ::= [iteration-statement]
         case 16:  // [simple-statement] ::= [jump-statement]
+            // No modification on parse tree required, because the
+            // production bodies correspond to C++ classes which inherit
+            // from the C++ class representing the production head.
+            break;
 
         case 17:  // [compound-statement] ::= { }
+        case 23:  // [compound-statement-no-new-scope] ::= { }
+            // Do not ignor empty statments, because the top-most symbol for the
+            // parse tree must be a GLSLCompoundStatement.
+            //
+            if (reductionBody.size() == 2)
+                pushNode(new GLSLCompoundStatement(0, (productionID == 17)));
+            break;
+
         case 18:  // [compound-statement] ::= { [statement-list] }
+        case 24:  // [compound-statement-no-new-scope] ::= { [statement-list] }
+            if (reductionBody.size() == 3) {
+                GLSLStatementList* const statements = popNode<GLSLStatementList>();
+                if (statements)
+                    pushNode(new GLSLCompoundStatement(statements, (productionID == 18)));
+                else
+                    std::cout << "GLSLParser::expandParseTree(): error in case 18, 24!\n";
+            }
+            break;
 
         case 19:  // [declaration-statement] ::= [declaration]
         case 20:  // [declaration-statement] ::= [enhanced-declaration]
+            if (reductionBody.size() == 1) {
+                GLSLDeclaration* const decl = popNode<GLSLDeclaration>();
+
+                if (decl)
+                    pushNode(new GLSLDeclarationStatement(decl));
+                else
+                    std::cout << "GLSLParser::expandParseTree(): error in case 19, 20!\n";
+            }
+            break;
 
         case 21:  // [statement-no-new-scope] ::= [compound-statement-no-new-scope]
         case 22:  // [statement-no-new-scope] ::= [simple-statement]
-
-        case 23:  // [compound-statement-no-new-scope] ::= { }
-        case 24:  // [compound-statement-no-new-scope] ::= { [statement-list] }
+            // Nothing else to do: production bodies correspond to classes which
+            // inherit form classes representing the production head.
+            break;
 
         case 25:  // [statement-list] ::= [statement]
+            if (reductionBody.size() == 1) {
+                GLSLStatement* const statement = popNode<GLSLStatement>();
+
+                if (statement)
+                    pushNode(new GLSLStatementList(statement));
+                else
+                    std::cout << "GLSLParser::expandParseTree(): error in case 25!\n";
+            }
+            break;
+
         case 26:  // [statement-list] ::= [statement-list] [statement]
+            if (reductionBody.size() == 2) {
+                GLSLStatement* const statement = popNode<GLSLStatement>();
+                GLSLStatementList* const list = popNode<GLSLStatementList>();
+
+                if ((list) && (statement)) {
+                    list->addStatement(statement);
+                    pushNode(list);
+                }
+            }
+            break;
 
         case 27:  // [expression-statement] ::= ;
+            if (reductionBody.size() == 1)
+                pushNode(new GLSLExpressionStatement(0));
+            break;
+
         case 28:  // [expression-statement] ::= [expression] ;
+            if (reductionBody.size() == 2) {
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+
+                if (expr)
+                    pushNode(new GLSLExpressionStatement(expr));
+                else
+                    std::cout << "GLSLParser::expandParseTree(): error in case 28!\n";
+            }
+            break;
 
         case 29:  // [selection-statement] ::= if ( [expression] ) [statement]
+            if (reductionBody.size() == 5) {
+                GLSLStatement* const stmt = popNode<GLSLStatement>();
+                GLSLExpression* const cond = popNode<GLSLExpression>();
+
+                if ((cond) && (stmt))
+                    pushNode(new GLSLSelectionStatement(cond, stmt));
+            }
+            break;
+
         case 30:  // [selection-statement] ::= if ( [expression] ) [statement] else [statement]
+            if (reductionBody.size() == 7) {
+                GLSLStatement* const falseStmt = popNode<GLSLStatement>();
+                GLSLStatement* const trueStmt = popNode<GLSLStatement>();
+                GLSLExpression* const cond = popNode<GLSLExpression>();
+
+                if ((cond) && (trueStmt) && (falseStmt))
+                    pushNode(new GLSLSelectionStatement(cond, trueStmt, falseStmt));
+            }
+            break;
 
         case 31:  // [condition] ::= [expression]
+            if (reductionBody.size() == 1) {
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+
+                if (expr)
+                    pushNode(new GLSLCondition(expr));
+            }
+            break;
+
         case 32:  // [condition] ::= [fully-specified-type] IDENTIFIER = [initializer]
+            if (reductionBody.size() == 4) {
+                GLSLExpression* const init = popNode<GLSLExpression>();
+                IdentifierToken* const identifier =
+                    dynamic_cast<IdentifierToken* const>(reductionBody[2]->getToken());
+                GLSLTypeSpecifier* const spec = popNode<GLSLTypeSpecifier>();
+
+                if ((spec) && (identifier) && (init))
+                    pushNode(new GLSLCondition(spec, identifier, init));
+            }
+            break;
 
         case 33:  // [switch-statement] ::= switch ( [expression] ) { [statement-list] }
+            // !!! Attention: There are special semantical rules for [statement-list] !!!
+            if (reductionBody.size() == 7) {
+                GLSLStatementList* const stmts = popNode<GLSLStatementList>();
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+
+                if ((expr) && (stmts))
+                    pushNode(new GLSLSwitchStatement(expr, stmts));
+            }
+            break;
+
         case 34:  // [switch-statement] ::= switch ( [expression] ) { }
+            if (reductionBody.size() == 6) {
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+
+                if (expr)
+                    pushNode(new GLSLSwitchStatement(expr));
+            }
+            break;
 
         case 35:  // [case-label] ::= case [expression] :
+            if (reductionBody.size() == 3) {
+                GLSLExpression* const cond = popNode<GLSLExpression>();
+
+                if (cond)
+                    pushNode(new GLSLCaseLabel(cond));
+            }
+            break;
+
         case 36:  // [case-label] ::= default :
+            if (reductionBody.size() == 2)
+                pushNode(new GLSLCaseLabel());
+            break;
 
         case 37:  // [iteration-statement] ::= while ( [condition] ) [statement-no-new-scope]
+            if (reductionBody.size() == 5) {
+                GLSLStatement* const stmt = popNode<GLSLStatement>();
+                GLSLCondition* const cond = popNode<GLSLCondition>();
+
+                if ((stmt) && (cond))
+                    pushNode(new GLSLWhileStatement(cond, stmt));
+            }
+            break;
+
         case 38:  // [iteration-statement] ::= do [statement] while ( [expression] ) ;
+            if (reductionBody.size() == 7) {
+                GLSLExpression* const cond = popNode<GLSLExpression>();
+                GLSLStatement* const stmt = popNode<GLSLStatement>();
+
+                if ((cond) && (stmt))
+                    pushNode(new GLSLDoWhileStatement(cond, stmt));
+            }
+            break;
+
         case 39:  // [iteration-statement] ::= for ( [for-init-statement] [for-rest-statement] ) [statement-no-new-scope]
+            if (reductionBody.size() == 6) {
+                GLSLStatement* const stmt = popNode<GLSLStatement>();
+                GLSLForStatement* const fr = popNode<GLSLForStatement>();
+
+                // NOTE: to be more precise, init may only be an instance of the
+                // GLSLSimpleStatement subclasses GLSLExpressionStatement or
+                // GLSLDeclarationStatement
+                GLSLSimpleStatement* const init = popNode<GLSLSimpleStatement>();
+
+                if ((init) && (fr) && (stmt))
+                {
+                    fr->setInitStatement(init);
+                    fr->setBody(stmt);
+                    pushNode(fr);
+                }
+            }
+            break;
 
         case 40:  // [for-init-statement] ::= [expression-statement]
         case 41:  // [for-init-statement] ::= [declaration-statement]
+            // Simply keep the statement nodes on the top of the stack and pop
+            // them as GLSLSimpleStatements for both subclasses inherit from it
+            break;
 
         case 42:  // [for-rest-statement] ::= ;
+            if (reductionBody.size() == 1)
+                pushNode(new GLSLForStatement());
+            break;
+
         case 43:  // [for-rest-statement] ::= [condition] ;
+            if (reductionBody.size() == 2) {
+                GLSLCondition* const cond = popNode<GLSLCondition>();
+
+                if (cond)
+                    pushNode(new GLSLForStatement(cond, 0));
+            }
+            break;
+
         case 44:  // [for-rest-statement] ::= ; [expression]
+            if (reductionBody.size() == 2) {
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+
+                if (expr)
+                    pushNode(new GLSLForStatement(0, expr));
+            }
+            break;
+
         case 45:  // [for-rest-statement] ::= [condition] ; [expression]
+            if (reductionBody.size() == 3) {
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+                GLSLCondition* const cond = popNode<GLSLCondition>();
+
+                if ((cond) && (expr))
+                    pushNode(new GLSLForStatement(cond, expr));
+            }
+            break;
 
         case 46:  // [jump-statement] ::= continue ;
         case 47:  // [jump-statement] ::= break ;
         case 48:  // [jump-statement] ::= return ;
-        case 49:  // [jump-statement] ::= return [expression] ;
         case 50:  // [jump-statement] ::= discard ;
+            if (reductionBody.size() == 2) {
+                Token* const token = reductionBody[1]->getToken();
+
+                if (token)
+                    pushNode(new GLSLJumpStatement(token));
+            }
             break;
-        */
+
+        case 49:  // [jump-statement] ::= return [expression] ;
+            if (reductionBody.size() == 3) {
+                GLSLExpression* const expr = popNode<GLSLExpression>();
+
+                if (expr)
+                    pushNode(new GLSLJumpStatement(expr));
+            }
+            break;
+
         case 51:  // [primary-expression] ::= IDENTIFIER
         case 52:  // [primary-expression] ::= INTCONSTANT
         case 53:  // [primary-expression] ::= UINTCONSTANT
@@ -156,7 +404,7 @@ void GLSLParser::expandParseTree(const int productionID,
                 Token* const token = reductionBody[0]->getToken();
 
                 if (token != 0)
-                    pushNode(new GLSLExpression(*token));
+                    pushNode(new GLSLPrimaryExpression(*token));
             }
             break;
 
@@ -165,45 +413,57 @@ void GLSLParser::expandParseTree(const int productionID,
                 GLSLExpression* const expr = popNode<GLSLExpression>();
 
                 if (expr != 0)
-                    pushNode(new GLSLParenthesisExpression(expr));
+                    pushNode(new GLSLPrimaryExpression(expr));
             }
             break;
 
         case 58:  // [postfix-expression] ::= [primary-expression]
+            if (reductionBody.size() == 1) {
+                GLSLPrimaryExpression* const expr = popNode<GLSLPrimaryExpression>();
+
+                if (expr != 0)
+                    pushNode(new GLSLPostfixExpression(expr));
+            }
             break;
 
         case 59:  // [postfix-expression] ::= [postfix-expression] [ [integer-expression] ]
             if (reductionBody.size() == 4) {
                 GLSLExpression* const intExpr = popNode<GLSLExpression>();
-                GLSLExpression* const arr = popNode<GLSLExpression>();
+                GLSLPostfixExpression* const arr = popNode<GLSLPostfixExpression>();
 
                 if ((arr != 0) && (intExpr != 0))
-                    pushNode(new GLSLArrayOperation(arr, intExpr));
+                    pushNode(new GLSLPostfixExpression(arr, intExpr));
             }
             break;
 
         case 60:  // [postfix-expression] ::= [function-call-or-method]
+            if (reductionBody.size() == 1) {
+                GLSLExpression* const funCall = popNode<GLSLFunctionCall>();
+
+                if (funCall != 0)
+                    pushNode(new GLSLPostfixExpression(funCall));
+            }
             break;
 
         case 61:  // [postfix-expression] ::= [postfix-expression] . FIELD-SELECTION
             if (reductionBody.size() == 3) {
-                GLSLExpression* const operand = popNode<GLSLExpression>();
+                GLSLPostfixExpression* const operand = popNode<GLSLPostfixExpression>();
                 IdentifierToken* const field =
                     dynamic_cast<IdentifierToken* const>(reductionBody[0]->getToken());
 
                 if ((operand != 0) && (field != 0))
-                    pushNode(new GLSLFieldSelection(operand, field));
+                    pushNode(new GLSLPostfixExpression(operand, field));
             }
             break;
 
         case 62:  // [postfix-expression] ::= [postfix-expression] ++
         case 63:  // [postfix-expression] ::= [postfix-expression] --
             if (reductionBody.size() == 2) {
-                GLSLExpression* const expr = popNode<GLSLExpression>();
+                GLSLPostfixExpression* const expr = popNode<GLSLPostfixExpression>();
                 Token* const token = reductionBody[0]->getToken();
 
                 if ((token != 0) && (expr != 0))
-                    pushNode(new GLSLPostfixOperation(token, expr));
+                    pushNode(new GLSLPostfixExpression(token, expr));
             }
             break;
 
@@ -216,7 +476,7 @@ void GLSLParser::expandParseTree(const int productionID,
         case 66:  // [function-call-or-method] ::= [postfix-expression] . [function-call-generic]
             if (reductionBody.size() == 3) {
                 GLSLFunctionCall* const func = popNode<GLSLFunctionCall>();
-                GLSLExpression* const postfix = popNode<GLSLExpression>();
+                GLSLPostfixExpression* const postfix = popNode<GLSLPostfixExpression>();
 
                 if ((func != 0) && (postfix != 0)) {
                     func->setPostfixExpression(postfix);
@@ -265,7 +525,7 @@ void GLSLParser::expandParseTree(const int productionID,
 
         case 75:  // [unary-expression] ::= [postfix-expression]
             if (reductionBody.size() == 1) {
-                GLSLExpression* const expr = popNode<GLSLExpression>();
+                GLSLPostfixExpression* const expr = popNode<GLSLPostfixExpression>();
 
                 if (expr != 0)
                     pushNode(new GLSLUnaryExpression(expr));
@@ -279,7 +539,7 @@ void GLSLParser::expandParseTree(const int productionID,
         case 80:  // [unary-expression] ::= ! [unary-expression]
         case 81:  // [unary-expression] ::= ~ [unary-expression]
             if (reductionBody.size() == 2) {
-                GLSLExpression* const expr = popNode<GLSLExpression>();
+                GLSLUnaryExpression* const expr = popNode<GLSLUnaryExpression>();
                 Token* const token = reductionBody[1]->getToken();
 
                 if ((expr != 0) && (token != 0))
@@ -434,6 +694,13 @@ void GLSLParser::expandParseTree(const int productionID,
             break;
 
         case 132:  // [declaration] ::= [function-prototype] ;
+            if (reductionBody.size() == 2) {
+                GLSLFunctionPrototype* const funcProto = popNode<GLSLFunctionPrototype>();
+                if (funcProto)
+                    pushNode(new GLSLFunctionDeclaration(funcProto));
+            }
+            break;
+
         case 133:  // [declaration] ::= [init-declarator-list] ;
             break;
 
@@ -534,17 +801,24 @@ void GLSLParser::expandParseTree(const int productionID,
 
         case 140:  // [function-prototype] ::= [function-header] )
         case 141:  // [function-prototype] ::= [function-header-with-parameters] )
+            // Top node is a GLSLFunctionPrototype node and no new node for a
+            // semantic action is required as closing brackets are implicitly
+            // assumed to be present.
+            {
+            GLSLFunctionPrototype* const funcProto = popNode<GLSLFunctionPrototype>();
+            pushNode(funcProto);
+            }
             break;
 
         case 142:  // [function-header-with-parameters] ::= [function-header] [parameter-declaration]
         case 143:  // [function-header-with-parameters] ::= [function-header-with-parameters] , [parameter-declaration]
             {
                 GLSLParameter* const param = popNode<GLSLParameter>();
-                GLSLFunctionDeclaration* const decl = popNode<GLSLFunctionDeclaration>();
+                GLSLFunctionPrototype* const funcProto = popNode<GLSLFunctionPrototype>();
 
-                if ((decl != 0) && (param != 0)) {
-                    decl->addParameter(param);
-                    pushNode(decl);
+                if ((funcProto != 0) && (param != 0)) {
+                    funcProto->addParameter(param);
+                    pushNode(funcProto);
                 }
             }
             break;
@@ -556,7 +830,7 @@ void GLSLParser::expandParseTree(const int productionID,
                     dynamic_cast<IdentifierToken* const>(reductionBody[1]->getToken());
 
                 if ((typeSpec != 0) && (name != 0))
-                    pushNode(new GLSLFunctionDeclaration(name, typeSpec));
+                    pushNode(new GLSLFunctionPrototype(name, typeSpec));
             }
             break;
 
@@ -1208,6 +1482,9 @@ void GLSLParser::expandParseTree(const int productionID,
             break;
 
         case 223:  // [initializer] ::= [assignment-expression]
+            // Only production, so leave assignment expression on top of the
+            // stack and use GLSLAssignmentExpression in all cases where
+            // [intializer] is exprected
             break;
 
     }   // switch (productionID)

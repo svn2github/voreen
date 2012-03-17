@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,10 +34,14 @@
 
 namespace voreen {
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<ShaderSource>;
+#endif
+
 /**
- * This class offers an interpolation function for ShaderSources. Interpolation: focus on startvalue.
+ * This class VRN_CORE_API offers an interpolation function for ShaderSources. Interpolation: focus on startvalue.
  */
-class ShaderSourceStartInterpolationFunction : public InterpolationFunction<ShaderSource> {
+class VRN_CORE_API ShaderSourceStartInterpolationFunction : public InterpolationFunction<ShaderSource> {
 public:
     ShaderSourceStartInterpolationFunction();
     InterpolationFunction<ShaderSource>* clone() const;
@@ -48,9 +52,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for ShaderSources. Interpolation: focus on endvalue.
+ * This class VRN_CORE_API offers an interpolation function for ShaderSources. Interpolation: focus on endvalue.
  */
-class ShaderSourceEndInterpolationFunction : public InterpolationFunction<ShaderSource> {
+class VRN_CORE_API ShaderSourceEndInterpolationFunction : public InterpolationFunction<ShaderSource> {
 public:
     ShaderSourceEndInterpolationFunction();
     InterpolationFunction<ShaderSource>* clone() const;
@@ -61,9 +65,9 @@ public:
 };
 
 /**
- * This class offers an interpolation function for ShaderSources. Interpolation: bisection.
+ * This class VRN_CORE_API offers an interpolation function for ShaderSources. Interpolation: bisection.
  */
-class ShaderSourceStartEndInterpolationFunction : public InterpolationFunction<ShaderSource> {
+class VRN_CORE_API ShaderSourceStartEndInterpolationFunction : public InterpolationFunction<ShaderSource> {
 public:
     ShaderSourceStartEndInterpolationFunction();
     InterpolationFunction<ShaderSource>* clone() const;

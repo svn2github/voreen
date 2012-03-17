@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -95,7 +95,7 @@ void TransFuncPlugin::createWidgets() {
     if (dynamic_cast<TransFuncIntensity*>(property_->get())) {
         for (size_t i=0; i < editors_.size(); ++i) {
             if (dynamic_cast<TransFuncEditorIntensity*>(editors_[i])) {
-                oldIndex_ = i;
+                oldIndex_ = static_cast<int>(i);
                 break;
             }
         }
@@ -103,13 +103,13 @@ void TransFuncPlugin::createWidgets() {
     else if (dynamic_cast<TransFuncIntensityGradient*>(property_->get())) {
         for (size_t i=0; i < editors_.size(); ++i) {
             if (dynamic_cast<TransFuncEditorIntensityGradient*>(editors_[i])) {
-                oldIndex_ = i;
+                oldIndex_ = static_cast<int>(i);
                 break;
             }
         }
     }
 
-    tabWidget_->setCurrentIndex(oldIndex_);
+    tabWidget_->setCurrentIndex(static_cast<int>(oldIndex_));
 }
 
 void TransFuncPlugin::createConnections() {
@@ -133,7 +133,7 @@ void TransFuncPlugin::editorChanged(int index) {
 
         // set tabwidget back to previous editor
         tabWidget_->blockSignals(true);
-        tabWidget_->setCurrentIndex(oldIndex_);
+        tabWidget_->setCurrentIndex(static_cast<int>(oldIndex_));
         tabWidget_->blockSignals(false);
         QString text(tr("The Editor you selected is not compatible with the previous one.\n"));
         text.append(tr("The transfer function and the thresholds will be reset to default.\n\n"));

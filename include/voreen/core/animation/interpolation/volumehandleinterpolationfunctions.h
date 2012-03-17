@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,14 +30,20 @@
 #define VRN_VOLUMEHANDLEINTERPOLATIONFUNCTIONS_H
 
 #include "voreen/core/animation/interpolationfunction.h"
-#include "voreen/core/properties/volumehandleproperty.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
+//#include "voreen/core/properties/volumehandleproperty.h"
 
 namespace voreen {
 
+//class VolumeHandle;
+
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<VolumeHandle*>;
+#endif
 /**
  * This class offers an interpolation function for volumehandles. Interpolation: focus on startvalue.
  */
-class VolumeHandleStartInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
+class VRN_CORE_API VolumeHandleStartInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
 public:
     VolumeHandleStartInterpolationFunction();
     InterpolationFunction<VolumeHandle*>* clone() const;
@@ -50,7 +56,7 @@ public:
 /**
  * This class offers an interpolation function for volumehandles. Interpolation: focus on endvalue.
  */
-class VolumeHandleEndInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
+class VRN_CORE_API VolumeHandleEndInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
 public:
     VolumeHandleEndInterpolationFunction();
     InterpolationFunction<VolumeHandle*>* clone() const;
@@ -63,7 +69,7 @@ public:
 /**
  * This class offers an interpolation function for volumehandles. Interpolation: bisection.
  */
-class VolumeHandleStartEndInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
+class VRN_CORE_API VolumeHandleStartEndInterpolationFunction : public InterpolationFunction<VolumeHandle*> {
 public:
     VolumeHandleStartEndInterpolationFunction();
     InterpolationFunction<VolumeHandle*>* clone() const;

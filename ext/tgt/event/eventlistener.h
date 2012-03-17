@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,15 +25,16 @@
 #ifndef TGT_EVENTLISTENER_H
 #define TGT_EVENTLISTENER_H
 
-#include "tgt/config.h"
-#include "tgt/event/event.h"
-#include "tgt/event/mouseevent.h"
-#include "tgt/event/timeevent.h"
-#include "tgt/event/keyevent.h"
+#include "tgt/types.h"
 
 namespace tgt {
 
-class EventListener {
+class Event;
+class KeyEvent;
+class MouseEvent;
+class TimeEvent;
+
+class TGT_API EventListener {
 public:
 	EventListener();
     virtual ~EventListener();

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,11 +34,15 @@
 
 #include "voreen/core/io/datvolumereader.h"
 #include "voreen/core/io/datvolumewriter.h"
-#include "voreen/modules/base/processors/datasource/volumesource.h"
 #include "voreen/core/properties/link/linkevaluatorfactory.h"
 #include "voreen/core/properties/filedialogproperty.h"  // needed for zip-export
 #include "voreen/core/animation/animatedprocessor.h"
-#include "tgt/ziparchive.h"
+
+#include "tgt/glcanvas.h"
+
+#ifdef VRN_MODULE_ZIP
+#include "modules/zip/io/ziparchive.h"
+#endif
 
 #ifdef WIN32
 #include <windows.h>
@@ -64,6 +68,7 @@ Workspace::Workspace(tgt::GLCanvas* sharedContext)
     , animation_(0)
     , filename_("")
     , readOnly_(false)
+    , description_("")
     , sharedContext_(sharedContext)
 {
 }
@@ -76,7 +81,7 @@ std::vector<std::string> Workspace::getErrors() const {
     return errorList_;
 }
 
-#ifndef VRN_WITH_ZLIB
+#ifndef VRN_MODULE_ZIP
 bool Workspace::exportToZipArchive(const std::string& /*exportName*/, bool /*overwrite*/)
     throw (SerializationException)
 {
@@ -109,7 +114,7 @@ bool Workspace::exportToZipArchive(const std::string& exportName, bool overwrite
     //
     std::vector<VolumeOrigin> previousOrigins;
     for (size_t i = 0; i < volumeContainer_->size(); ++i) {
-        VolumeHandle* handle = volumeContainer_->at(i);
+        VolumeHandleBase* handle = volumeContainer_->at(i);
         previousOrigins.push_back(handle->getOrigin());
 
         // Get the old file name, remove file extension if present and
@@ -164,7 +169,7 @@ bool Workspace::exportToZipArchive(const std::string& exportName, bool overwrite
     if (vwsfilename.empty())
         vwsfilename = "workspace.vws";
 
-    tgt::ZipArchive zip(exportName);
+    ZipArchive zip(exportName);
     size_t size = (stringStream.tellp() > 0) ? static_cast<size_t>(stringStream.tellp()) : 0;
     tgt::MemoryFile memFile(const_cast<char*>(data.c_str()), size, vwsfilename, false);
     bool result = zip.addFile(&memFile);
@@ -178,7 +183,7 @@ bool Workspace::exportToZipArchive(const std::string& exportName, bool overwrite
     std::vector<tgt::MemoryFile*> datFiles;
     std::vector<tgt::MemoryFile*> rawFiles;
     for (size_t i = 0; ((result == true) && (i < volumeContainer_->size())); ++i) {
-        VolumeHandle* handle = volumeContainer_->at(i);
+        VolumeHandleBase* handle = volumeContainer_->at(i);
 
         // get the file name only and remove file extension, if it is not
         // a .flow file, which need "special" treatment
@@ -191,9 +196,9 @@ bool Workspace::exportToZipArchive(const std::string& exportName, bool overwrite
             // Get information about the volume and a .dat file, as well as the
             // correct size of the volume data and a pointer to them
             //
-            char* rawData = 0;
-            size_t numBytesRaw = 0;
-            std::string datFileString = dvw.getDatFileString(handle, rawFileName, &rawData, numBytesRaw);
+            const char* rawData = static_cast<const char*>(handle->getRepresentation<Volume>()->getData());
+            size_t numBytesRaw = handle->getRepresentation<Volume>()->getNumBytes();
+            std::string datFileString = dvw.getDatFileString(handle, rawFileName);
 
             // Add the .dat file to the zip-archive as a memory-mapped file. The string needs to be
             // copied, because the memory file does not copy the passed data.
@@ -251,7 +256,7 @@ bool Workspace::exportToZipArchive(const std::string& exportName, bool overwrite
         volumeContainer_->at(i)->setOrigin(previousOrigins[i]);
 
     return result;
-#endif // VRN_WITH_ZLIB
+#endif // VRN_MODULE_ZIP
 }
 
 void Workspace::load(const std::string& filename)
@@ -261,7 +266,7 @@ void Workspace::load(const std::string& filename)
     std::fstream fileStream(filename.c_str(), std::ios_base::in);
     if (fileStream.fail()) {
         //LERROR("Failed to open file '" << tgt::FileSystem::absolutePath(filename) << "' for reading.");
-        throw SerializationException("Failed to open file '" + tgt::FileSystem::absolutePath(filename) + "' for reading.");
+        throw SerializationException("Failed to open workspace file '" + tgt::FileSystem::absolutePath(filename) + "' for reading.");
     }
 
     // read data stream into deserializer
@@ -272,11 +277,11 @@ void Workspace::load(const std::string& filename)
         d.read(fileStream, &ser);
     }
     catch (SerializationException& e) {
-        throw SerializationException("Failed to read serialization data stream from file '"
+        throw SerializationException("Failed to read serialization data stream from workspace file '"
                                      + filename + "': " + e.what());
     }
     catch (...) {
-        throw SerializationException("Failed to read serialization data stream from file '"
+        throw SerializationException("Failed to read serialization data stream from workspace file '"
                                      + filename + "' (unknown exception).");
     }
 
@@ -287,10 +292,10 @@ void Workspace::load(const std::string& filename)
         setFilename(filename);
     }
     catch (std::exception& e) {
-        throw SerializationException("Deserialization from file '" + filename + "' failed: " + e.what());
+        throw SerializationException("Deserialization from workspace file '" + filename + "' failed: " + e.what());
     }
     catch (...) {
-        throw SerializationException("Deserialization from file '" + filename + "' failed (unknown exception).");
+        throw SerializationException("Deserialization from workspace file '" + filename + "' failed (unknown exception).");
     }
 }
 
@@ -458,6 +463,8 @@ void Workspace::serialize(XmlSerializer& s) const {
 
     // Serialize animation...
     s.serialize("Animation", animation_);
+
+    s.serialize("GlobalDescription", description_);
 }
 
 void Workspace::deserialize(XmlDeserializer& s) {
@@ -504,6 +511,14 @@ void Workspace::deserialize(XmlDeserializer& s) {
         ProcessorNetwork* net = const_cast<ProcessorNetwork*>(network_);
         net->addObserver(this->animation_);
     }
+
+    try {
+        s.deserialize("GlobalDescription", description_);
+    }
+    catch (XmlSerializationNoSuchDataException&) {
+        s.removeLastError();
+        description_ = "";
+    }
 }
 
 Animation* Workspace::getAnimation() const {
@@ -512,6 +527,18 @@ Animation* Workspace::getAnimation() const {
 
 void Workspace::setAnimation(Animation* anim) {
     animation_ = anim;
+}
+
+const std::string& Workspace::getDescription() const {
+    return description_;
+}
+
+bool Workspace::hasDescription() const {
+    return !description_.empty();
+}
+
+void Workspace::setDescription(const std::string& description) {
+    description_ = description;
 }
 
 } // namespace

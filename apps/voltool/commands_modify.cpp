@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,8 +32,9 @@
 #include "voreen/core/datastructures/volume/volumecollection.h"
 #include "voreen/core/datastructures/volume/volumeatomic.h"
 #include "voreen/core/datastructures/volume/volumeoperator.h"
-#include "voreen/core/datastructures/volume/bricking/brickinginformation.h"
-#include "voreen/core/io/brickedvolumewriter.h"
+#include "voreen/core/datastructures/volume/operators/volumeoperatormirror.h"
+#include "voreen/core/datastructures/volume/operators/volumeoperatorresample.h"
+#include "voreen/core/datastructures/volume/operators/volumeoperatorsubset.h"
 
 #include "tgt/vector.h"
 
@@ -51,7 +52,7 @@ bool CommandCutToPieces::checkParameters(const std::vector<std::string>& paramet
 }
 
 bool CommandCutToPieces::execute(const std::vector<std::string>& parameters) {
-    tgt::ivec3 start, dimensions;
+    tgt::svec3 start, dimensions;
     dimensions.x = cast<int>(parameters[0]);
     dimensions.y = cast<int>(parameters[1]);
     dimensions.z = cast<int>(parameters[2]);
@@ -59,10 +60,10 @@ bool CommandCutToPieces::execute(const std::vector<std::string>& parameters) {
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[3]);
-    Volume* sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[3]);
+    const VolumeHandleBase* sourceDataset_ = volumeCollection->first();
 
-    int cx, cy, cz; // number of pieces in each dimension
+    size_t cx, cy, cz; // number of pieces in each dimension
     cx = sourceDataset_->getDimensions().x / dimensions.x;
     cy = sourceDataset_->getDimensions().y / dimensions.y;
     cz = sourceDataset_->getDimensions().z / dimensions.z;
@@ -76,10 +77,10 @@ bool CommandCutToPieces::execute(const std::vector<std::string>& parameters) {
     LINFO("Into " << cx << " * " << cy << " * " << cz << " = " << (cx * cy * cz) << " pieces with dimensions: " << dimensions);
 
     char string[500];
-    for (int x = 0; x < cx; x++) {
-        for (int y = 0; y < cy; y++) {
-            for (int z = 0; z < cz; z++) {
-                tgt::ivec3 dim = dimensions;
+    for (size_t x = 0; x < cx; x++) {
+        for (size_t y = 0; y < cy; y++) {
+            for (size_t z = 0; z < cz; z++) {
+                tgt::svec3 dim = dimensions;
                 start.x = dimensions.x * x;
                 start.y = dimensions.y * y;
                 start.z = dimensions.z * z;
@@ -91,13 +92,12 @@ bool CommandCutToPieces::execute(const std::vector<std::string>& parameters) {
                 if (start.z + dimensions.z > sourceDataset_->getDimensions().z)
                     dim.z = (sourceDataset_->getDimensions().z - start.z);
 
-                VolumeOperatorCreateSubset voCreateSubset(start, dim);
-                Volume* targetDataset_ = voCreateSubset.apply<Volume*>(sourceDataset_);
-                sprintf( string, "%s-%i-%i-%i", parameters.back().c_str(), x, y, z);
+                VolumeHandle* targetDataset_ = VolumeOperatorSubset::APPLY_OP(sourceDataset_, start, dim);
+                sprintf( string, "%s-%i-%i-%i", parameters.back().c_str(), (int)x, (int)y, (int)z);
 
-                serializer->save(string, targetDataset_);
+                serializer->write(string, targetDataset_);
                 //targetDataset_->save(string);
-                delete targetDataset_;
+                //delete targetDataset_;
             }
         }
     }
@@ -149,12 +149,11 @@ bool CommandScale::execute(const std::vector<std::string>& parameters) {
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[4]);
-    Volume* sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[4]);
+    const VolumeHandleBase* sourceDataset_ = volumeCollection->first();
 
-    VolumeOperatorResample voResample(dimensions, filter);
-    Volume* targetDataset_ = voResample.apply<Volume*>(sourceDataset_);
-    serializer->save(parameters.back(), targetDataset_);
+    VolumeHandle* targetDataset_ = VolumeOperatorResample::APPLY_OP(sourceDataset_, dimensions, filter);
+    serializer->write(parameters.back(), targetDataset_);
     delete sourceDataset_;
     delete targetDataset_;
     return true;
@@ -173,14 +172,12 @@ bool CommandMirrorZ::execute(const std::vector<std::string>& parameters) {
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[0]);
-    Volume* sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[0]);
+    const VolumeHandleBase* sourceDataset_ = volumeCollection->first();
 
-    Volume* targetDataset_ = sourceDataset_->clone();
-    VolumeOperatorMirrorZ mirrorZ;
-    mirrorZ.apply<void>(targetDataset_);
+    VolumeHandle* targetDataset_ = VolumeOperatorMirrorZ::APPLY_OP(sourceDataset_);
 
-    serializer->save(parameters.back(), targetDataset_);
+    serializer->write(parameters.back(), targetDataset_);
     delete targetDataset_;
     return true;
 }
@@ -211,180 +208,14 @@ bool CommandSubSet::execute(const std::vector<std::string>& parameters) {
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[6]);
-    Volume* sourceDataset_ = volumeCollection->first()->getVolume();;
+    VolumeCollection* volumeCollection = serializer->read(parameters[6]);
+    const VolumeHandleBase* sourceDataset_ = volumeCollection->first();
 
-    VolumeOperatorCreateSubset voCreateSubset(start, dimensions);
-    Volume* targetDataset_ = voCreateSubset.apply<Volume*>(sourceDataset_);
+    VolumeHandle* targetDataset_ = VolumeOperatorSubset::APPLY_OP(sourceDataset_, start, dimensions);
 
-    targetDataset_->setSpacing(sourceDataset_->getSpacing());
-    serializer->save(parameters.back(), targetDataset_);
+    serializer->write(parameters.back(), targetDataset_);
     delete targetDataset_;
     return true;
-}
-
-//-----------------------------------------------------------------------------
-
-CommandBrick::CommandBrick() :
-    Command("--brick", "", "Bricks the volume into bricks of size BRICKSIZE^3 and writes them into a single file.",
-        "<BRICKSIZE IN OUT>",3)
-{
-    loggerCat_ += "." + name_;
-}
-
-bool CommandBrick::checkParameters(const std::vector<std::string>& parameters) {
-    return (parameters.size() == 3);
-}
-
-bool CommandBrick::execute(const std::vector<std::string>& parameters) {
-
-    int bricksize = cast<int>(parameters[0]);
-
-    VolumeSerializerPopulator volLoadPop;
-    const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-
-    BrickingInformation brickingInformation;
-
-    brickingInformation.brickSize = bricksize;
-    brickingInformation.totalNumberOfResolutions = static_cast<int> ( ( log(
-            (float)bricksize) / log (2.0) ) + 1);
-
-    VolumeCollection* volumeCollection = 0;
-    Volume* volume;
-    bool readSliceWise = true;
-    try {
-        volumeCollection = serializer->loadSlices(parameters[1],0,bricksize);
-    } catch (std::exception e) {
-        readSliceWise = false;
-    }
-    if (readSliceWise == false) {
-        try {
-            volumeCollection = serializer->loadBrick(parameters[1],tgt::ivec3(0),bricksize);
-        } catch (std::exception e) {
-            LERROR(e.what() << "\nCouldn't read brick-wise or slice-wise.");
-            return false;
-        }
-    }
-
-    volume = volumeCollection->first()->getVolume();
-    getVolumeInformation(brickingInformation,volume);
-    delete volume;
-    volume = 0;
-
-    BrickedVolumeWriter* brickedVolumeWriter = new BrickedVolumeWriter(brickingInformation);
-    brickedVolumeWriter->openFile(parameters[2]);
-
-    //The volume might not fit into memory, therefore we only read enough slices to
-    //create some bricks, write those into the file and then delete them from memory.
-    //Then we read the next slices, create bricks, and so on.
-    if (readSliceWise == true) {
-        for (int i=0; i<brickingInformation.originalVolumeDimensions.z; i=i+bricksize) {
-            VolumeCollection* volumeCollection = 0;
-
-            try {
-                volumeCollection = serializer->loadSlices(parameters[1],i,i+bricksize);
-            } catch (std::exception e) {
-                LERROR(e.what());
-            }
-            Volume* volume = volumeCollection->first()->getVolume();
-
-            for (int j=0; j < brickingInformation.numBricks.y; j++) {
-                for (int k=0; k < brickingInformation.numBricks.x; k++) {
-                    int xpos,ypos,zpos;
-                    xpos=k*bricksize;
-                    ypos=j*bricksize;
-                    zpos=0;
-
-                    VolumeOperatorCreateSubset voCreateSubset(tgt::ivec3(xpos,ypos,zpos), tgt::ivec3(bricksize));
-                    Volume* subset = voCreateSubset.apply<Volume*>(volume);
-                    brickedVolumeWriter->writeVolume(new VolumeHandle(subset));
-                    delete subset;
-                }
-            }
-            std::stringstream msg;
-            msg << i+bricksize << " of " << brickingInformation.originalVolumeDimensions.z << " slices done.";
-            LINFO(msg.str());
-            delete volume;
-        }
-    } else {
-        //We don't even have enough RAM to read enough slices, so we read single bricks.
-        //This is very very very slow, but there is nothing we can do if the volumes are just
-        //too big.
-        for (int i=0; i<brickingInformation.numBricks.z; i++) {
-            for (int j=0; j < brickingInformation.numBricks.y; j++) {
-                for (int k=0; k < brickingInformation.numBricks.x; k++) {
-                    VolumeCollection* volumeCollection = 0;
-
-                    try {
-                        volumeCollection = serializer->loadBrick(parameters[1],tgt::ivec3(k,j,i), bricksize);
-                    } catch (std::exception e) {
-                        LERROR(e.what());
-                    }
-                    Volume* volume = volumeCollection->first()->getVolume();
-                    brickedVolumeWriter->writeVolume(new VolumeHandle(volume));
-                    delete volume;
-                }
-            }
-        }
-    }
-
-    brickedVolumeWriter->writeBviFile();
-    brickedVolumeWriter->closeFile();
-    return true;
-}
-
-void CommandBrick::getVolumeInformation(BrickingInformation &brickingInformation, Volume* volume) {
-
-    if (dynamic_cast<VolumeUInt8*>(volume)) {
-        brickingInformation.originalVolumeFormat = "UCHAR";
-        brickingInformation.originalVolumeModel = "I";
-    } else if (dynamic_cast<VolumeUInt16*>(volume)) {
-        brickingInformation.originalVolumeFormat = "USHORT";
-        brickingInformation.originalVolumeModel = "I";
-    } else if (dynamic_cast<VolumeFloat*>(volume)) {
-        brickingInformation.originalVolumeFormat = "FLOAT";
-        brickingInformation.originalVolumeModel = "I";
-    } else if (dynamic_cast<Volume4xUInt8*>(volume)) {
-        brickingInformation.originalVolumeFormat = "UCHAR";
-        brickingInformation.originalVolumeModel = "RGBA";
-    } else if (dynamic_cast<Volume4xUInt16*>(volume)) {
-        brickingInformation.originalVolumeFormat = "USHORT";
-        brickingInformation.originalVolumeModel = "RGBA";
-    } else if (dynamic_cast<Volume3xUInt8*>(volume)) {
-        brickingInformation.originalVolumeFormat = "UCHAR";
-        brickingInformation.originalVolumeModel = "RGB";
-    } else if (dynamic_cast<Volume3xUInt16*>(volume)) {
-        brickingInformation.originalVolumeFormat = "USHORT";
-        brickingInformation.originalVolumeModel = "RGB";
-    }
-    brickingInformation.originalVolumeDimensions = volume->meta().getParentVolumeDimensions();
-    brickingInformation.originalVolumeSpacing = volume->getSpacing();
-    brickingInformation.originalVolumeBitsStored = volume->getBitsStored();
-    brickingInformation.originalVolumeBytesAllocated = volume->getBitsAllocated()/8;
-
-    tgt::ivec3 numbricks;
-    numbricks.x = static_cast<int>(
-        ceil( (float)brickingInformation.originalVolumeDimensions.x / (float)brickingInformation.brickSize));
-    numbricks.y = static_cast<int>(
-        ceil( (float)brickingInformation.originalVolumeDimensions.y / (float)brickingInformation.brickSize));
-    numbricks.z = static_cast<int>(
-        ceil( (float)brickingInformation.originalVolumeDimensions.z / (float)brickingInformation.brickSize));
-
-    brickingInformation.totalNumberOfBricksNeeded = numbricks.x * numbricks.y * numbricks.z;
-
-    brickingInformation.numBricks = numbricks;
-
-
-    tgt::vec3 cubeSize = tgt::vec3(numbricks*brickingInformation.brickSize) *
-                                brickingInformation.originalVolumeSpacing;
-
-    cubeSize = cubeSize * 2.f / max(cubeSize);
-    tgt::vec3 urb = cubeSize / 2.f;
-    tgt::vec3 llf = -urb;
-
-    brickingInformation.originalVolumeLLF = llf;
-    brickingInformation.originalVolumeURB = urb;
-    brickingInformation.numberOfBricksWithEmptyVolumes = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -407,17 +238,17 @@ bool CommandScaleTexCoords::execute(const std::vector<std::string>& parameters) 
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection= serializer->load(parameters[3]);
-    Volume* sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection= serializer->read(parameters[3]);
+    const Volume* sourceDataset_ = volumeCollection->first()->getRepresentation<Volume>();
 
-    Volume4xUInt8* source = dynamic_cast<Volume4xUInt8*>(sourceDataset_);
+    const Volume4xUInt8* source = dynamic_cast<const Volume4xUInt8*>(sourceDataset_);
 
     LINFO("resampling with sampledimensions from " << source->getDimensions() << " to " << newDims);
 
     // build target volume
     Volume4xUInt8* v;
     try {
-         v = new Volume4xUInt8(newDims, source->getSpacing());
+         v = new Volume4xUInt8(newDims);
     }
     catch (std::bad_alloc) {
         throw; // throw it to the caller
@@ -440,7 +271,7 @@ bool CommandScaleTexCoords::execute(const std::vector<std::string>& parameters) 
                     tgt::vec3 p = nearest - floor(nearest); // get decimal part
                     tgt::ivec3 llb = tgt::ivec3(nearest);
                     tgt::ivec3 urf = tgt::ivec3(ceil(nearest));
-                    urf = tgt::min(urf, source->getDimensions() - 1); // clamp so the lookups do not exceed the dimensions
+                    urf = tgt::min(urf, tgt::ivec3(source->getDimensions()) - 1); // clamp so the lookups do not exceed the dimensions
 
                     //calculate target segment:
                     double segments[256];
@@ -511,10 +342,10 @@ bool CommandScaleTexCoords::execute(const std::vector<std::string>& parameters) 
                 }
             }
         }
-
-    serializer->save(parameters.back(), v);
+    VolumeHandle h(v, volumeCollection->first());
+    serializer->write(parameters.back(), &h);
     delete sourceDataset_;
-    delete v;
+    //delete v;
     return true;
 }
 

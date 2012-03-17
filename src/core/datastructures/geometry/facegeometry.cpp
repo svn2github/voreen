@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,16 +26,19 @@
  *                                                                    *
  **********************************************************************/
 
-#include <map>
+#include "voreen/core/datastructures/geometry/facegeometry.h"
 
+#include <map>
 #include "tgt/glmath.h"
 
-#include "voreen/core/datastructures/geometry/facegeometry.h"
+#include "voreen/core/io/serialization/xmlserializer.h"
+#include "voreen/core/io/serialization/xmldeserializer.h"
 
 namespace voreen {
 
 FaceGeometry::FaceGeometry()
     : Geometry()
+    , normalIsSet_(false)
 {
 }
 
@@ -61,8 +64,17 @@ VertexGeometry& FaceGeometry::getVertex(size_t index) {
     return vertices_.at(index);
 }
 
+
+void FaceGeometry::setFaceNormal(const tgt::vec3& normal) {
+    normalIsSet_ = true;
+    normal_ = normal;
+
+    setHasChanged(true);
+}
+
 void FaceGeometry::clear() {
     vertices_.clear();
+    normalIsSet_ = false;
 
     setHasChanged(true);
 }
@@ -87,11 +99,17 @@ VertexGeometry& FaceGeometry::operator[](size_t index) {
     return vertices_[index];
 }
 
-void FaceGeometry::render() {
+void FaceGeometry::render() const {
     glBegin(GL_POLYGON);
-    for (iterator it = begin(); it != end(); ++it) {
+    for (const_iterator it = begin(); it != end(); it++) {
         glColor4fv(it->getColor().elem);
         tgt::texCoord(it->getTexCoords());
+
+        if (normalIsSet_)
+            tgt::normal(normal_);
+        else if (it->isNormalDefined())
+            tgt::normal(it->getNormal());
+
         tgt::vertex(it->getCoords());
     }
     glEnd();
@@ -158,5 +176,31 @@ void FaceGeometry::clip(const tgt::vec4& clipplane, double epsilon) {
     setHasChanged(true);
 }
 
+void FaceGeometry::serialize(XmlSerializer& s) const {
+    s.serialize("vertices", vertices_);
+    if (normalIsSet_)
+        s.serialize("normal", normal_);
+}
+
+void FaceGeometry::deserialize(XmlDeserializer& s) {
+    s.deserialize("vertices", vertices_);
+    try {
+        s.deserialize("normal", normal_);
+        normalIsSet_ = true;
+    }
+    catch (...) {
+        s.removeLastError();
+        normalIsSet_ = false;
+    }
+    setHasChanged(true);
+}
+
+bool FaceGeometry::operator==(const FaceGeometry& rhs) const {
+    return (this->getVertexCount() == rhs.getVertexCount());
+}
+
+bool FaceGeometry::operator!=(const FaceGeometry& rhs) const {
+    return !(*this == rhs);
+}
 
 } // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -46,7 +46,7 @@ namespace voreen {
  * its input to the associated canvas and to issue canvas updates on invalidations.
  * Additionally, the CanvasRenderer can take snapshots of arbitrary dimensions.
  */
-class CanvasRenderer : public RenderProcessor {
+class VRN_CORE_API CanvasRenderer : public RenderProcessor {
 public:
     CanvasRenderer();
     ~CanvasRenderer();
@@ -55,12 +55,17 @@ public:
     virtual std::string getCategory() const     { return "View"; }
     virtual CodeState getCodeState() const      { return CODE_STATE_STABLE; }
 
-    virtual std::string getProcessorInfo() const;
     virtual Processor* create() const;
 
     virtual void invalidate(int inv = INVALID_RESULT);
     virtual bool isEndProcessor() const;
     virtual bool isReady() const;
+
+    /**
+     * A CanvasRenderer is never valid, since it has fill its
+     * canvas in any case.
+     */
+    virtual bool isValid() const;
 
     /**
      * Assigns a canvas object to the CanvasRenderer. The CanvasRenderer
@@ -162,8 +167,8 @@ public:
 
 protected:
     virtual void process();
-    virtual void initialize() throw (VoreenException);
-    virtual void deinitialize() throw (VoreenException);
+    virtual void initialize() throw (tgt::Exception);
+    virtual void deinitialize() throw (tgt::Exception);
 
     /**
      * Writes the rendering currently held by the inport to an

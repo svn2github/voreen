@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,14 +33,21 @@
 
 namespace voreen {
 
-class StringProperty : public TemplateProperty<std::string> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API TemplateProperty<std::string>;
+#endif
+
+class VRN_CORE_API StringProperty : public TemplateProperty<std::string> {
 public:
     StringProperty(const std::string& id, const std::string& guiText, const std::string& value = "",
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    StringProperty();
     virtual ~StringProperty() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "StringProperty"; }
+    virtual std::string getTypeDescription() const { return "String"; }
 
     /**
      * @see Property::serialize
@@ -52,8 +59,9 @@ public:
      */
     virtual void deserialize(XmlDeserializer& s);
 
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
-    virtual std::string toString() const { return value_; }
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 }

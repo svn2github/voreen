@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,7 +25,6 @@
 #include "tgt/filesystem.h"
 
 #include "tgt/types.h"
-#include "tgt/ziparchive.h"
 
 #include <algorithm>
 #include <string>
@@ -188,7 +187,7 @@ RegularFile::RegularFile(const std::string& filename)
     file_.open(filename.c_str(), std::ios::binary);
 
     if (!file_) {
-        LERROR("Cannot open file: " << filename);
+        LDEBUG("Cannot open file: " << filename);
         return;
     }
 
@@ -212,15 +211,15 @@ size_t RegularFile::read(void* buf, size_t count) {
         return 0;
 
     file_.read(static_cast<char*>(buf), count);
-    return file_.gcount();
+    return static_cast<size_t>(file_.gcount());
 }
 
-void RegularFile::skip(long count) {
+void RegularFile::skip(size_t count) {
     if (isOpen())
         file_.seekg(count, std::ios::cur);
 }
 
-void RegularFile::seek(size_t pos) {
+void RegularFile::seek(std::streamoff pos) {
     if (isOpen())
         file_.seekg(pos);
 }
@@ -274,7 +273,7 @@ bool RegularFile::good() {
 
 //-----------------------------------------------------------------------------
 
-MemoryFile::MemoryFile(char* data, size_t size, const std::string& filename, bool deleteData)
+MemoryFile::MemoryFile(const char* data, size_t size, const std::string& filename, bool deleteData)
   : File(filename),
   data_(data),
   pos_(0),
@@ -308,14 +307,14 @@ size_t MemoryFile::read(void* buf, size_t count) {
     }
 }
 
-void MemoryFile::skip(long count) {
+void MemoryFile::skip(size_t count) {
     pos_ += count;
     if (pos_ >= size_)
         pos_ = size_ - 1;
 }
 
-void MemoryFile::seek(size_t pos) {
-    pos_ = pos;
+void MemoryFile::seek(std::streamoff pos) {
+    pos_ = static_cast<size_t>(pos);
     if (pos_ >= size_)
         pos_ = size_ - 1;
 }
@@ -416,7 +415,7 @@ size_t TarFile::read(void* buf, size_t count) {
     return count;
 }
 
-void TarFile::skip(long count) {
+void TarFile::skip(size_t count) {
     if (tell() + count > size_)
         count = size_ - tell();
 
@@ -424,7 +423,7 @@ void TarFile::skip(long count) {
         file_->seek(count, File::CURRENT);
 }
 
-void TarFile::seek(size_t pos) {
+void TarFile::seek(std::streamoff pos) {
     if (file_)
         file_->seek(offset_ + pos);
 }
@@ -574,29 +573,6 @@ std::vector<std::string> TarFileFactory::getFilenames() {
     return files;
 }
 
-//-----------------------------------------------------------------------------
-
-const std::string ZipFileFactory::loggerCat_("tgt.FileSystem.ZipFileFactory");
-
-ZipFileFactory::ZipFileFactory(const std::string& filename, const std::string& /*rootpath*/)
-    : archive_(new ZipArchive(filename))
-{
-}
-
-ZipFileFactory::~ZipFileFactory() {
-    delete archive_;
-}
-
-File* ZipFileFactory::open(const std::string& filename) {
-    if ((archive_->archiveExists() == true) && (archive_->open() == true))
-        return archive_->extractFile(filename, ZipArchive::TARGET_MEMORY);
-    else
-        return 0;
-}
-
-std::vector<std::string> ZipFileFactory::getFilenames() {
-    return archive_->getContainedFileNames();
-}
 
 //-----------------------------------------------------------------------------
 
@@ -608,6 +584,8 @@ const char FileSystem::badSlash_ = '/';
 const char FileSystem::goodSlash_ = '/';
 const char FileSystem::badSlash_ = '\\';
 #endif
+    
+SINGLETON_CLASS_SOURCE(FileSystem)
 
 FileSystem::FileSystem() {
 }
@@ -671,17 +649,7 @@ void FileSystem::addPackage(const std::string& filename, const std::string& root
 	LDEBUG("root path: " << rootpath);
 
     //TODO: do something like TextureReader in TexMgr...
-    std::string::size_type loc = filename.find(".zip", 0);
-	if (loc != std::string::npos) {
-		LDEBUG("Recognized zip file");
-        addFactory(new ZipFileFactory(filename, rootpath));
-	}
-    loc = filename.find(".3dp", 0);
-	if (loc != std::string::npos) {
-        LDEBUG("Recognized 3dp file");
-		addFactory(new ZipFileFactory(filename, rootpath));
-	}
-    loc = filename.find(".tar", 0);
+    std::string::size_type loc = filename.find(".tar", 0);
 	if (loc != std::string::npos) {
 		LDEBUG("Recognized tar file");
         addFactory(new TarFileFactory(filename, rootpath));
@@ -796,6 +764,10 @@ std::string FileSystem::relativePath(const std::string& path, const std::string&
     string abspath = cleanupPath(absolutePath(path)) + "/";
     string absdir = cleanupPath(absolutePath(dir)) + "/";
 
+    // if both directories are the same we return an empty relative path
+    if (abspath.compare(absdir) == 0)
+        return "";
+
     /*
     // catch differing DOS-style drive names
     if (abspath.size() < 1 || abspath.size() < 1 || abspath[0] != absdir[0]) {
@@ -811,7 +783,7 @@ std::string FileSystem::relativePath(const std::string& path, const std::string&
     // find common part in path and dir string
     string::size_type pospath = abspath.find_first_of(PATH_SEPARATORS);
     string::size_type posdir = absdir.find_first_of(PATH_SEPARATORS);
-    int i = 0;
+    size_t i = 0;
     while (abspath.compare(0, pospath, absdir, 0, posdir) == 0) {
         i = pospath;
         pospath = abspath.find_first_of(PATH_SEPARATORS, pospath + 1);
@@ -844,6 +816,25 @@ string FileSystem::fileName(const string& filepath) {
         return filepath;    
 }
 
+string FileSystem::baseName(const string& filepath) {
+    string filename = fileName(filepath);
+    string::size_type dot = filename.rfind(".");
+
+    if (dot != string::npos)
+        return filename.substr(0, dot);
+    else
+        return filename;
+}
+
+string FileSystem::fullBaseName(const string& filepath) {
+    string::size_type dot = filepath.rfind(".");
+
+    if (dot != string::npos)
+        return filepath.substr(0, dot);
+    else
+        return filepath;
+}
+
 string FileSystem::dirName(const std::string& filepath) {
     string::size_type separator = filepath.find_last_of("/\\");
     if (separator != string::npos)
@@ -852,6 +843,10 @@ string FileSystem::dirName(const std::string& filepath) {
         return "";
 }
 
+std::string FileSystem::parentDir(const std::string& dir) {
+    std::string curDir = cleanupPath(dir);
+    return dirName(curDir);
+}
 
 string FileSystem::fileExtension(const string& path, bool lowercase) {
     string filename = fileName(path);
@@ -928,6 +923,18 @@ bool FileSystem::createDirectory(const std::string& directory) {
 #endif    
 }
 
+bool FileSystem::createDirectoryRecursive(const std::string& directory) {
+    if(dirExists(directory))
+        return true;
+    else {
+        if(createDirectoryRecursive(parentDir(directory))) {
+            return createDirectory(directory);
+        }
+        else
+            return false;
+    }
+}
+
 bool FileSystem::deleteDirectory(const std::string& directory) {
     if (directory.empty())
         return false;
@@ -939,6 +946,32 @@ bool FileSystem::deleteDirectory(const std::string& directory) {
 #else
     return (rmdir(converted.c_str()) == 0);
 #endif
+}
+
+bool FileSystem::deleteDirectoryRecursive(const std::string& directory) {
+    if (directory.empty())
+        return false;
+
+    std::string converted = replaceAllCharacters(directory, badSlash_, goodSlash_);
+    removeTrailingCharacters(converted, goodSlash_);
+
+    bool success = true;
+
+    //recursively delete all subdirectories
+    std::vector<std::string> subDirs = listSubDirectories(converted);
+    for(size_t i=0; i<subDirs.size(); i++) {
+        success &= deleteDirectoryRecursive(converted + goodSlash_ + subDirs[i]);
+    }
+    //delete all files
+    std::vector<std::string> files = listFiles(converted);
+    for(size_t i=0; i<files.size(); i++) {
+        success &= deleteFile(converted + goodSlash_ + files[i]);
+    }
+
+    //delete directory itself
+    success &= deleteDirectory(converted);
+
+    return success;
 }
 
 bool FileSystem::deleteFile(const std::string& filename) {
@@ -1003,11 +1036,16 @@ bool FileSystem::dirExists(const string& dirpath) {
 #endif
 }
 
-#ifdef _WIN32
-
 std::vector<std::string> FileSystem::readDirectory(const std::string& directory, const bool sort,
-                                                   const bool recursiveSearch)
-{
+                                                   const bool recursiveSearch) {
+    if(recursiveSearch)
+        return listFilesRecursive(directory, sort);
+    else
+        return listFiles(directory, sort);
+}
+
+#ifdef _WIN32
+std::vector<std::string> FileSystem::listFiles(const std::string& directory, const bool sort) {
     std::vector<std::string> result;
     if (directory.empty())
         return result;
@@ -1020,32 +1058,17 @@ std::vector<std::string> FileSystem::readDirectory(const std::string& directory,
 
     std::stack<std::string> stackDirs;
     std::string dir(converted + "\\*");
-    std::string subdir("");
 
-    do {
-        if (!stackDirs.empty()) {
-            subdir = stackDirs.top();
-            stackDirs.pop();
-            dir = converted + "\\" + subdir + "\\*";
-        }
-
-        hFind = FindFirstFile(dir.c_str(), &findFileData);
-        if (hFind != INVALID_HANDLE_VALUE) {
-            do {
-                std::string file(findFileData.cFileName);
-                if (! (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-                    if (!subdir.empty())
-                        result.push_back(std::string("/" + subdir + "/" + file));
-                    else
-                        result.push_back(file);
-                } else if (recursiveSearch) {
-                    if ((file != ".") && (file != ".."))
-                        stackDirs.push(file);
-                }
-            } while (FindNextFile(hFind, &findFileData) != 0);
-        }
-        FindClose(hFind);
-    } while (!stackDirs.empty());
+    hFind = FindFirstFile(dir.c_str(), &findFileData);
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            std::string file(findFileData.cFileName);
+            if (! (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+                    result.push_back(file);
+            }
+        } while (FindNextFile(hFind, &findFileData) != 0);
+    }
+    FindClose(hFind);
 
     if (sort)
         std::sort(result.begin(), result.end());
@@ -1053,27 +1076,20 @@ std::vector<std::string> FileSystem::readDirectory(const std::string& directory,
     return result;
 }
 #else
-
-std::vector<std::string> FileSystem::readDirectory(const std::string& directory, const bool sort,
-                                                   const bool recursiveSearch) {
+std::vector<std::string> FileSystem::listFiles(const std::string& directory, const bool sort) {
     std::vector<std::string> result;
-
-    if (recursiveSearch) {
-        LWARNING("FileSystem::readDirectory(): recursive search not supported on Unix");
-    }
 
     // POSIX directory listing
     DIR *dir;
     struct dirent *ent;
-    if ((dir = opendir(directory.c_str())) == NULL) {
-        LERROR("Can't list directory: " << directory);
-        return result;
-    }
-    std::string name;
-    while ((ent = readdir(dir))) {
-        name = ent->d_name;
-        if ((ent->d_type != DT_DIR) && (name != ".") && (name != "..")) {
-            result.push_back(ent->d_name);
+    if ((dir= opendir(directory.c_str())) != NULL) {
+        std::string name;
+        while ((ent = readdir(dir))) {
+            name = ent->d_name;
+            if ((name != ".") && (name != "..")) {
+                if(ent->d_type != DT_DIR) 
+                    result.push_back(ent->d_name);
+            }
         }
     }
     closedir(dir);
@@ -1083,7 +1099,107 @@ std::vector<std::string> FileSystem::readDirectory(const std::string& directory,
 
     return result;
 }
+#endif
 
-#endif // WIN32
+std::vector<std::string> FileSystem::listFilesRecursive(const std::string& directory, const bool sort) {
+    std::vector<std::string> result;
+    if (directory.empty())
+        return result;
+
+    result = listFiles(directory, false);
+
+    std::vector<std::string> subDirs = listSubDirectories(directory, false);
+    for(size_t i=0; i<subDirs.size(); i++) {
+        std::vector<std::string> files = listFilesRecursive(directory + "/" + subDirs[i], false);
+        for(size_t j=0; j<files.size(); j++) {
+            result.push_back(subDirs[i] + "/" +files[j]);
+        }
+    }
+
+    if (sort)
+        std::sort(result.begin(), result.end());
+
+    return result;
+}
+
+#ifdef _WIN32
+std::vector<std::string> FileSystem::listSubDirectories(const std::string& directory, const bool sort) {
+    std::vector<std::string> result;
+    if (directory.empty())
+        return result;
+
+    std::string converted = replaceAllCharacters(directory, badSlash_, goodSlash_);
+    removeTrailingCharacters(converted, goodSlash_);
+
+    WIN32_FIND_DATA findFileData = {0};
+    HANDLE hFind = 0;
+
+    std::stack<std::string> stackDirs;
+    std::string dir(converted + "\\*");
+
+    hFind = FindFirstFile(dir.c_str(), &findFileData);
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            std::string file(findFileData.cFileName);
+            if ((file != ".") && (file != "..")) {
+                if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                        result.push_back(file);
+                }
+            }
+        } while (FindNextFile(hFind, &findFileData) != 0);
+    }
+    FindClose(hFind);
+
+    if (sort)
+        std::sort(result.begin(), result.end());
+
+    return result;
+}
+#else
+std::vector<std::string> FileSystem::listSubDirectories(const std::string& directory, const bool sort) {
+    std::vector<std::string> result;
+
+    // POSIX directory listing
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir= opendir(directory.c_str())) != NULL) {
+        std::string name;
+        while ((ent = readdir(dir))) {
+            name = ent->d_name;
+            if ((name != ".") && (name != "..")) {
+                if(ent->d_type == DT_DIR) 
+                    result.push_back(ent->d_name);
+            }
+        }
+    }
+    closedir(dir);
+
+    if (sort)
+        std::sort(result.begin(), result.end());
+
+    return result;
+}
+#endif
+
+std::vector<std::string> FileSystem::listSubDirectoriesRecursive(const std::string& directory, const bool sort) {
+    std::vector<std::string> result;
+    if (directory.empty())
+        return result;
+
+    result = listSubDirectories(directory, false);
+
+    std::vector<std::string> subDirs = result;
+    for(size_t i=0; i<subDirs.size(); i++) {
+        std::vector<std::string> dirs = listSubDirectoriesRecursive(directory + "/" + subDirs[i], false);
+        for(size_t j=0; j<dirs.size(); j++) {
+            result.push_back(subDirs[i] + "/" + dirs[j]);
+        }
+    }
+
+    if (sort)
+        std::sort(result.begin(), result.end());
+
+    return result;
+}
 
 } // namespace

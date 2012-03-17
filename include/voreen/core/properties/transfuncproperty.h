@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,21 +31,25 @@
 
 #include "voreen/core/properties/templateproperty.h"
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/utils/observer.h"
+#include "voreen/core/datastructures/transfunc/transfunc.h"
 #include "voreen/core/datastructures/volume/volumehandle.h"
 
 namespace voreen {
 
-class TransFunc;
 class VolumeHandle;
 class Volume;
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API TemplateProperty<TransFunc*>;
+#endif
 /**
  * Property for transfer functions. The widget for this property contains several editors
  * to modify the transfer function. You can change the shown editors via the constructor or
  * by calling enableEditor() or disableEditor().
  */
-class TransFuncProperty : public TemplateProperty<TransFunc*> {
+class VRN_CORE_API TransFuncProperty : public TemplateProperty<TransFunc*> {
 public:
 
     ///< enum for all editors that can be used in the widget for this property
@@ -73,11 +77,18 @@ public:
      */
     TransFuncProperty(const std::string& ident, const std::string& guiText,
         Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT,
-        Editors editors = ALL, bool lazyEditorInstantiation = true);
-
+        Editors editors = Editors(INTENSITY | INTENSITY_GRADIENT), bool lazyEditorInstantiation = true);
+    TransFuncProperty();
     virtual ~TransFuncProperty();
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "TransFuncProperty"; }
+    virtual std::string getTypeDescription() const { return "TransferFunction"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 
     /**
      * Enables the given editor in the widget for the property. Must be called before creation
@@ -120,14 +131,14 @@ public:
      *
      * @param handle volumehandle that should be assigned to this property
      */
-    void setVolumeHandle(VolumeHandle* handle);
+    void setVolumeHandle(const VolumeHandleBase* handle);
 
     /**
      * Returns the volume handle that is assigned to this property.
      *
      * @return volume handle that is associated with this property
      */
-    VolumeHandle* getVolumeHandle() const;
+    const VolumeHandleBase* getVolumeHandle() const;
 
     /**
      * Executes all member actions that belong to the property. Generally the owner of the
@@ -146,14 +157,6 @@ public:
     virtual void deserialize(XmlDeserializer& s);
 
     /**
-     * Creates a widget for the transfer function property using the given factory.
-     *
-     * @param f the factory that is used to create a widget for the transfer function property
-     * @return widget that was created for the property
-     */
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
-
-    /**
      * Returns whether the transfer function editor of this property should be instantiated on
      * construction of the property widget or when the user is first accessing it (lazy)
      */
@@ -166,16 +169,16 @@ protected:
      *
      * @see Property::initialize
      */
-    void initialize() throw (VoreenException);
+    void initialize() throw (tgt::Exception);
 
     /**
      * Deletes the stored transfer function.
      *
      * @see Property::deinitialize
      */
-    void deinitialize() throw (VoreenException);
+    void deinitialize() throw (tgt::Exception);
 
-    VolumeHandle* volumeHandle_; ///< volumehandle that is associated with the transfer function property
+    const VolumeHandleBase* volumeHandle_; ///< volumehandle that is associated with the transfer function property
 
     int editors_; ///< number that indicates what editors will appear in the tf widget
 

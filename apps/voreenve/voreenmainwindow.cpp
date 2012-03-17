@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,15 +28,13 @@
 
 #ifdef VRN_MODULE_PYTHON
 // Must come first!
-#include "voreen/modules/python/pythonmodule.h"
-#include "voreen/modules/python/qt/pythoneditor.h"
+#include "modules/python/pythonmodule.h"
 #endif
 
 #include "voreenmainwindow.h"
 
 #include "tgt/gpucapabilities.h"
 #include "tgt/filesystem.h"
-#include "tgt/ziparchive.h"
 #include "tgt/qt/qtcanvas.h"
 
 #include "voreen/core/processors/processor.h"
@@ -54,28 +52,37 @@
 
 #include "voreen/qt/widgets/consoleplugin.h"
 #include "voreen/qt/widgets/inputmappingdialog.h"
+#include "voreen/qt/widgets/propertystatewidget.h"
 #include "voreen/qt/widgets/rendertargetviewer.h"
+#include "voreen/qt/widgets/snapshotwidget.h"
 #include "voreen/qt/widgets/volumecontainerwidget.h"
+#include "settingsdialog.h"
 #include "voreen/qt/widgets/voreentoolwindow.h"
 #include "voreen/qt/widgets/animation/animationeditor.h"
-#include "voreen/qt/widgets/processor/qprocessorwidgetfactory.h"
 #include "voreen/qt/widgets/processor/canvasrendererwidget.h"
-
+#include "voreen/qt/widgets/performancerecordwidget.h"
 #include "voreen/qt/widgets/processorlistwidget.h"
 #include "voreen/qt/widgets/propertylistwidget.h"
 #include "networkeditor/networkeditor.h"
 
 #include "voreen/core/voreenapplication.h"
 #include "voreen/qt/voreenapplicationqt.h"
+#include "voreenveapplication.h"
+#include "voreenveplugin.h"
+#include "voreenmoduleve.h"
+#include "startupscreen.h"
 #include "voreen/core/version.h"
+#include "voreen/core/utils/stringconversion.h"
 
 #include <QDesktopServices>
+#include <QLabel>
+#include <QPropertyAnimation>
 
 namespace voreen {
 
 namespace {
 
-const int MAX_RECENT_FILES = 8;
+const int MAX_RECENT_FILES = 10;
 
 // Version number of restoring state of the main window.
 // Increase when incompatible changes happen.
@@ -86,34 +93,37 @@ const int WINDOW_STATE_VERSION = 14;  // V2.6.1
 ////////// VoreenSplashScreen //////////////////////////////////////////////////////////
 
 VoreenSplashScreen::VoreenSplashScreen()
-    : QSplashScreen()
+    : QWidget(0, Qt::WindowStaysOnTopHint | Qt::ToolTip)
 {
-    pixmap_ = new QPixmap(":/voreenve/image/splash.png");
-    setPixmap(*pixmap_);
-    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-}
+    setWindowModality(Qt::ApplicationModal);
 
-VoreenSplashScreen::~VoreenSplashScreen() {
-    delete pixmap_;
-}
+    QPixmap pm = QPixmap(":/voreenve/image/splash.png");
+    qreal screenWidth = QApplication::desktop()->screenGeometry().width();
+    qreal screenHeight = QApplication::desktop()->screenGeometry().height();
 
-void VoreenSplashScreen::drawContents(QPainter* painter) {
-    painter->setPen(Qt::white);
-    QRect r = rect();
+    move(screenWidth / 2.f - pm.size().width() / 2.f, screenHeight / 2.f - pm.size().height());
+    layout_ = new QVBoxLayout(this);
+    layout_->setMargin(0);
+    layout_->setSpacing(0);
 
-    r.setRect(r.x() + 21, r.y() + 95, r.width() - 10, r.height() - 10);
-    std::string version = "Version " + VoreenVersion::getVersion();
-    painter->drawText(r, Qt::AlignLeft, version.c_str());
+    pixmap_ = new QLabel;
+    pixmap_->setPixmap(pm);
+    layout_->addWidget(pixmap_);
+    
+    QString version = QString::fromStdString("<font color='white'>Version " + VoreenVersion::getVersion() + "</font>");
+    version_ = new QLabel(version, this);
+    version_->move(21, 85);
 
-    r = rect();
-    //r.setRect(r.x() + 116, r.y(), r.x() + 300, r.height() - 13);
-    r.setRect(r.x() + 3, r.y(), r.x() + 300, r.height() - 2);
-    painter->drawText(r, Qt::AlignLeft | Qt::AlignBottom, message_);
+    message_ = new QLabel(this);
+    message_->move(5, 255);
 }
 
 void VoreenSplashScreen::showMessage(const QString& message) {
-    message_ = message;
-    QSplashScreen::showMessage(message);
+    message_->setText("<font color='white'>" + message + "</font>");
+}
+
+QPoint VoreenSplashScreen::getPixmapPosition() const {
+    return mapToGlobal(pixmap_->pos());
 }
 
 ////////// VoreenMdiSubWindow //////////////////////////////////////////////////////////
@@ -183,7 +193,7 @@ bool VoreenMdiSubWindow::restoreGeometry(const QByteArray& geometry) {
         restoredNormalGeometry = QRect(QPoint(0, frameHeight), sizeHint());
 
     if (maximized) {
-        // set geomerty before setting the window state to make
+        // set geometry before setting the window state to make
         // sure the window is maximized to the right screen.
         setGeometry(restoredNormalGeometry);
         Qt::WindowStates ws = windowState();
@@ -224,36 +234,66 @@ protected:
 
 } // namespace
 
-VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::string& dataset, bool resetSettings)
+const std::string VoreenMainWindow::loggerCat_("voreenve.VoreenMainWindow");
+
+VoreenMainWindow::VoreenMainWindow(const std::string& workspace, bool resetSettings)
     : QMainWindow()
-    , guiMode_(MODE_NONE)
+    , networkEditorWindow_(0)
+    , networkEditorWidget_(0)
+    , processorListWidget_(0)
+    , propertyListWidget_(0)
+    , volumeContainerWidget_(0)
+    , consolePlugin_(0)
+    , inputMappingDialog_(0)
     , animationEditor_(0)
-    , resetSettings_(resetSettings)
+    , renderTargetViewer_(0)
+    , propertyStateWidget_(0)
+    , performanceRecordWidget_(0)
+    , snapshotWidget_(0)
+    , guiMode_(MODE_NONE)
     , canvasPos_(0, 0)
     , canvasSize_(0, 0)
+    , errorMessageDialog_(0)
 {
-
 
     setDockOptions(QMainWindow::AnimatedDocks); // disallow tabbed docks
 
-    // initialialize the console early so it gets all the interesting messages
-    consolePlugin_ = new ConsolePlugin(this);
+    // initialize the console early so it gets all the interesting messages
+    consolePlugin_ = new ConsolePlugin(this, VoreenApplication::app()->getLogLevel());
 
-    // clear session settings (window states, paths, ...), if specified by cmd line parameter
-    if (resetSettings_) {
-        settings_.clear();
-        LWARNINGC("voreenve.VoreenMainWindow", "Restored session settings");
+    // retrieve VoreenVE plugins from application/modules
+    VoreenVEApplication* veApp = VoreenVEApplication::veApp();
+    if (!veApp) {
+        LERROR("VoreenVEApplication not instantiated");
+    }
+    else {
+        std::vector<std::string> pluginNames;
+        for (size_t i=0; i<veApp->getVEModules().size(); i++) {
+            VoreenModuleVE* veModule = veApp->getVEModules().at(i);
+            const std::vector<VoreenVEPlugin*>& modPlugins = veModule->getVoreenVEPlugins(); 
+            for (size_t j=0; j<modPlugins.size(); j++) {
+                plugins_.push_back(modPlugins.at(j));
+                pluginNames.push_back(modPlugins.at(j)->getName());
+            }
+        }
+        LINFO("VoreenVE plugins: " << strJoin(pluginNames, ", "));
     }
 
     // if we have a stylesheet we want the fancy menu bar, please
     if (!qApp->styleSheet().isEmpty())
         setMenuBar(new FancyMenuBar());
 
-    loadSettings();
+    // clear session settings (window states, paths, ...), if specified by cmd line parameter
+    if (resetSettings) {
+        settings_.clear();
+        LWARNING("Restored session settings");
+    }
+    else { 
+        loadSettings();
+    }
+        
     if (!workspace.empty())
         currentWorkspace_ = workspace.c_str();
-    if (!dataset.empty())
-        defaultDataset_ = dataset.c_str();
 
     setMinimumSize(600, 400);
     setWindowIcon(QIcon(":/voreenve/icons/voreen-logo_64x64.png"));
@@ -268,23 +308,23 @@ VoreenMainWindow::VoreenMainWindow(const std::string& workspace, const std::stri
 }
 
 VoreenMainWindow::~VoreenMainWindow() {
-    VoreenApplication::app()->deinit();
+    VoreenApplication::app()->deinitialize();
 }
 
-void VoreenMainWindow::init(VoreenSplashScreen* splash) {
+void VoreenMainWindow::initialize(VoreenSplashScreen* splash, bool showStartup) {
     if (splash)
         splash->showMessage("Initializing OpenGL...");
 
     // initGL requires a valid OpenGL context
     sharedContext_ = new tgt::QtCanvas("Init Canvas", tgt::ivec2(32, 32), tgt::GLCanvas::RGBADD, this, true);
-    sharedContext_->init(); //neccessary?
+    sharedContext_->init(); //necessary?
 
     // initialize OpenGL
     try {
-        VoreenApplication::app()->initGL();
+        VoreenApplication::app()->initializeGL();
     }
     catch(VoreenException& e) {
-        if (tgt::Singleton<tgt::LogManager>::isInited())
+        if (tgt::LogManager::isInited())
             LFATALC("voreenve.MainWindow", "OpenGL initialization failed: " << e.what());
         else
             std::cerr << "OpenGL initialization failed: " << e.what();
@@ -312,7 +352,8 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
                                  "will most likely not work properly.").arg(glVersion.str().c_str()));
         qApp->processEvents();
     }
-    else if (!GpuCaps.isShaderModelSupported(tgt::GpuCapabilities::SHADER_MODEL_3)) {
+    // deactivated on intel until we have a reliable detection. (stefan)
+    else if ( !GpuCaps.isShaderModelSupported(tgt::GpuCapabilities::SHADER_MODEL_3) && (GpuCaps.getVendor() != tgt::GpuCapabilities::GPU_VENDOR_INTEL) ) {
         if (splash)
             splash->close();
         qApp->processEvents();
@@ -346,24 +387,41 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
     mdiArea_->setOption(QMdiArea::DontMaximizeSubWindowOnActivation, true);
     setCentralWidget(mdiArea_);
 
+    // put network editor in mdi area
+    networkEditorWidget_ = new NetworkEditor(this, vis_->getWorkspace()->getProcessorNetwork(), vis_->getEvaluator());
+    networkEditorWidget_->setWindowTitle(tr("Processor Network"));
+    networkEditorWindow_ = new VoreenMdiSubWindow(networkEditorWidget_, this, Qt::FramelessWindowHint);
+    networkEditorWindow_->setWindowState(networkEditorWindow_->windowState() | Qt::WindowFullScreen);
+    networkEditorWindow_->hide(); // hide initially to prevent flicker
+    mdiArea_->addSubWindow(networkEditorWindow_);
+    vis_->setNetworkEditorWidget(networkEditorWidget_);
+    qApp->processEvents();
+
     // create tool windows now, after everything is initialized, but before window settings are restored
     createMenus();
     createToolBars();
+
+    // create built-in tools and add plugins
+    createToolWindows();
+    addVEPlugins();
+    qApp->processEvents();
 
     // signals indicating a change in network
     connect(vis_, SIGNAL(networkModified(ProcessorNetwork*)), this, SLOT(adjustSnapshotMenu()));
     connect(vis_, SIGNAL(modified()), this, SLOT(updateWindowTitle()));
     connect(vis_, SIGNAL(newNetwork(ProcessorNetwork*)), this, SLOT(adjustSnapshotMenu()));
-    createToolWindows();
-    qApp->processEvents();
 
     loadWindowSettings();
 
-
     setGuiMode(guiMode_);
 
-    if (splash)
+    if (splash) {
         splash->showMessage("Loading workspace...");
+        qApp->processEvents();
+    }
+
+    GpuCaps.setCurrentAvailableTextureMem(settings_.value("maximumGPUMemory", QVariant(0)).toInt());
+    GpuCaps.setRetrieveAvailableTextureMem(settings_.value("constraintGPUMemoryEnabled", QVariant(true)).toBool());
 
     //
     // now the GUI is complete
@@ -372,23 +430,27 @@ void VoreenMainWindow::init(VoreenSplashScreen* splash) {
         // load workspace passed as program parameter
         openWorkspace(currentWorkspace_);
     }
-    else if (!lastWorkspace_.isEmpty() && loadLastWorkspace_ && startupWorkspace_) {
+    else if (!lastWorkspace_.isEmpty() && startupWorkspace_) {
         // load last workspace, but only if loading has been successful last time
         openWorkspace(lastWorkspace_);
     }
     else {
         // load an initial workspace
-        openWorkspace(VoreenApplication::app()->getWorkspacePath("standard.vws").c_str());
+        //openWorkspace(VoreenApplication::app()->getWorkspacePath("templates/standard.vws").c_str());
     }
     startupComplete("workspace");
 
-    // load an initial dataset
-    if (!defaultDataset_.isEmpty())
-        loadDataset(defaultDataset_.toStdString());
+    if (showStartup && settings_.value("showStartupScreen", QVariant(true)).toBool()) {
+        StartupScreen* startupWidget = createStartupScreen(splash);
+        startupWidget->show();
+        qApp->processEvents();
+    }
+    
+    if (splash)
+        splash->close();
 }
 
-void VoreenMainWindow::deinit() {
-
+void VoreenMainWindow::deinitialize() {
     // save widget settings first
     saveSettings();
 
@@ -397,23 +459,29 @@ void VoreenMainWindow::deinit() {
     delete renderTargetViewer_;
     renderTargetViewer_ = 0;
 
-#ifdef VRN_MODULE_PYTHON
-    // accesses the PythonModule singleton
-    pythonEditor_->clearScript();
-#endif
+    // deinitialize plugins (deleting not necessary, since done by the Qt parent)
+    for (size_t i=0; i<plugins_.size(); i++) {
+        VoreenVEPlugin* plugin = plugins_.at(i);
+        if (plugin->isInitialized()) {
+            try {
+                LINFO("Deinitializing VoreenVE plugin '" << plugin->getName() << "'");
+                plugin->deinitialize();
+                plugin->initialized_ = false;        
+            }
+            catch (tgt::Exception& e) {
+                LERROR("Failed to deinitialize VoreenVE plugin '" << plugin->getName() << "': " << e.what());
+            }
+        }
+    }
 
     // free workspace, unregister network/volumecontainer from widgets
     delete vis_;
     vis_ = 0;
 
     // finalize OpenGL
-    VoreenApplication::app()->deinitGL();
+    VoreenApplication::app()->deinitializeGL();
     delete sharedContext_;
     sharedContext_ = 0;
-
-    // also deletes stored processor instances
-    // (processor destructors must not have OpenGL dependencies!)
-    ProcessorFactory::getInstance()->destroy();
 }
 
 ////////// GUI setup ///////////////////////////////////////////////////////////////////
@@ -442,10 +510,13 @@ void VoreenMainWindow::createMenus() {
     connect(workspaceSaveAction_, SIGNAL(triggered()), this, SLOT(saveWorkspace()));
     fileMenu_->addAction(workspaceSaveAction_);
 
-
     workspaceSaveAsAction_ = new QAction(QIcon(":/voreenve/icons/saveas.png"), tr("Save Workspace &As..."),  this);
     connect(workspaceSaveAsAction_, SIGNAL(triggered()), this, SLOT(saveWorkspaceAs()));
     fileMenu_->addAction(workspaceSaveAsAction_);
+
+    workspaceSaveCopyAsAction_ = new QAction(tr("Save &Copy As..."), this);
+    connect(workspaceSaveCopyAsAction_, SIGNAL(triggered()), this, SLOT(saveCopyAs()));
+    fileMenu_->addAction(workspaceSaveCopyAsAction_);
 
     fileMenu_->addSeparator();
 
@@ -456,26 +527,15 @@ void VoreenMainWindow::createMenus() {
     connect(openDatasetAction_, SIGNAL(triggered()), this, SLOT(openDataset()));
     fileMenu_->addAction(openDatasetAction_);
 
-    openRawDatasetAction_ = new QAction(QIcon(":/voreenve/icons/open-volume.png"), tr("Load &Raw Volume..."), this);
-    openRawDatasetAction_->setStatusTip(tr("Load a raw volume data set"));
-    connect(openRawDatasetAction_, SIGNAL(triggered()), this, SLOT(openRawDataset()));
-    fileMenu_->addAction(openRawDatasetAction_);
-
-    openDicomFilesAct_ = new QAction(QIcon(":/voreenve/icons/open-dicom.png"), tr("Load &DICOM Slices..."), this);
-    openDicomFilesAct_->setStatusTip(tr("Load DICOM slices"));
-    openDicomFilesAct_->setToolTip(tr("Load DICOM files containing individual slices"));
-    connect(openDicomFilesAct_, SIGNAL(triggered()), this, SLOT(buttonAddDICOMClicked()));
-    fileMenu_->addAction(openDicomFilesAct_);
-
     fileMenu_->addSeparator();
 
-#ifdef VRN_WITH_ZLIB
+#ifdef VRN_MODULE_ZIP
     // ZIP-Workspaces
     workspaceExtractAction_ = new QAction(QIcon(":/voreenve/icons/extract-workspace.png"),
                                           tr("&Extract Workspace Archive..."), this);
     connect(workspaceExtractAction_, SIGNAL(triggered()), this, SLOT(extractWorkspaceArchive()));
     fileMenu_->addAction(workspaceExtractAction_);
-#endif // VRN_WITH_ZLIB
+#endif // VRN_MODULE_ZIP
 
     // Network
     importNetworkAction_ = new QAction(QIcon(":/voreenve/icons/import.png"), tr("&Import Network..."), this);
@@ -535,14 +595,6 @@ void VoreenMainWindow::createMenus() {
     //
     toolsMenu_ = menu_->addMenu(tr("&Tools"));
 
-    snapshotAction_ = new QAction(QIcon(":/voreenve/icons/make-snapshot.png"), "&Snapshot", this);
-    snapshotAction_->setData(0);
-    QMenu* snapshotMenu = new QMenu(this);
-    snapshotAction_->setMenu(snapshotMenu);
-    snapshotAction_->setEnabled(false);
-    connect(snapshotAction_, SIGNAL(triggered(bool)), this, SLOT(snapshotActionTriggered(bool)));
-    toolsMenu_->addAction(snapshotAction_);
-
     //
     // Action menu
     //
@@ -554,20 +606,24 @@ void VoreenMainWindow::createMenus() {
     connect(rebuildShadersAction_, SIGNAL(triggered()), this, SLOT(rebuildShaders()));
     actionMenu_->addAction(rebuildShadersAction_);
 
-    QAction* resetQSettingsAction = new QAction("Reset Settings", this);
-    connect(resetQSettingsAction, SIGNAL(triggered()), this, SLOT(resetSettings()));
-    actionMenu_->addAction(resetQSettingsAction);
+    enterWhatsThisAction_ = QWhatsThis::createAction();
+    actionMenu_->addAction(enterWhatsThisAction_);
 
     //
     // Options menu
     //
     optionsMenu_ = menu_->addMenu(tr("&Options"));
+    showStartupScreen_ = new QAction(tr("Show startup widget"), this);
+    connect(showStartupScreen_, SIGNAL(triggered()), this, SLOT(showStartupScreen()));
+    if (optionsMenu_)
+        optionsMenu_->addAction(showStartupScreen_);
 
-    loadLastWorkspaceAct_ = new QAction(tr("&Load Last Workspace on Startup"), this);
-    loadLastWorkspaceAct_->setCheckable(true);
-    loadLastWorkspaceAct_->setChecked(loadLastWorkspace_);
-    connect(loadLastWorkspaceAct_, SIGNAL(triggered()), this, SLOT(setLoadLastWorkspace()));
-    optionsMenu_->addAction(loadLastWorkspaceAct_);
+    // settings editor
+    settingsEditor_ = new SettingsDialog(this);
+    settingsAction_ = new QAction(QIcon(":/icons/saveas.png"), tr("&Settings"), this);
+    connect(settingsAction_, SIGNAL(triggered()), this, SLOT(optionsSettings()));
+    if (optionsMenu_)
+        optionsMenu_->addAction(settingsAction_);
 
     //
     // Help menu
@@ -657,7 +713,6 @@ void VoreenMainWindow::createToolBars() {
     label = new QLabel(tr("   Tools "));
     label->setObjectName("toolBarLabel");
     toolsToolBar_->addWidget(label);
-    toolsToolBar_->addAction(snapshotAction_);
 
     // action toolbar
     actionToolBar_ = addToolBar(tr("Action"));
@@ -680,38 +735,16 @@ void VoreenMainWindow::createToolBars() {
 
 }
 
-VoreenToolWindow* VoreenMainWindow::addToolWindow(QAction* action, QWidget* widget, const QString& name, bool basic) {
-    action->setCheckable(true);
-
-    VoreenToolWindow* window = new VoreenToolWindow(action, this, widget, name, false);
-    addDockWidget(Qt::LeftDockWidgetArea, window);
-
-    if (basic) {
-        if (viewMenu_)
-            viewMenu_->addAction(action);
-        if (viewToolBar_)
-            viewToolBar_->addAction(action);
-    }
-    else {
-        if (toolsMenu_)
-            toolsMenu_->addAction(action);
-        if (toolsToolBar_)
-            toolsToolBar_->addAction(action);
-    }
-
-    window->setVisible(false);
-    toolWindows_ << window;
-
-    return window;
-}
-
-VoreenToolWindow* VoreenMainWindow::addToolDockWindow(QAction* action, QWidget* widget, const QString& name,
+VoreenToolWindow* VoreenMainWindow::addToolWindow(QAction* action, QWidget* widget, const QString& name,
                                                       Qt::DockWidgetArea dockarea, Qt::DockWidgetAreas allowedAreas,
                                                       bool basic)
 {
     action->setCheckable(true);
+    action->setChecked(false);
 
-    VoreenToolWindow* window = new VoreenToolWindow(action, this, widget, name, true);
+    bool dockable = (allowedAreas != Qt::NoDockWidgetArea);
+
+    VoreenToolWindow* window = new VoreenToolWindow(action, this, widget, name, dockable);
 
     if (basic) {
         if (viewMenu_)
@@ -727,58 +760,66 @@ VoreenToolWindow* VoreenMainWindow::addToolDockWindow(QAction* action, QWidget* 
     }
 
     window->setAllowedAreas(allowedAreas);
-    addDockWidget(dockarea, window);
-    window->setVisible(false);
+    if (dockable) {
+        if (dockarea == Qt::NoDockWidgetArea) {
+            addDockWidget(Qt::LeftDockWidgetArea, window);
+            window->setFloating(true);
+        }
+        else {
+            addDockWidget(dockarea, window);
+        }
+    }
+
+    toolWindows_ << window;
 
     return window;
 }
 
-void VoreenMainWindow::createToolWindows() {
-    // network editor
-    networkEditorWidget_ = new NetworkEditor(this, vis_->getWorkspace()->getProcessorNetwork(), vis_->getEvaluator());
-    networkEditorWidget_->setWindowTitle(tr("Processor Network"));
-    networkEditorWindow_ = new VoreenMdiSubWindow(networkEditorWidget_, this, Qt::FramelessWindowHint);
-    networkEditorWindow_->setWindowState(networkEditorWindow_->windowState() | Qt::WindowFullScreen);
-    networkEditorWindow_->hide(); // hide initially to prevent flicker
-    mdiArea_->addSubWindow(networkEditorWindow_);
-    vis_->setNetworkEditorWidget(networkEditorWidget_);
+VoreenToolWindow* VoreenMainWindow::getToolWindow(QWidget* childWidget) const {
+    if (!childWidget)
+        return 0;
+    foreach(VoreenToolWindow* toolWindow, toolWindows_) {
+        if (toolWindow->child() == childWidget)
+            return toolWindow;
+    }
+    return 0;
+}
 
+void VoreenMainWindow::createToolWindows() {
     // processor list
     processorListWidget_ = new ProcessorListWidget(this);
     processorListWidget_->setMinimumSize(200, 200);
-    processorListAction_ = new QAction(QIcon(":/voreenve/icons/show-processors.png"), tr("&Processors"), this);
-    processorListTool_ = addToolDockWindow(processorListAction_, processorListWidget_, "ProcessorList",
-        Qt::LeftDockWidgetArea, Qt::LeftDockWidgetArea);
+    QAction* processorListAction = new QAction(QIcon(":/voreenve/icons/show-processors.png"), tr("&Processors"), this);
+    addToolWindow(processorListAction, processorListWidget_, "ProcessorList",
+        Qt::LeftDockWidgetArea, Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vis_->setProcessorListWidget(processorListWidget_);
 
     // property list
     propertyListWidget_ = new PropertyListWidget(this, 0);
-    propertyListTool_ = addToolDockWindow(new QAction(QIcon(":/voreenve/icons/show-properties.png"), tr("P&roperties"), this),
-                                          propertyListWidget_, "Properties", Qt::RightDockWidgetArea, Qt::RightDockWidgetArea);
+    addToolWindow(new QAction(QIcon(":/voreenve/icons/show-properties.png"), tr("P&roperties"), this),
+        propertyListWidget_, "Properties", Qt::RightDockWidgetArea, Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vis_->setPropertyListWidget(propertyListWidget_);
 
     // VolumeContainerWidget
     volumeContainerWidget_ = new VolumeContainerWidget(vis_->getVolumeContainer(), this);
-    volumeContainerTool_ = addToolDockWindow(new QAction(QIcon(":/voreenve/icons/show-volumecontainer.png"), tr("V&olumes"), this),
+    addToolWindow(new QAction(QIcon(":/voreenve/icons/show-volumecontainer.png"), tr("V&olumes"), this),
                       volumeContainerWidget_, "VolumeContainer", Qt::RightDockWidgetArea);
     vis_->setVolumeContainerWidget(volumeContainerWidget_);
+
+    // console (note: has been created in constructor!)
+    QAction* consoleAction = new QAction(QIcon(":/voreenve/icons/show-console.png"), tr("&Debug Console"), this);
+    consoleAction->setShortcut(tr("Ctrl+D"));
+    VoreenToolWindow* consoleTool = addToolWindow(consoleAction, consolePlugin_, "Console", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea);
+    consoleTool->setMinimumHeight(100);
 
     // input mapping
     inputMappingDialog_ =  new InputMappingDialog(this, vis_->getWorkspace()->getProcessorNetwork());
     QAction* inputMappingAction = new QAction(QIcon(":/voreenve/icons/show-keymapping.png"), tr("&Input Mapping"), this);
     inputMappingAction->setShortcut(tr("Ctrl+I"));
-    VoreenToolWindow* inputWindow = addToolWindow(inputMappingAction, inputMappingDialog_, tr("Show shortcut preferences"), true);
+    VoreenToolWindow* inputWindow = addToolWindow(inputMappingAction, inputMappingDialog_, tr("Show shortcut preferences"), 
+        Qt::NoDockWidgetArea, Qt::AllDockWidgetAreas, true);
     inputWindow->resize(520, 400);
     vis_->setInputMappingDialog(inputMappingDialog_);
-
-    // console
-    QAction* consoleAction = new QAction(QIcon(":/voreenve/icons/show-console.png"), tr("&Debug Console"), this);
-    consoleAction->setShortcut(tr("Ctrl+D"));
-    consoleTool_ = addToolDockWindow(consoleAction, consolePlugin_, "Console", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea);
-    consoleTool_->setAllowedAreas(Qt::BottomDockWidgetArea);
-    consoleTool_->setFloating(false);
-    consoleTool_->resize(700, 150);
-    consoleTool_->setMinimumHeight(100);
 
     // render target debug window
     renderTargetViewer_ = new RenderTargetViewer(sharedContext_);
@@ -786,42 +827,74 @@ void VoreenMainWindow::createToolWindows() {
     renderTargetViewer_->setMinimumSize(200, 200);
     QAction* texContainerAction = new QAction(QIcon(":/voreenve/icons/show-rendertargets.png"),tr("Render &Target Viewer"), this);
     texContainerAction->setShortcut(tr("Ctrl+T"));
-    VoreenToolWindow* tc = addToolWindow(texContainerAction, renderTargetViewer_, "RenderTargetViewer");
+    VoreenToolWindow* tc = addToolWindow(texContainerAction, renderTargetViewer_, "RenderTargetViewer",
+        Qt::NoDockWidgetArea, Qt::NoDockWidgetArea);
     tc->widget()->setContentsMargins(0,0,0,0);
     tc->widget()->layout()->setContentsMargins(0,0,0,0);
     tc->resize(500, 500);
+    vis_->setRenderTargetViewer(renderTargetViewer_);
+
+    // property state
+    propertyStateWidget_ = new PropertyStateWidget(vis_->getWorkspace()->getProcessorNetwork(), this);
+    connect(propertyStateWidget_, SIGNAL(modifiedNetwork()), vis_, SLOT(setModified()));
+    QAction* propertyStateAction = new QAction(QIcon(":/voreenve/icons/alacarte.png"), tr("Property State History"), this);
+    VoreenToolWindow* propertyStateWindow = addToolWindow(propertyStateAction, propertyStateWidget_, tr("Property State"),
+        Qt::NoDockWidgetArea, (Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea), false);
+    propertyStateWindow->resize(350, 400);
+
+    // performance records
+    performanceRecordWidget_ = new PerformanceRecordWidget(this);
+    performanceRecordWidget_->setEvaluator(vis_->getEvaluator());
+    QAction* performanceRecordAction = new QAction(QIcon(":/voreenve/icons/performance.png"), tr("&Performance Record"), this);
+    performanceRecordAction->setCheckable(true);
+    VoreenToolWindow* performanceRecordWindow = addToolWindow(performanceRecordAction, performanceRecordWidget_, 
+        tr("Performance Record"), Qt::NoDockWidgetArea, Qt::AllDockWidgetAreas, false);
+    performanceRecordWindow->resize(350, 400);
+    vis_->setPerformanceRecordWidget(performanceRecordWidget_);
 
     // animation editor
     animationEditor_ = new AnimationEditor(vis_->getEvaluator(), vis_->getWorkspace(), this);
-    VoreenToolWindow* animationWindow = addToolDockWindow(new QAction(QIcon(":/icons/video.png"), tr("&Animation"), this), animationEditor_, "Animation",
-                      Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, false);
-    animationWindow->setFloating(true);
+    VoreenToolWindow* animationWindow = addToolWindow(new QAction(QIcon(":/icons/video.png"), tr("&Animation"), this), animationEditor_, "Animation",
+                      Qt::NoDockWidgetArea, Qt::BottomDockWidgetArea, false);
     animationWindow->resize(925, 400);
-    toolWindows_.append(animationWindow);
 
-#ifdef VRN_MODULE_PYTHON
-    pythonEditor_ = new PythonEditor(this);
-    pythonAction_ = new QAction(QIcon(":/voreenve/icons/python.png"), tr("Python Script Editor"), this);
-    VoreenToolWindow* pythonWindow = addToolWindow(pythonAction_, pythonEditor_, tr("Python Script Editor"), false);
-    pythonWindow->setMinimumSize(300, 400);
-    pythonWindow->resize(600, 650);
+    // snapshot widget
+#ifdef VRN_MODULE_DEVIL
+    snapshotWidget_ = new SnapshotWidget(this);
+    QAction* snapshotAction = new QAction(QIcon(":/voreenve/icons/make-snapshot.png"), tr("Snapshot"), this);
+    VoreenToolWindow* snapshotTool = addToolWindow(snapshotAction, snapshotWidget_, "Snapshot", Qt::NoDockWidgetArea, Qt::AllDockWidgetAreas, false);
+    snapshotTool->resize(400, 250);
 #endif
 
-    // connections between tool widgets
-    connect(networkEditorWidget_, SIGNAL(processorsSelected(const QList<Processor*>&)),
-        renderTargetViewer_, SLOT(processorsSelected(const QList<Processor*>&)));
-
+    // create connections between tool widgets
     vis_->createConnections();
 }
 
-void VoreenMainWindow::buttonAddDICOMClicked() {
+void VoreenMainWindow::addVEPlugins() {
+    /// Initialize all VoreenVEPlugins and add them to the main window
+    for (size_t i=0; i<plugins_.size(); i++) {
+        VoreenVEPlugin* plugin = plugins_.at(i);
 
-    if (!volumeContainerWidget_) {
-        LWARNINGC("voreenve.VoreenMainWindow", "No volume container widget");
-        return;
+        QAction* action = new QAction(plugin->getIcon(), QString::fromStdString(plugin->getName()), this);
+        VoreenToolWindow* pluginWindow = addToolWindow(action, plugin, QString::fromStdString(plugin->getName()), 
+            plugin->getInitialDockWidgetArea(), plugin->getAllowedDockWidgetAreas(), false);
+
+        plugin->setParentWindow(pluginWindow); 
+        plugin->setMainWindow(this);
+        plugin->setNetworkEvaluator(vis_->getEvaluator());
+        plugin->createWidgets();
+
+        try {
+            LINFO("Initializing VoreenVE plugin '" << plugin->getName() << "'");
+            plugin->initialize();
+            plugin->initialized_ = true;
+        }
+        catch (tgt::Exception& e) {
+            LERROR("Failed to initialize VoreenVE plugin '" << plugin->getName() << "': " << e.what());
+            toolWindows_.removeOne(pluginWindow);
+            delete pluginWindow;
+        }
     }
-
-    volumeContainerWidget_->loadDicomFiles();
 }
 
 ////////// settings ////////////////////////////////////////////////////////////////////
@@ -835,30 +908,27 @@ void VoreenMainWindow::loadSettings() {
     bool windowMaximized = true;
 
     // restore settings
-    if (!resetSettings_) {
-        settings_.beginGroup("MainWindow");
-        windowSize = settings_.value("size", windowSize).toSize();
-        windowPosition = settings_.value("pos", windowPosition).toPoint();
-        windowMaximized = settings_.value("maximized", windowMaximized).toBool();
-        lastWorkspace_ = settings_.value("workspace", "").toString();
-        loadLastWorkspace_ = settings_.value("loadLastWorkspace", true).toBool();
-        applicationModeState_ = settings_.value("visualizationModeState").toByteArray();
-        developmentModeState_ = settings_.value("networkModeState").toByteArray();
-        networkEditorWindowState_ = settings_.value("networkEditorWindowState").toByteArray();
-        settings_.endGroup();
+    settings_.beginGroup("MainWindow");
+    windowSize = settings_.value("size", windowSize).toSize();
+    windowPosition = settings_.value("pos", windowPosition).toPoint();
+    windowMaximized = settings_.value("maximized", windowMaximized).toBool();
+    lastWorkspace_ = settings_.value("workspace", "").toString();
+    applicationModeState_ = settings_.value("visualizationModeState").toByteArray();
+    developmentModeState_ = settings_.value("networkModeState").toByteArray();
+    networkEditorWindowState_ = settings_.value("networkEditorWindowState").toByteArray();
+    settings_.endGroup();
 
-        settings_.beginGroup("Paths");
-        networkPath_ = settings_.value("network", networkPath_).toString();
-        workspacePath_ = settings_.value("workspace", workspacePath_).toString();
-        settings_.endGroup();
+    settings_.beginGroup("Paths");
+    networkPath_ = settings_.value("network", networkPath_).toString();
+    workspacePath_ = settings_.value("workspace", workspacePath_).toString();
+    settings_.endGroup();
 
-        settings_.beginGroup("Startup");
-        // load last startup values
-        startupWorkspace_ = settings_.value("workspace", true).toBool();
-        // set default values for the current startup
-        settings_.setValue("workspace", false);
-        settings_.endGroup();
-    }
+    settings_.beginGroup("Startup");
+    // load last startup workspace
+    startupWorkspace_ = settings_.value("workspace", true).toBool();
+    // set default values for the current startup
+    settings_.setValue("workspace", false);
+    settings_.endGroup();
 
     if (windowSize.isNull()) {
         windowMaximized = true;
@@ -885,56 +955,35 @@ void VoreenMainWindow::loadSettings() {
         setWindowState(windowState() | Qt::WindowMaximized);
 }
 
-void VoreenMainWindow::resetSettings() {
-    QMessageBox msgBox(this);
-    msgBox.setWindowTitle(tr("Reset Settings"));
-    msgBox.setIcon(QMessageBox::Question);
-    msgBox.setText(tr("This will reset the complete window configuration as well as the default paths."));
-    msgBox.setInformativeText(tr("Do you want to proceed?"));
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgBox.exec();
-    if (ret == QMessageBox::Ok) {
-        settings_.clear();
-        resetSettings_ = true;
-        LINFOC("voreenve.VoreenMainWindow", "Restored session settings");
-        QMessageBox::information(this, tr("Settings Restored"), tr("All session settings have been restored. "
-             "Please restart the application for the changes to take effect."));
-    }
-}
-
 void VoreenMainWindow::loadWindowSettings() {
     // Restore visibility, position and size of tool windows from settings
-    if (!resetSettings_) {
-        for (int i=0; i < toolWindows_.size(); ++i) {
-            if (!toolWindows_[i]->objectName().isEmpty()) {
-                toolWindows_[i]->setVisible(false);
-            }
+    for (int i=0; i < toolWindows_.size(); ++i) {
+        if (!toolWindows_[i]->objectName().isEmpty()) {
+            toolWindows_[i]->setVisible(false);
         }
-
-        settings_.beginGroup("Windows");
-        for (int i=0; i < toolWindows_.size(); ++i) {
-            if (!toolWindows_[i]->objectName().isEmpty()) {
-                settings_.beginGroup(toolWindows_[i]->objectName());
-                if (settings_.contains("size"))
-                    toolWindows_[i]->resize(settings_.value("size").toSize());
-
-                // Ignore position (0, 0) for invisible windows as otherwise all previously
-                // invisible windows would be placed at (0, 0) after restarting the application.
-                if (settings_.contains("pos") &&
-                    (settings_.value("pos").toPoint() != QPoint(0, 0) || settings_.value("visible").toBool()))
-                {
-                    toolWindows_[i]->move(settings_.value("pos").toPoint());
-                }
-
-                if (settings_.contains("visible"))
-                    toolWindows_[i]->setVisible(settings_.value("visible").toBool());
-                settings_.endGroup();
-            }
-        }
-        settings_.endGroup();
     }
 
+    settings_.beginGroup("Windows");
+    for (int i=0; i < toolWindows_.size(); ++i) {
+        if (!toolWindows_[i]->objectName().isEmpty()) {
+            settings_.beginGroup(toolWindows_[i]->objectName());
+            if (settings_.contains("size"))
+                toolWindows_[i]->resize(settings_.value("size").toSize());
+
+            // Ignore position (0, 0) for invisible windows as otherwise all previously
+            // invisible windows would be placed at (0, 0) after restarting the application.
+            if (settings_.contains("pos") &&
+                (settings_.value("pos").toPoint() != QPoint(0, 0) || settings_.value("visible").toBool()))
+            {
+                toolWindows_[i]->move(settings_.value("pos").toPoint());
+            }
+
+            if (settings_.contains("visible"))
+                toolWindows_[i]->setVisible(settings_.value("visible").toBool());
+            settings_.endGroup();
+        }
+    }
+    settings_.endGroup();
 
     settings_.beginGroup("MainWindow");
     bool applicationMode = settings_.value("visualizationMode").toBool();
@@ -944,15 +993,8 @@ void VoreenMainWindow::loadWindowSettings() {
 }
 
 void VoreenMainWindow::saveSettings() {
-    // store settings
-    settings_.setValue("ResetSettings", resetSettings_);
-
     // write version number of the config file format (might be useful someday)
     settings_.setValue("ConfigVersion", 1);
-
-    // do not save any session settings, if user has resetted them
-    if (resetSettings_)
-        return;
 
     if (guiMode_ == MODE_APPLICATION) {
         applicationModeState_ = saveState(WINDOW_STATE_VERSION);
@@ -967,7 +1009,6 @@ void VoreenMainWindow::saveSettings() {
     settings_.setValue("pos", pos());
     settings_.setValue("maximized", (windowState() & Qt::WindowMaximized) != 0);
     settings_.setValue("workspace", lastWorkspace_);
-    settings_.setValue("loadLastWorkspace", loadLastWorkspace_);
     settings_.setValue("visualizationModeState", applicationModeState_);
     settings_.setValue("networkModeState", developmentModeState_);
     settings_.setValue("networkEditorWindowState", networkEditorWindowState_);
@@ -1048,8 +1089,8 @@ void VoreenMainWindow::openNetwork(const QString& filename) {
                                      "use the 'workspaceconverter' application to convert it to the new file format."));
         }
         else {
-            QErrorMessage* errorMessageDialog = new QErrorMessage(this);
-            errorMessageDialog->showMessage(e.what());
+            errorMessageDialog_ = new QErrorMessage(this);
+            errorMessageDialog_->showMessage(e.what());
         }
     }
     ignoreWindowTitleModified_ = false;
@@ -1171,7 +1212,7 @@ void VoreenMainWindow::extractWorkspaceArchive() {
 void VoreenMainWindow::extractWorkspaceArchive(QString archivFile) {
 
     if (archivFile.isEmpty()) {
-        LERRORC("voreenve.Mainwindow", "Passed archive filename is empty");
+        LERROR("Passed archive filename is empty");
         return;
     }
 
@@ -1227,12 +1268,19 @@ void VoreenMainWindow::newWorkspace() {
     currentNetwork_ = "";
     lastWorkspace_ = currentWorkspace_;
 
-    propertyListWidget_->clear();
-    renderTargetViewer_->update();
+    if (propertyListWidget_)
+        propertyListWidget_->clear();
+    if (renderTargetViewer_)
+        renderTargetViewer_->update();
 
     vis_->setModified(false);
     updateWindowTitle();
-    animationEditor_->setWorkspace(vis_->getWorkspace());
+    if (animationEditor_)
+        animationEditor_->setWorkspace(vis_->getWorkspace());
+
+    for (size_t i=0; i<plugins_.size(); i++)
+        if (plugins_[i]->isInitialized())
+            plugins_[i]->setWorkspace(vis_->getWorkspace());
 }
 
 void VoreenMainWindow::openWorkspace(const QString& filename) {
@@ -1248,7 +1296,13 @@ void VoreenMainWindow::openWorkspace(const QString& filename) {
     }
 
     // disable render target widget during load
-    renderTargetViewer_->setEvaluator(0);
+    if (renderTargetViewer_)
+        renderTargetViewer_->setEvaluator(0);
+
+    if (errorMessageDialog_) {
+        delete errorMessageDialog_;
+        errorMessageDialog_ = 0;
+    }
 
     // open vws workspace
     try {
@@ -1274,8 +1328,10 @@ void VoreenMainWindow::openWorkspace(const QString& filename) {
     updateWindowTitle();
 
     // adjust canvas widgets (created during workspace load) to application mode
-    if (guiMode_ == MODE_APPLICATION)
+    if (guiMode_ == MODE_APPLICATION) {
         adjustCanvasWidgets(MODE_APPLICATION);
+        setGuiMode(MODE_APPLICATION);
+    }
 
     showWorkspaceErrors();
     showNetworkErrors();
@@ -1288,12 +1344,15 @@ void VoreenMainWindow::openWorkspace(const QString& filename) {
     vis_->setModified(false);
     ignoreWindowTitleModified_ = false;
     updateWindowTitle();
-    renderTargetViewer_->setEvaluator(vis_->getEvaluator());
+    if (renderTargetViewer_)
+        renderTargetViewer_->setEvaluator(vis_->getEvaluator());
     QApplication::restoreOverrideCursor();
-
 
     if (animationEditor_)
         animationEditor_->setWorkspace(vis_->getWorkspace());
+
+    for (size_t i=0; i<plugins_.size(); i++)
+        plugins_.at(i)->setWorkspace(vis_->getWorkspace());
 
 }
 
@@ -1306,7 +1365,7 @@ void VoreenMainWindow::openWorkspace() {
 
     QStringList filters;
     filters << "Voreen workspaces (*.vws)";
-#ifdef VRN_WITH_ZLIB
+#ifdef VRN_MODULE_ZIP
     filters << "Voreen workspace archives (*.zip)";
 #endif
     fileDialog.setNameFilters(filters);
@@ -1373,7 +1432,7 @@ bool VoreenMainWindow::saveWorkspaceAs() {
 
     QStringList filters;
     filters << "Voreen workspaces (*.vws)";
-#ifdef VRN_WITH_ZLIB
+#ifdef VRN_MODULE_ZIP
     filters << "Voreen workspace archives (*.zip)";
 #endif
     fileDialog.setNameFilters(filters);
@@ -1392,7 +1451,7 @@ bool VoreenMainWindow::saveWorkspaceAs() {
         QString name = fileDialog.selectedFiles().at(0);
         if (fileDialog.selectedNameFilter() == "Voreen workspace archives (*.zip)") {
             if (!name.endsWith(".zip"))
-                result = saveWorkspace(name+".zip");
+                result = saveWorkspace(name + ".zip");
             else
                 result = saveWorkspace(name);
         }
@@ -1408,48 +1467,23 @@ bool VoreenMainWindow::saveWorkspaceAs() {
     }
 }
 
+bool VoreenMainWindow::saveCopyAs() {
+    QString current = currentWorkspace_;
+    bool success = saveWorkspaceAs();
+    if (success) {
+        currentWorkspace_ = current;
+        vis_->setModified(true);
+        updateWindowTitle();
+    }
+    return success;
+}
+
 void VoreenMainWindow::openDataset() {
     if (!volumeContainerWidget_) {
-        LWARNINGC("voreenve.VoreenMainWindow", "No volume container widget");
+        LWARNING("No volume container widget");
         return;
     }
-
     volumeContainerWidget_->loadVolume();
-}
-
-void VoreenMainWindow::openRawDataset() {
-    if (!volumeContainerWidget_) {
-        LWARNINGC("voreenve.VoreenMainWindow", "No volume container widget");
-        return;
-    }
-
-    volumeContainerWidget_->loadVolumeRawFilter();
-}
-
-void VoreenMainWindow::loadDataset(const std::string& filename) {
-    if (!vis_) {
-        LWARNINGC("voreenve.VoreenMainWindow", "No VoreenVisualization object");
-        return;
-    }
-
-    if (!vis_->getVolumeContainer()) {
-        LWARNINGC("voreenve.VoreenMainWindow", "No volume container");
-        return;
-    }
-
-    try {
-        vis_->getVolumeContainer()->loadVolume(filename);
-    }
-    catch (tgt::FileException e) {
-        QErrorMessage* errorMessageDialog = new QErrorMessage(this);
-        errorMessageDialog->showMessage(e.what());
-        LWARNINGC("voreenve.VoreenMainWindow", e.what());
-    }
-    catch (std::bad_alloc) {
-        QErrorMessage* errorMessageDialog = new QErrorMessage(this);
-        errorMessageDialog->showMessage("std::Error BAD ALLOCATION, File: " + QString::fromStdString(filename));
-        LWARNINGC("voreenve.VoreenMainWindow", "std::Error BAD ALLOCATION");
-    }
 }
 
 void VoreenMainWindow::openRecentFile() {
@@ -1464,10 +1498,12 @@ void VoreenMainWindow::openRecentFile() {
 }
 
 void VoreenMainWindow::addToRecentFiles(const QString& filename) {
+    QString f = filename;
+    f.replace("\\", "/");
     QStringList files = settings_.value("recentFileList").toStringList();
     files.removeAll("");        // delete empty entries
-    files.removeAll(filename);
-    files.prepend(filename);
+    files.removeAll(f);
+    files.prepend(f);
     while (files.size() > MAX_RECENT_FILES)
         files.removeLast();
 
@@ -1492,20 +1528,19 @@ void VoreenMainWindow::updateRecentFiles() {
 ////////// network /////////////////////////////////////////////////////////////////////
 
 void VoreenMainWindow::showNetworkErrors() {
-
     // alert about errors in the Network
     std::vector<std::string> errors = vis_->getNetworkErrors();
     if (!errors.empty()) {
         QString msg;
         for (size_t i=0; i < errors.size(); i++) {
             msg += "<li>" + QString(errors[i].c_str()) + "</li>\n";
-            LWARNINGC("voreenve.VoreenMainWindow", errors[i]);
+            LWARNING(errors[i]);
         }
 
-        QErrorMessage* errorMessageDialog = new QErrorMessage(this);
-        errorMessageDialog->resize(600, 300);
-        errorMessageDialog->setWindowTitle(tr("Network Deserialization"));
-        errorMessageDialog->showMessage(tr("There were <b>%1 errors</b> loading the network:\n<ul>").arg(errors.size())
+        errorMessageDialog_ = new QErrorMessage(this);
+        errorMessageDialog_->resize(600, 300);
+        errorMessageDialog_->setWindowTitle(tr("Network Deserialization"));
+        errorMessageDialog_->showMessage(tr("There were <b>%1 errors</b> loading the network:\n<ul>").arg(errors.size())
                                         + msg + "\n</ul>");
 
         qApp->processEvents();
@@ -1513,20 +1548,19 @@ void VoreenMainWindow::showNetworkErrors() {
 }
 
 void VoreenMainWindow::showWorkspaceErrors() {
-
     // alert about errors in the Network
     std::vector<std::string> errors = vis_->getWorkspaceErrors();
     if (!errors.empty()) {
         QString msg;
         for (size_t i=0; i < errors.size(); i++) {
             msg += "<li>" + QString(errors[i].c_str()) + "</li>\n";
-            LWARNINGC("voreenve.VoreenMainWindow", errors[i]);
+            LWARNING(errors[i]);
         }
 
-        QErrorMessage* errorMessageDialog = new QErrorMessage(this);
-        errorMessageDialog->resize(600, 300);
-        errorMessageDialog->setWindowTitle(tr("Workspace Deserialization"));
-        errorMessageDialog->showMessage(tr("There were <b>%1 errors</b> loading the workspace %2:\n<ul>").arg(
+        errorMessageDialog_ = new QErrorMessage(this);
+        errorMessageDialog_->resize(600, 300);
+        errorMessageDialog_->setWindowTitle(tr("Workspace Deserialization"));
+        errorMessageDialog_->showMessage(tr("There were <b>%1 errors</b> loading the workspace %2:\n<ul>").arg(
             errors.size()).arg(QString::fromStdString(vis_->getWorkspace() ? vis_->getWorkspace()->getFilename() : ""))
             + msg + "\n</ul>");
 
@@ -1535,7 +1569,9 @@ void VoreenMainWindow::showWorkspaceErrors() {
 }
 
 void VoreenMainWindow::adaptWidgetsToNetwork() {
-
+    if (propertyStateWidget_) {
+        propertyStateWidget_->setProcessorNetwork(vis_->getWorkspace()->getProcessorNetwork());
+    }
 }
 
 ////////// actions /////////////////////////////////////////////////////////////////////
@@ -1555,7 +1591,7 @@ void VoreenMainWindow::closeEvent(QCloseEvent *event) {
         }
     }
 
-    deinit();
+    deinitialize();
 }
 
 void VoreenMainWindow::dragEnterEvent(QDragEnterEvent* event) {
@@ -1577,33 +1613,31 @@ void VoreenMainWindow::runScript(const QString& filename) {
 #ifdef VRN_MODULE_PYTHON
 
     if (!PythonModule::getInstance()) {
-        LERRORC("voreenve.VoreenMainWindow", "PythonModule not instantiated");
+        LERROR("PythonModule not instantiated");
         return;
     }
 
     if (!PythonModule::getInstance()->isInitialized()) {
-        LERRORC("voreenve.VoreenMainWindow", "PythonModule not initialized");
+        LERROR("PythonModule not initialized");
         return;
     }
 
     PythonScript* script = PythonModule::getInstance()->load(filename.toStdString(), false);
     if (!script) {
-        LERRORC("voreenve.VoreenMainWindow", "Failed to load Python script '" << filename.toStdString() << "'");
+        LERROR("Failed to load Python script '" << filename.toStdString() << "'");
         //QMessageBox::warning(this, tr("Python Error"), tr("Python script '%1' could not be loaded.").arg(filename));
         return;
     }
 
     if (script->compile()) {
-        LINFOC("voreenve.VoreenMainWindow", "Running Python script '" << filename.toStdString() << "' ...");
+        LINFO("Running Python script '" << filename.toStdString() << "' ...");
         if (script->run())
-            LINFOC("voreenve.VoreenMainWindow", "Python script finished");
+            LINFO("Python script finished");
         else
-            LERRORC("voreenve.VoreenMainWindow", "Python runtime error:\n" << script->getLog());
-            //QMessageBox::warning(this, tr("Python Error"), tr("Python runtime error (see Debug Console)."));
+            LERROR("Python runtime error:\n" << script->getLog());
     }
     else {
-        LERRORC("voreenve.VoreenMainWindow", "Python compile error:\n" << script->getLog());
-        //QMessageBox::warning(this, tr("Python Error"), tr("Python compile error (see Debug Console)."));
+        LERROR("Python compile error:\n" << script->getLog());
     }
     PythonModule::getInstance()->dispose(script);
 #else
@@ -1616,18 +1650,18 @@ void VoreenMainWindow::rebuildShaders() {
     // set to a waiting cursor
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     if (vis_->rebuildShaders()) {
-        LINFOC("VoreenMainWindow", "Shaders reloaded");
+        LINFO("Shaders reloaded");
         #ifdef WIN32
         Beep(100, 100);
         #endif
     }
     else {
-        LWARNINGC("VoreenMainWindow", "Shader reloading failed");
+        LWARNING("Shader reloading failed");
         #ifdef WIN32
         Beep(10000, 100);
         #endif
         QApplication::restoreOverrideCursor();
-        consoleTool_->show();
+        //consoleTool_->show();
         qApp->processEvents();
         QMessageBox::critical(this, tr("Shader Reloading"),
                               tr("Shader reloading failed.\n"
@@ -1637,14 +1671,12 @@ void VoreenMainWindow::rebuildShaders() {
 }
 
 //
-// Options menu
+// Help menu
 //
 
-void VoreenMainWindow::setLoadLastWorkspace() {
-    loadLastWorkspace_ = loadLastWorkspaceAct_->isChecked();
-}
-
-void VoreenMainWindow::setReuseTargets() {
+void VoreenMainWindow::optionsSettings() {
+    SettingsDialog settings(this);
+    settings.exec();
 }
 
 //
@@ -1653,7 +1685,7 @@ void VoreenMainWindow::setReuseTargets() {
 
 void VoreenMainWindow::helpFirstSteps() {
     QString path(VoreenApplication::app()->getDocumentationPath("gettingstarted/gsg.html").c_str());
-    HelpBrowser* help = new HelpBrowser(QUrl::fromLocalFile(path), tr("VoreenVE Help"));
+    HelpBrowser* help = new HelpBrowser(QUrl::fromLocalFile(path), tr("VoreenVE Help"), this);
     help->resize(1050, 700);
     help->show();
     connect(this, SIGNAL(closeMainWindow()), help, SLOT(close()));
@@ -1666,7 +1698,7 @@ void VoreenMainWindow::helpTutorialSlides() {
 
 void VoreenMainWindow::helpAnimation() {
     QString path(VoreenApplication::app()->getDocumentationPath("animation/animation.html").c_str());
-    HelpBrowser* help = new HelpBrowser(QUrl::fromLocalFile(path), tr("VoreenVE Animation Manual"));
+    HelpBrowser* help = new HelpBrowser(QUrl::fromLocalFile(path), tr("VoreenVE Animation Manual"), this);
     help->resize(1050, 700);
     help->show();
     connect(this, SIGNAL(closeMainWindow()), help, SLOT(close()));
@@ -1731,23 +1763,24 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
 
         // hide all first to prevent some flicker
         modeApplicationAction_->setChecked(true);
-        processorListAction_->setEnabled(false);
         networkEditorWindow_->hide();
         networkEditorWidget_->setVisible(false);
-        processorListTool_->hide();
-//        qApp->processEvents(); //TODO: seems unneccessary
+        if (getToolWindow(processorListWidget_))
+            getToolWindow(processorListWidget_)->hide();
 
         if (!restoreState(applicationModeState_, WINDOW_STATE_VERSION)) {
-            if (processorListTool_->isEnabled())
-                propertyListTool_->show();
-            if (volumeContainerTool_->isEnabled())
-                volumeContainerTool_->show();
-            consoleTool_->hide();
+            if (getToolWindow(processorListWidget_) && getToolWindow(processorListWidget_)->isEnabled()) {
+                if (getToolWindow(propertyListWidget_))
+                    getToolWindow(propertyListWidget_)->show();
+            }
+            if (getToolWindow(volumeContainerWidget_) && getToolWindow(volumeContainerWidget_)->isEnabled())
+                getToolWindow(volumeContainerWidget_)->show();
+            if (getToolWindow(consolePlugin_))
+                getToolWindow(consolePlugin_)->hide();
         }
         setUpdatesEnabled(true);
 
         // resize canvas after gui has been settled
-//        qApp->processEvents(); //TODO: seems unneccessary
         adjustCanvasWidgets(MODE_APPLICATION);
     }
     else if (guiMode == MODE_DEVELOPMENT) {
@@ -1757,13 +1790,15 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
         // first update canvas widget
         adjustCanvasWidgets(MODE_DEVELOPMENT);
 
-//        qApp->processEvents(); //TODO: seems unneccessary
-
         if (!restoreState(developmentModeState_, WINDOW_STATE_VERSION)) {
-            processorListTool_->show();
-            propertyListTool_->show();
-            volumeContainerTool_->show();
-            consoleTool_->show();
+            if (getToolWindow(processorListWidget_))
+                getToolWindow(processorListWidget_)->show();
+            if (getToolWindow(propertyListWidget_))
+                getToolWindow(propertyListWidget_)->show();
+            if (getToolWindow(volumeContainerWidget_))
+                getToolWindow(volumeContainerWidget_)->show();
+            if (getToolWindow(consolePlugin_))
+                getToolWindow(consolePlugin_)->show();
         }
 
         setUpdatesEnabled(false);
@@ -1775,7 +1810,6 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
 
         networkEditorWidget_->setVisible(true); // only show now, so it immediately gets the correct size
         modeDevelopmentAction_->setChecked(true);
-        processorListAction_->setEnabled(true);
 
         setUpdatesEnabled(true);
     }
@@ -1783,10 +1817,12 @@ void VoreenMainWindow::setGuiMode(GuiMode guiMode) {
     setUpdatesEnabled(false);
 
     // adjust property list widget at last, since this is quite expensive and may flicker
-    if (guiMode == MODE_APPLICATION)
-        propertyListWidget_->setState(PropertyListWidget::LIST, Property::USER);
-    else
-        propertyListWidget_->setState(PropertyListWidget::SELECTED, Property::DEVELOPER);
+    if (propertyListWidget_) {
+        if (guiMode == MODE_APPLICATION)
+            propertyListWidget_->setState(PropertyListWidget::LIST, Property::USER);
+        else
+            propertyListWidget_->setState(PropertyListWidget::SELECTED, Property::DEVELOPER);
+    }
 
     setUpdatesEnabled(true);
     guiMode_ = guiMode;
@@ -1835,65 +1871,41 @@ void VoreenMainWindow::adjustCanvasWidgets(GuiMode guiMode) {
 }
 
 void VoreenMainWindow::adjustSnapshotMenu() {
-#ifdef VRN_WITH_DEVIL
-    if (!snapshotAction_)
-        return;
-
-    snapshotAction_->menu()->clear();
-
-    if (!vis_->getWorkspace()->getProcessorNetwork()) {
-        snapshotAction_->setEnabled(false);
-        return;
-    }
-
-    snapshotAction_->setEnabled(true);
+#ifdef VRN_MODULE_DEVIL
     std::vector<CanvasRenderer*> canvasRenderers
         = vis_->getWorkspace()->getProcessorNetwork()->getProcessorsByType<CanvasRenderer>();
 
-    for (size_t i=0; i < canvasRenderers.size(); ++i) {
-        QAction* menuAction = new QAction(QString::fromStdString(canvasRenderers[i]->getName()), this);
-        // store index of canvasrenderer in action for identification
-        // TODO: replace by name, when processors' names are unique
-        menuAction->setData((int)i);
-        snapshotAction_->menu()->addAction(menuAction);
-        connect(menuAction, SIGNAL(triggered(bool)), this, SLOT(snapshotActionTriggered(bool)));
-    }
+    std::vector<SnapshotElement*> pluginRenderer;
+    pluginRenderer.push_back(networkEditorWidget_->getSnapshotPlugin());
 
-    // add network snapshot functionality
-    QAction* networkAction = new QAction(tr("Network Graph"), this);
-    networkAction->setData(-1);
-    snapshotAction_->menu()->addSeparator();
-    snapshotAction_->menu()->addAction(networkAction);
-    connect(networkAction, SIGNAL(triggered(bool)), this, SLOT(snapshotActionTriggered(bool)));
+    snapshotWidget_->setCanvasRenderer(canvasRenderers);
+    snapshotWidget_->setPluginRenderer(pluginRenderer);
 #endif
 }
 
-void VoreenMainWindow::snapshotActionTriggered(bool /*triggered*/) {
-    if (dynamic_cast<QAction*>(QObject::sender())) {
-        int rendererIndex = static_cast<QAction*>(QObject::sender())->data().toInt();
-        std::vector<CanvasRenderer*> canvasRenderers
-            = vis_->getWorkspace()->getProcessorNetwork()->getProcessorsByType<CanvasRenderer>();
-
-        if (rendererIndex >= 0 && (size_t)rendererIndex < canvasRenderers.size()) {
-            // snapshot of canvas
-            CanvasRendererWidget* canvasWidget
-                = dynamic_cast<CanvasRendererWidget*>(canvasRenderers[rendererIndex]->getProcessorWidget());
-            if (!canvasWidget) {
-                LERRORC("voreenve.mainwindow", "No canvas renderer widget");
-                return;
-            }
-            canvasWidget->showSnapshotTool();
-        }
-        else if (rendererIndex == -1) {
-            // snapshot of network graph
-            NetworkSnapshotPlugin* snapshotTool_ = new NetworkSnapshotPlugin(this, networkEditorWidget_);
-            snapshotTool_->adjustSize();
-            snapshotTool_->setFixedSize(snapshotTool_->sizeHint());
-            snapshotTool_->show();
-        }
-    }
+void VoreenMainWindow::showStartupScreen() {
+    StartupScreen* startupWidget = createStartupScreen();
+    startupWidget->show();
 }
 
-
+StartupScreen* VoreenMainWindow::createStartupScreen(VoreenSplashScreen* splash) {
+    StartupScreen* startupWidget = new StartupScreen(this);
+    if (splash) {
+        QPoint splashPos = splash->getPixmapPosition();
+        startupWidget->move(splashPos);
+    }
+    else {
+        qreal screenWidth = QApplication::desktop()->screenGeometry().width();
+        qreal screenHeight = QApplication::desktop()->screenGeometry().height();
+        startupWidget->move(screenWidth / 2.f - startupWidget->size().width() / 2.f, screenHeight / 2.f - startupWidget->size().height());
+    }
+    connect(startupWidget, SIGNAL(selectedRecentWorkspace(const QString&)), this, SLOT(openWorkspace(const QString&)));
+    connect(startupWidget, SIGNAL(selectedNewWorkspace()), this, SLOT(newWorkspace()));
+    connect(startupWidget, SIGNAL(selectedTemplate(const QString&)), this, SLOT(openWorkspace(const QString&)));
+    connect(startupWidget, SIGNAL(gettingStartedSignal()), this, SLOT(helpFirstSteps()));
+    connect(startupWidget, SIGNAL(helpTutorialSlides()), this, SLOT(helpTutorialSlides()));
+    connect(startupWidget, SIGNAL(helpAnimation()), this, SLOT(helpAnimation()));
+    return startupWidget;
+}
 
 } // namespace

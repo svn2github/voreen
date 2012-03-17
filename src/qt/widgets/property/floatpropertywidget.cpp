@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,9 +37,9 @@
 namespace voreen {
 
 FloatPropertyWidget::FloatPropertyWidget(FloatProperty* prop, QWidget* parent, bool addVisibilityControl)
-    : QPropertyWidget(prop, parent),
-    property_(prop),
-      widget_(new DoubleSliderSpinBoxWidget(this))
+    : QPropertyWidget(prop, parent)
+    , property_(prop)
+    , widget_(new DoubleSliderSpinBoxWidget(this))
 {
     tgtAssert(property_, "no property");
     widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

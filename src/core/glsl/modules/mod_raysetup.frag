@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,6 +34,7 @@
  */
 
 uniform float samplingStepSize_;
+uniform float samplingRate_;
 uniform float isoValue_;
 
 /**
@@ -41,19 +42,18 @@ uniform float isoValue_;
  * a ray has to reach before it is terminated.
  * Setting this value to 1.0 disables early ray termination.
  */
-#define EARLY_RAY_TERMINATION_OPACITY 0.95
+#define EARLY_RAY_TERMINATION_OPACITY 1.0
 
 /***
  * Calculates the direction of the ray and returns the number
  * of steps and the direction.
  ***/
-void raySetup(in vec3 first, in vec3 last, out vec3 rayDirection, out float tIncr, out float tEnd) {
+void raySetup(in vec3 first, in vec3 last, in vec3 dimension, out vec3 rayDirection, out float tIncr, out float tEnd) {
     // calculate ray parameters
-    tIncr = samplingStepSize_;
-
     rayDirection = last - first;
     tEnd = length(rayDirection);
     rayDirection = normalize(rayDirection);
+    tIncr = 1.0/(samplingRate_*length(rayDirection*dimension));
     #ifdef ADAPTIVE_SAMPLING
         directionWithStepSize = rayDirection * tIncr;
     #endif

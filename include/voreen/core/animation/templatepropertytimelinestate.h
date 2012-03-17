@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -68,7 +68,7 @@ class TemplatePropertyTimeline;
  * This class organizes all animationsettings of one property of the type T.
  */
 template <class T>
-class TemplatePropertyTimelineState : public Serializable {
+class VRN_CORE_API TemplatePropertyTimelineState : public Serializable {
 public:
     /**
      * Destructor.

@@ -2,8 +2,8 @@
 # Project file for the Voreen voltool app
 ####################################################
 TARGET = voltool
-TEMPLATE	= app
-LANGUAGE	= C++
+TEMPLATE = app
+LANGUAGE = C++
 
 CONFIG += console
 CONFIG -= qt
@@ -24,6 +24,10 @@ include(../../config.txt)
 # Include common configuration
 include(../../commonconf.pri)
 
+# Set output directory of the executable
+VRN_APP_DIRECTORY = "$${VRN_HOME}/bin"
+
+# Include generic app configuration
 include(../voreenapp.pri)
 
 win32 {

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,14 +25,14 @@
 #ifndef TGT_EVENT_H
 #define TGT_EVENT_H
 
-#include "tgt/config.h"
+#include "tgt/types.h"
 
 namespace tgt {
 	
 /**
  *  The base class for all events. Provides the accepted/ignore mechanism.
  */
-class Event {
+class TGT_API Event {
 public:
     enum Modifier {
         MODIFIER_NONE   = 0x0000,

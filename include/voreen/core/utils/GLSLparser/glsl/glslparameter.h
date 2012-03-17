@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -39,7 +39,8 @@ namespace glslparser {
 class GLSLParameter : public GLSLNode {
 public:
     GLSLParameter(GLSLTypeSpecifier* const typeSpecifier,
-        GLSLParameterQualifier* const paramQualifier, const bool isConst, GLSLVariable* const paramName)
+                  GLSLParameterQualifier* const paramQualifier,
+                  const bool isConst, GLSLVariable* const paramName)
         : GLSLNode(GLSLTerminals::ID_UNKNOWN),
         typeSpecifier_(typeSpecifier),
         paramQualifier_(paramQualifier),
@@ -61,6 +62,11 @@ public:
     }
 
     void setIsConst(const bool isConst) { isConst_ = isConst; }
+
+    GLSLTypeSpecifier* getSpecifier() { return typeSpecifier_; }
+    GLSLParameterQualifier* getQualifier() { return paramQualifier_; }
+    bool isConst() const { return isConst_; }
+    GLSLVariable* getName() { return name_; }
 
 protected:
     GLSLTypeSpecifier* typeSpecifier_;

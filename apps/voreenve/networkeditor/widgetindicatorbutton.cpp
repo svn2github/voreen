@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,8 +44,8 @@ namespace {
     // the color if the button is pressed
     const QColor sunkenColor = QColor(32,181,230,128);
 
-    const QColor someWidgetsVisible = QColor(245, 220, 120, 175);
-    const QColor allWidgetsVisible = QColor(46, 192, 217, 160);
+    const QColor allWidgetsVisible = QColor(160, 241, 164, 175);
+    const QColor someWidgetsVisible = QColor(254, 196, 79, 175);
 
     // size of the WidgetIndicator
     const QSize size = QSize(12, 8);
@@ -75,7 +75,7 @@ int WidgetIndicatorButton::type() const {
 }
 
 void WidgetIndicatorButton::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*) {
-    painter->setPen(QPen(Qt::black, 4));
+    painter->setPen(QPen(Qt::black, 3.5));
     painter->drawRect(boundingRect());
 
     if (option->state & QStyle::State_MouseOver)

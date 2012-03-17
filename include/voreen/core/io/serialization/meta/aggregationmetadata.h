@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,9 @@
 #define VRN_AGGREGATIONMETADATA_H
 
 #include "voreen/core/io/serialization/serialization.h"
+#include "voreen/core/network/processornetwork.h"
+#include "voreen/core/network/portconnection.h"
+
 
 namespace voreen {
 
@@ -37,7 +40,7 @@ class Port;
 class PortConnection;
 class Processor;
 
-class AggregationMetaData : public Serializable {
+class VRN_CORE_API AggregationMetaData : public Serializable {
 public:
     AggregationMetaData();
     virtual ~AggregationMetaData();
@@ -72,16 +75,18 @@ private:
 
 //-------------------------------------------------------------------------------------------------
 
-class AggregationMetaDataContainer : public MetaDataBase {
+class VRN_CORE_API AggregationMetaDataContainer : public MetaDataBase {
 public:
     AggregationMetaDataContainer();
     virtual ~AggregationMetaDataContainer();
 
+    virtual std::string getClassName() const { return "AggregationMetaDataContainer"; };
+    virtual Serializable* create() const;
+    virtual MetaDataBase* clone() const;
+    virtual std::string toString() const;
+
     virtual void serialize(XmlSerializer& s) const;
     virtual void deserialize(XmlDeserializer& s);
-
-    virtual const std::string getTypeString(const std::type_info& type) const;
-    virtual Serializable* createType(const std::string& typeString);
 
     void addAggregation(AggregationMetaData* aggregation);
     void removeAggregation(AggregationMetaData* aggregation);
@@ -90,7 +95,7 @@ public:
 
     const std::vector<AggregationMetaData*>& getAggregations() const;
 
-private:
+protected:
     std::vector<AggregationMetaData*> aggregations_; ///< contains all stored aggregations and every processor within each aggregation
 };
 

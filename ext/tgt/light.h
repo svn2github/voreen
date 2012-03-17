@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,7 +25,6 @@
 #ifndef TGT_LIGHT_H
 #define TGT_LIGHT_H
 
-#include "tgt/config.h"
 #include "tgt/vector.h"
 #include "tgt/spline.h"
 #include "tgt/curve.h"
@@ -402,7 +401,7 @@ public:
 
 	/// Returns the count of the currently instantiated Light objects.
 	static int getLightCount(){
-		return usedLightIndices_.size();
+		return static_cast<int>(usedLightIndices_.size());
 	}
 
 	//! Returns true if OpenGL light limit is reached and no more Light objects can be created.

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -122,7 +122,10 @@ ParseTreeNode* Parser::parse() {
 
     ParseTreeNode* root = 0;
     if ((accepted == true) && (error == false)) {
-        log_ << "  accepted.\n";
+        log_ << "  accepted." << std::endl;
+
+        if (nodes_.empty())
+            log_ << " !!! Error: parse tree has no  root !!!" << std::endl;
 
         while (! nodes_.empty()) {
             if (root != 0)

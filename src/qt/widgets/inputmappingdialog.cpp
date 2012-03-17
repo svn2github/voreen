@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,13 +27,16 @@
  **********************************************************************/
 
 #include "voreen/qt/widgets/inputmappingdialog.h"
-#include "voreen/qt/widgets/keydetectorwidget.h"
+
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/properties/eventproperty.h"
 #include "voreen/core/interaction/interactionhandler.h"
 #include "voreen/core/network/processornetwork.h"
+
+#include "voreen/qt/widgets/keydetectorwidget.h"
 #include "voreen/qt/widgets/eventpropertywidget.h"
-#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
 #include "voreen/qt/widgets/property/qpropertywidget.h"
 #include "voreen/qt/widgets/customlabel.h"
 
@@ -45,14 +48,23 @@
 #include <QApplication>
 #include <QShowEvent>
 
+namespace {
+    QString whatsThisInfo = "<h3>Input Mapping Dialog</h3>This widget controls how different input methods are handled in the \
+                            workspace. Every processor with has an interaction method is listed in a seperate box with the \
+                            interaction modes within. It is possible to activate or deactivate a certain mode with the checkbox, \
+                            or assign modifier (click the box and press the modifier or SPACE to delete) to a specific interaction. \
+                            Lastly \"Sharing\" determines if a processor consumes the interaction event after it has been processed.";
+}
+
 namespace voreen {
 
 InputMappingDialog::InputMappingDialog(QWidget* parent, ProcessorNetwork* network)
-    : QWidget(parent),
-      processorNetwork_(network),
-      scrollStretchItem_(0),
-      widgetsValid_(false)
+    : QWidget(parent)
+    , processorNetwork_(network)
+    , scrollStretchItem_(0)
+    , widgetsValid_(false)
 {
+    setWhatsThis(whatsThisInfo);
 
     if (processorNetwork_)
         processorNetwork_->addObserver(this);
@@ -152,9 +164,16 @@ void InputMappingDialog::addProcessorToLayout(const Processor* processor) {
     processorBox->setLayout(boxLayout);
 
     // add widgets for collected interaction handler's normal properties
-    QPropertyWidgetFactory propFactory;
-    for (size_t j=0; j<handlerProps.size(); j++) {
-        PropertyWidget* propWidget = handlerProps[j]->createAndAddWidget(&propFactory);
+    if (!VoreenApplication::app()) {
+        LERRORC("voreen.qt.InputMappingDialog", "VoreenApplication not instantiated");
+        return;
+    }
+    for (size_t p=0; p<handlerProps.size(); p++) {
+        Property* prop = handlerProps.at(p);
+        PropertyWidget* propWidget = VoreenApplication::app()->createPropertyWidget(prop);
+        if (propWidget) 
+            prop->addWidget(propWidget);
+
         if (QPropertyWidget* qPropWidget = dynamic_cast<QPropertyWidget*>(propWidget)) {
             QHBoxLayout* layoutTemp = new QHBoxLayout();
             layoutTemp->setContentsMargins(2,2,2,2);

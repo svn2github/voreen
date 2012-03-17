@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,128 +27,30 @@
  **********************************************************************/
 
 #include "voreen/core/properties/link/linkevaluatorid.h"
-#include "voreen/core/properties/boolproperty.h"
-#include "voreen/core/properties/floatproperty.h"
-#include "voreen/core/properties/intproperty.h"
-#include "voreen/core/properties/stringproperty.h"
-#include "voreen/core/properties/vectorproperty.h"
-#include "voreen/core/properties/transfuncproperty.h"
-#include "voreen/core/properties/buttonproperty.h"
-#include "voreen/core/datastructures/transfunc/transfunc.h"
+#include "voreen/core/utils/variant.h"
 
-#include "voreen/core/properties/link/boxobjecthelper.h"
+#include "voreen/core/properties/property.h"
 
 namespace voreen {
 
 void LinkEvaluatorId::eval(Property* src, Property* dst) throw (VoreenException) {
-    BoxObject bo = BoxObjectHelper::createBoxObjectFromProperty(src);
-    BoxObjectHelper::setPropertyFromBoxObject(dst, bo);
+    const Variant& srcVar = src->getVariant();
+    dst->setVariant(srcVar);
 }
 
-std::string LinkEvaluatorId::name() const {
-    return "id";
+std::string LinkEvaluatorId::getClassName() const {
+    return "LinkEvaluatorId";
 }
 
-bool LinkEvaluatorId::arePropertiesLinkable(const Property* p1, const Property* p2) const {
-    tgtAssert(p1, "null pointer");
-    tgtAssert(p2, "null pointer");
+bool LinkEvaluatorId::arePropertiesLinkable(const Property* src, const Property* dst) const {
+    tgtAssert(src, "null pointer");
+    tgtAssert(dst, "null pointer");
 
-    if (typeid(*p1) == typeid(*p2))
-        return true;
-
-    if (dynamic_cast<const BoolProperty*>(p1) || dynamic_cast<const FloatProperty*>(p1) ||
-        dynamic_cast<const IntProperty*>(p1)  || dynamic_cast<const StringProperty*>(p1) )
-    {
-        if (dynamic_cast<const BoolProperty*>(p2))
-            return true;
-        else if (dynamic_cast<const IntProperty*>(p2))
-            return true;
-        else if (dynamic_cast<const FloatProperty*>(p2))
-            return true;
-        else if (dynamic_cast<const StringProperty*>(p2))
-            return true;
-        else
-            return false;
-    }
-    else if (dynamic_cast<const IntVec2Property*>(p1)   || dynamic_cast<const IntVec3Property*>(p1)   || dynamic_cast<const IntVec4Property*>(p1)   ||
-             dynamic_cast<const FloatVec2Property*>(p1) || dynamic_cast<const FloatVec3Property*>(p1) || dynamic_cast<const FloatVec4Property*>(p1) )
-    {
-        if (dynamic_cast<const IntVec2Property*>(p2))
-            return true;
-        else if (dynamic_cast<const IntVec3Property*>(p2))
-            return true;
-        else if (dynamic_cast<const IntVec4Property*>(p2))
-            return true;
-        else if (dynamic_cast<const FloatVec2Property*>(p2))
-            return true;
-        else if (dynamic_cast<const FloatVec3Property*>(p2))
-            return true;
-        else if (dynamic_cast<const FloatVec4Property*>(p2))
-            return true;
-        else
-            return false;
-    }
-
-    return false;
+    return Variant::canConvert(src->getVariantType(), dst->getVariantType());
 }
 
-//-----------------------------------------------------------------------------
-
-void LinkEvaluatorCameraId::eval(Property* src, Property* dst) throw (VoreenException) {
-    CameraProperty* dstCast = static_cast<CameraProperty*>(dst);
-    CameraProperty* srcCast = static_cast<CameraProperty*>(src);
-
-    tgt::Camera cam = dstCast->get();
-    tgt::Camera srcCam = srcCast->get();
-
-    cam.setPosition(srcCam.getPosition());
-    cam.setFocus(srcCam.getFocus());
-    cam.setUpVector(srcCam.getUpVector());
-
-    dstCast->set(cam);
-}
-
-bool LinkEvaluatorCameraId::arePropertiesLinkable(const Property* p1, const Property* p2) const {
-    tgtAssert(p1, "null pointer");
-    tgtAssert(p2, "null pointer");
-
-    return (dynamic_cast<const CameraProperty*>(p1) && dynamic_cast<const CameraProperty*>(p2));
-}
-
-//-----------------------------------------------------------------------------
-
-void LinkEvaluatorTransFuncId::eval(Property* src, Property* dst) throw (VoreenException) {
-    TransFuncProperty* dstCast = static_cast<TransFuncProperty*>(dst);
-    TransFuncProperty* srcCast = static_cast<TransFuncProperty*>(src);
-
-    if(!srcCast->get()) {
-        LERRORC("voreen.LinkEvaluatorTransFuncId", "src is has no TF");
-        return;
-    }
-
-    TransFunc* tf = srcCast->get()->clone();
-
-    dstCast->set(tf);
-}
-
-bool LinkEvaluatorTransFuncId::arePropertiesLinkable(const Property* p1, const Property* p2) const {
-    tgtAssert(p1, "null pointer");
-    tgtAssert(p2, "null pointer");
-
-    return (dynamic_cast<const TransFuncProperty*>(p1) && dynamic_cast<const TransFuncProperty*>(p2));
-}
-
-//-----------------------------------------------------------------------------
-
-void LinkEvaluatorButtonId::eval(Property* /*src*/, Property* dst) throw (VoreenException) {
-    static_cast<ButtonProperty*>(dst)->clicked();
-}
-
-bool LinkEvaluatorButtonId::arePropertiesLinkable(const Property* p1, const Property* p2) const {
-    tgtAssert(p1, "null pointer");
-    tgtAssert(p2, "null pointer");
-
-    return (dynamic_cast<const ButtonProperty*>(p1) && dynamic_cast<const ButtonProperty*>(p2));
+LinkEvaluatorBase* LinkEvaluatorId::create() const {
+    return new LinkEvaluatorId;
 }
 
 } // namespace

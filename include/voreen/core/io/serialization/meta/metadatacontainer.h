@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,11 +41,15 @@ namespace voreen {
  *
  * @see Serializable
  */
-class MetaDataContainer : public Serializable {
+class VRN_CORE_API  MetaDataContainer : public Serializable {
+
+    friend class XmlSerializer;
+    friend class XmlDeserializer;
+
 public:
-    /**
-     * Default destructor.
-     */
+    MetaDataContainer() {}
+    MetaDataContainer(const MetaDataContainer& mdc);
+    MetaDataContainer& operator=(const MetaDataContainer& mdc);
     virtual ~MetaDataContainer();
 
     /**
@@ -64,7 +68,9 @@ public:
      * @param key the key
      * @returns @c true if meta data exists, otherwise @c false.
      */
-    virtual bool hasMetaData(const std::string& key);
+    virtual bool hasMetaData(const std::string& key) const;
+
+    virtual std::vector<std::string> getKeys() const;
 
     /**
      * Returns meta data to the given key.
@@ -74,12 +80,21 @@ public:
      */
     virtual MetaDataBase* getMetaData(const std::string& key);
 
+    ///@overload
+    virtual const MetaDataBase* getMetaData(const std::string& key) const;
+
     /**
      * Removes meta data with the given key. If no meta data exists, nothing happens
      *
      * @param key the key
      */
     virtual void removeMetaData(const std::string& key);
+
+    /** 
+     * @brief Changes the key of a MetaData entry.
+     * Does nothing if the key doesn't exist.
+     */
+    virtual void renameMetaData(const std::string& oldKey, const std::string& newKey);
 
     /**
      * Deletes all associated meta data.
@@ -98,28 +113,9 @@ public:
 
 private:
     /**
-     * Initializes meta data factories.
-     */
-    static void initializeFactories();
-
-    /**
-     * Are factories initialized?
-     */
-    static bool factoriesInitialized_;
-
-    typedef std::vector<SerializableFactory*> FactoryCollection;
-
-    /**
-     * Meta data factories.
-     */
-    static FactoryCollection factories_;
-
-    typedef std::map<std::string, MetaDataBase*> MetaDataMap;
-
-    /**
      * Stored meta data.
      */
-    MetaDataMap metaData_;
+    std::map<std::string, MetaDataBase*> metaData_;
 };
 
 } // namespace

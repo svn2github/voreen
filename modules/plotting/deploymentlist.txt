@@ -1,0 +1,2 @@
+modules/plotting/plottingmodule.xml
+modules/plotting/ext/triangle/license.txt:licenses/triangle

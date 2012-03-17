@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,20 +28,23 @@
 
 #include "voreen/qt/widgets/customlabel.h"
 
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
+#include "voreen/core/interaction/interactionhandler.h"
+#include "voreen/core/processors/processor.h"
+#include "voreen/core/datastructures/volume/volumecontainer.h"
+#include "voreen/core/properties/volumehandleproperty.h"
+#include "voreen/core/properties/transfuncproperty.h"
+
 #include "voreen/qt/widgets/expandableheaderbutton.h"
 #include "voreen/qt/widgets/property/lightpropertywidget.h"
 #include "voreen/qt/widgets/property/processorpropertieswidget.h"
 #include "voreen/qt/widgets/property/propertyvectorwidget.h"
 #include "voreen/qt/widgets/property/qpropertywidget.h"
-#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
 #include "voreen/qt/widgets/property/grouppropertywidget.h"
 #include "voreen/qt/widgets/property/transfuncpropertywidget.h"
 #include "voreen/qt/widgets/property/volumecollectionpropertywidget.h"
 #include "voreen/qt/widgets/property/volumehandlepropertywidget.h"
-
-#include "voreen/core/interaction/interactionhandler.h"
-#include "voreen/core/processors/processor.h"
-#include "voreen/core/datastructures/volume/volumecontainer.h"
 
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -56,7 +59,6 @@ ProcessorPropertiesWidget::ProcessorPropertiesWidget(QWidget* parent, const Proc
     , volumeContainer_(0)
     , expanded_(expanded)
     , userExpandable_(userExpandable)
-    , widgetFactory_(0)
     , widgetInstantiationState_(NONE)
 {
 
@@ -119,6 +121,23 @@ void ProcessorPropertiesWidget::setLevelOfDetail(Property::LODSetting lod) {
         headerVisible |= (propertyList[i]->isVisible()
                 && (propertyList[i]->getLevelOfDetail() <= lod));
     }
+
+    std::map<std::string, GroupPropertyWidget*>::iterator it;
+    for(it = propertyGroupsMap_.begin(); it != propertyGroupsMap_.end(); it++) {
+        GroupPropertyWidget* gpw = it->second;
+
+        if(gpw) {
+            if (lod == Property::USER) {
+                if(gpw->isAnyPropertyVisible(lod))
+                    gpw->setVisible(true);
+                else
+                    gpw->setVisible(false);
+            }
+            else
+                gpw->setVisible(true);
+        }
+    }
+
 
     setVisible(headerVisible);
 }
@@ -218,116 +237,120 @@ void ProcessorPropertiesWidget::widgetInstantiation() {
 }
 
 void ProcessorPropertiesWidget::instantiateWidgets() {
-setUpdatesEnabled(false);
-if(widgetInstantiationState_ == NONE) {
-    propertyWidget_ = new QWidget;
-    QGridLayout* gridLayout = new QGridLayout(propertyWidget_);
-    gridLayout->setContentsMargins(3, 4, 0, 2);
-    gridLayout->setSpacing(2);
-    gridLayout->setColumnStretch(0, 1);
-    gridLayout->setColumnStretch(1, 2);
-    gridLayout->setEnabled(false);
-    std::vector<Property*> propertyList = processor_->getProperties();
-
-    // create widget for every property and put them into a vertical layout
-    int rows = 0;
-    widgetFactory_ = new QPropertyWidgetFactory();
-    for (std::vector<Property*>::iterator iter = propertyList.begin(); iter
-            != propertyList.end(); ++iter) {
-                if (dynamic_cast<TransFuncProperty*>(*iter)) {
-                    QPropertyWidget* w =
-                            dynamic_cast<QPropertyWidget*>((*iter)->createAndAddWidget(widgetFactory_));
-                    if (w != 0) {
-                        widgets_.push_back(w);
-                        connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));
-                        CustomLabel* nameLabel = w->getNameLabel();
-                        gridLayout->addWidget(w, rows, 1, 1, 1);
-                        gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
-                    }
-                }
-                ++rows;
+    setUpdatesEnabled(false);
+    if (!VoreenApplication::app()) {
+        LERRORC("voreen.qt.ProcessorPropertiesWidget", "VoreenApplication not instantiated");
+        return;
     }
-    gridLayout->setEnabled(true);
+    if (widgetInstantiationState_ == NONE) {
+        propertyWidget_ = new QWidget;
+        QGridLayout* gridLayout = new QGridLayout(propertyWidget_);
+        gridLayout->setContentsMargins(3, 4, 0, 2);
+        gridLayout->setSpacing(2);
+        gridLayout->setColumnStretch(0, 1);
+        gridLayout->setColumnStretch(1, 2);
+        gridLayout->setEnabled(false);
+        std::vector<Property*> propertyList = processor_->getProperties();
 
-    delete widgetFactory_;
-    widgetFactory_ = 0;
-    mainLayout_->addWidget(propertyWidget_);
-    setUpdatesEnabled(true);
-    updateState();
-    widgetInstantiationState_ = ONLY_TF;
-}
-else if(widgetInstantiationState_ == ONLY_TF) {
-    QGridLayout* gridLayout = dynamic_cast<QGridLayout*>(propertyWidget_->layout());
-    std::vector<Property*> propertyList = processor_->getProperties();
+        // create widget for every property and put them into a vertical layout
+        int rows = 0;
 
-    // create widget for every property and put them into a vertical layout
-    int rows = 0;
-    widgetFactory_ = new QPropertyWidgetFactory();
-    for (std::vector<Property*>::iterator iter = propertyList.begin(); iter
-            != propertyList.end(); ++iter) {
-                if(!dynamic_cast<TransFuncProperty*>(*iter)) {
-                    QPropertyWidget* w =
-                            dynamic_cast<QPropertyWidget*>((*iter)->createAndAddWidget(widgetFactory_));
-                    if (w != 0) {
-                        widgets_.push_back(w);
-                        connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));
-                        // we are dealing with a propertygroup
-                        if((*iter)->getGroupID() != "") {
-                            std::map<std::string, GroupPropertyWidget*>::iterator it = propertyGroupsMap_.find((*iter)->getGroupID());
-                            // the group does not exist
-                            if(it == propertyGroupsMap_.end()) {
-                                std::string guiName = (*iter)->getOwner()->getPropertyGroupGuiName((*iter)->getGroupID());
-                                propertyGroupsMap_[(*iter)->getGroupID()] = new GroupPropertyWidget((*iter), false, guiName, this);
-                                (*iter)->getOwner()->setPropertyGroupWidget((*iter)->getGroupID(), propertyGroupsMap_[(*iter)->getGroupID()]);
-                                // the group is not visible
-                                if(!(*iter)->getOwner()->isPropertyGroupVisible((*iter)->getGroupID())) {
-                                    propertyGroupsMap_[(*iter)->getGroupID()]->setVisible(false);
-                                }
+        for (std::vector<Property*>::iterator iter = propertyList.begin(); iter != propertyList.end(); ++iter) {
+            Property* prop = *iter;
+            if (dynamic_cast<TransFuncProperty*>(prop)) {
+                PropertyWidget* propWidget = VoreenApplication::app()->createPropertyWidget(prop);
+                if (propWidget) 
+                    prop->addWidget(propWidget);
+
+                QPropertyWidget* w = dynamic_cast<QPropertyWidget*>(propWidget);
+                if (w != 0) {
+                    widgets_.push_back(w);
+                    connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));
+                    CustomLabel* nameLabel = w->getNameLabel();
+                    gridLayout->addWidget(w, rows, 1, 1, 1);
+                    gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
+                }
+            }
+            ++rows;
+        }
+        gridLayout->setEnabled(true);
+
+        mainLayout_->addWidget(propertyWidget_);
+        setUpdatesEnabled(true);
+        updateState();
+        widgetInstantiationState_ = ONLY_TF;
+    }
+    else if(widgetInstantiationState_ == ONLY_TF) {
+        QGridLayout* gridLayout = dynamic_cast<QGridLayout*>(propertyWidget_->layout());
+        std::vector<Property*> propertyList = processor_->getProperties();
+
+        // create widget for every property and put them into a vertical layout
+        int rows = 0;
+        for (std::vector<Property*>::iterator iter = propertyList.begin(); iter != propertyList.end(); ++iter) {
+            Property* prop = *iter;
+            if (!dynamic_cast<TransFuncProperty*>(prop)) {
+                PropertyWidget* propWidget = VoreenApplication::app()->createPropertyWidget(prop);
+                if (propWidget) 
+                    prop->addWidget(propWidget);
+                QPropertyWidget* w = dynamic_cast<QPropertyWidget*>(propWidget);
+                if (w != 0) {
+                    widgets_.push_back(w);
+                    connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));
+                    // we are dealing with a propertygroup
+                    if (prop->getGroupID() != "") {
+                        std::map<std::string, GroupPropertyWidget*>::iterator it = propertyGroupsMap_.find(prop->getGroupID());
+                        // the group does not exist
+                        if (it == propertyGroupsMap_.end()) {
+                            std::string guiName = prop->getOwner()->getPropertyGroupGuiName(prop->getGroupID());
+                            propertyGroupsMap_[prop->getGroupID()] = new GroupPropertyWidget(prop, false, guiName, this);
+                            prop->getOwner()->setPropertyGroupWidget(prop->getGroupID(), propertyGroupsMap_[prop->getGroupID()]);
+                            // the group is not visible
+                            if(!prop->getOwner()->isPropertyGroupVisible(prop->getGroupID())) {
+                                propertyGroupsMap_[prop->getGroupID()]->setVisible(false);
                             }
-                            propertyGroupsMap_[(*iter)->getGroupID()]->addWidget(w, w->getNameLabel(), QString::fromStdString(w->getPropertyGuiName()));
-                            w->getNameLabel()->setMinimumWidth(60);
-                            gridLayout->addWidget(propertyGroupsMap_[(*iter)->getGroupID()], rows, 0, 1, 2);
-                            propertyGroupsMap_[(*iter)->getGroupID()]->setVisible((*iter)->getOwner()->isPropertyGroupVisible((*iter)->getGroupID()));
                         }
-                        else {
-                            CustomLabel* nameLabel = w->getNameLabel();
+                        propertyGroupsMap_[prop->getGroupID()]->addWidget(w, w->getNameLabel(), QString::fromStdString(w->getPropertyGuiName()));
+                        w->getNameLabel()->setMinimumWidth(60);
+                        gridLayout->addWidget(propertyGroupsMap_[prop->getGroupID()], rows, 0, 1, 2);
+                        propertyGroupsMap_[prop->getGroupID()]->setVisible(prop->getOwner()->isPropertyGroupVisible(prop->getGroupID()));
+                    }
+                    else {
+                        CustomLabel* nameLabel = w->getNameLabel();
 
-                            if(dynamic_cast<LightPropertyWidget*>(w)) {     // HACK: this prevents a cut off gui element e.g. seen in the clipping plane widget
-                                gridLayout->setRowStretch(rows, 1);
-                            }
-                            if(!dynamic_cast<PropertyVectorWidget*>(w)) {
-                                if (nameLabel) {
-                                    gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
-                                    gridLayout->addWidget(w, rows, 1, 1, 1);
-                                }
-                                else {
-                                    gridLayout->addWidget(w, rows, 0, 1, 2);
-                                }
+                        if(dynamic_cast<LightPropertyWidget*>(w)) {     // HACK: this prevents a cut off gui element e.g. seen in the clipping plane widget
+                            gridLayout->setRowStretch(rows, 1);
+                        }
+                        if(!dynamic_cast<PropertyVectorWidget*>(w)) {
+                            if (nameLabel) {
+                                gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
+                                gridLayout->addWidget(w, rows, 1, 1, 1);
                             }
                             else {
-                                gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
-                                ++rows;
                                 gridLayout->addWidget(w, rows, 0, 1, 2);
+                            }
+                        }
+                        else {
+                            gridLayout->addWidget(nameLabel, rows, 0, 1, 1);
+                            ++rows;
+                            gridLayout->addWidget(w, rows, 0, 1, 2);
 
-                            }
+                        }
 
-                            if (dynamic_cast<VolumeHandlePropertyWidget*>(w)){
-                                if(volumeContainer_)
-                                    static_cast<VolumeHandlePropertyWidget*>(w)->setVolumeContainer(volumeContainer_);
-                            }
-                            else if (dynamic_cast<VolumeCollectionPropertyWidget*>(w)){
-                                if(volumeContainer_)
-                                    static_cast<VolumeCollectionPropertyWidget*>(w)->setVolumeContainer(volumeContainer_);
-                            }
+                        if (dynamic_cast<VolumeHandlePropertyWidget*>(w)){
+                            if(volumeContainer_)
+                                static_cast<VolumeHandlePropertyWidget*>(w)->setVolumeContainer(volumeContainer_);
+                        }
+                        else if (dynamic_cast<VolumeCollectionPropertyWidget*>(w)){
+                            if(volumeContainer_)
+                                static_cast<VolumeCollectionPropertyWidget*>(w)->setVolumeContainer(volumeContainer_);
+                        }
                     }
 
-                    }
+                }
             }
             ++rows;
         }
 
-        delete widgetFactory_;
-        widgetFactory_ = 0;
         setUpdatesEnabled(true);
         //updateState();
         widgetInstantiationState_ = ALL;
@@ -344,14 +367,27 @@ void ProcessorPropertiesWidget::processorWidgetCreated(const Processor*) {}
 void ProcessorPropertiesWidget::processorWidgetDeleted(const Processor*) {}
 
 void ProcessorPropertiesWidget::portsAndPropertiesChanged(const Processor*) {
-    widgetFactory_ = new QPropertyWidgetFactory();
+
+    if (!VoreenApplication::app()) {
+        LERRORC("voreen.qt.ProcessorPropertiesWidget", "VoreenApplication not instantiated");
+        return;
+    }
+
+    if(!propertyWidget_) {
+        LERRORC("voreen.qt.ProcessorPropertiesWidget", "Property widget not instantiated");
+        return;
+    }
+
     QGridLayout* gridLayout = dynamic_cast<QGridLayout*>(propertyWidget_->layout());
     std::vector<Property*> properties = processor_->getProperties();
     for (unsigned int i=0; i<properties.size(); i++) {
-        const std::set<PropertyWidget*> propWidgets = properties[i]->getPropertyWidgets();
-        if (propWidgets.size() == 0) {
-            QPropertyWidget* w =
-                dynamic_cast<QPropertyWidget*>(properties[i]->createAndAddWidget(widgetFactory_));
+        Property* prop = properties.at(i);
+        const std::set<PropertyWidget*> propWidgets = prop->getPropertyWidgets();
+        if (propWidgets.empty()) {
+            PropertyWidget* propWidget = VoreenApplication::app()->createPropertyWidget(prop);
+            if (propWidget) 
+                prop->addWidget(propWidget);
+            QPropertyWidget* w = dynamic_cast<QPropertyWidget*>(propWidget);
             if (w) {
                 widgets_.push_back(w);
                 connect(w, SIGNAL(modified()), this, SLOT(propertyModified()));

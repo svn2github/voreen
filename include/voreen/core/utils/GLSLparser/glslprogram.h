@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,7 @@
 
 #include "voreen/core/utils/GLSLparser/glsl/glslsymbol.h"
 
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -53,6 +54,7 @@ public:
     const std::string& getShaderHeader() const { return shaderHeader_; }
     const std::vector<GLSLVariableSymbol*>& getUniformDeclarations() const { return uniformDecls_; }
     const std::vector<GLSLVariableSymbol*>& getOutDeclarations() const { return outDecls_; }
+    const std::set<unsigned int>& getReferencedGlFragData() const { return referencedGlFragData_; }
 
     void setShaderHeader(const std::string& shaderHeader) { shaderHeader_ = shaderHeader; }
 
@@ -64,6 +66,7 @@ private:
     std::string shaderHeader_;
     std::vector<GLSLVariableSymbol*> uniformDecls_;
     std::vector<GLSLVariableSymbol*> outDecls_;
+    std::set<unsigned int> referencedGlFragData_;
     std::ostringstream log_;
 
     static const std::string loggerCat_;

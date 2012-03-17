@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,7 @@
 #ifndef LABELINGWIDGETQT_H
 #define LABELINGWIDGETQT_H
 
-#include "voreen/modules/base/processors/image/labeling.h"
+#include "modules/base/processors/image/labeling.h"
 
 #include <QTabWidget>
 #include <QListWidget>

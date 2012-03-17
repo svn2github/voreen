@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,7 +41,7 @@ namespace voreen {
  *
  * @see EventProperty
  */
-class EventPropertyBase : public Property {
+class VRN_CORE_API EventPropertyBase : public Property {
 
     friend class Processor;
 
@@ -71,7 +71,8 @@ public:
         tgt::Event::Modifier modifier,
         bool shareEvents, bool enabled);
 
-    virtual std::string getTypeString() const;
+    virtual std::string getClassName() const       { return "EventProperty"; }
+    virtual std::string getTypeDescription() const { return "EventProperty"; }
 
     /**
      * Returns true, if the event property accepts the event \p e.
@@ -340,6 +341,14 @@ public:
         tgt::Event::Modifier modifier = tgt::Event::MODIFIER_NONE,
         bool shareEvents = false, bool enabled = true);
 
+
+    /**
+     * Default constructor. Needed for serialization. Do not use directly!
+     */
+    EventProperty();
+
+    virtual Property* create() const;
+
     /**
      * Registers a change listener function that is called
      * after the property state (keys/buttons) has changed.
@@ -379,7 +388,6 @@ private:
 
     void (T::*fptOnChange_)();                   ///< Called in case the property state (keys/buttons) changes
 };
-
 
 //-----------------------------------------------------------------------------------------------------------------------
 // template definitions
@@ -443,6 +451,24 @@ EventProperty<T>::EventProperty(const std::string& id, const std::string& guiNam
     , fptOnChange_(0)
 {
     tgtAssert(target_ && fptEvent_, "Passed target or function pointer invalid");
+}
+
+
+template<class T>
+voreen::EventProperty<T>::EventProperty() 
+    : EventPropertyBase("", "", false, false,    
+      tgt::MouseEvent::MOUSE_BUTTON_NONE, tgt::MouseEvent::ACTION_NONE,
+      tgt::KeyEvent::K_UNKNOWN, tgt::Event::MODIFIER_NONE, false, false)
+    , target_(0)
+    , fptMouseEvent_(0)
+    , fptKeyEvent_(0)
+    , fptEvent_(0)
+    , fptOnChange_(0)
+{}
+
+template<class T>
+Property* voreen::EventProperty<T>::create() const {
+    return new EventProperty<T>();
 }
 
 template<class T>

@@ -27,7 +27,6 @@
 
 #include <list>
 
-#include "tgt/config.h"
 #include "tgt/init.h"
 #include "tgt/vector.h"
 #include "tgt/glcanvas.h"

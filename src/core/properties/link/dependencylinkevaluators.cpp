@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,24 +33,24 @@
 namespace voreen {
 
 void DependencyLinkEvaluatorVolumeHandle::eval(Property* src, Property* dst) throw (VoreenException) {
-    DependencyLinkEvaluatorBase::eval(src, dst);
+    DependencyLinkEvaluator::eval(src, dst);
 
     if(static_cast<VolumeHandleProperty*>(src)->get())
         static_cast<VolumeHandleProperty*>(src)->get()->addObserver(this);
 }
 
 void DependencyLinkEvaluatorVolumeHandle::propertiesChanged(Property* src, Property* dst) {
-    DependencyLinkEvaluatorBase::propertiesChanged(src, dst);
+    DependencyLinkEvaluator::propertiesChanged(src, dst);
 
     if(static_cast<VolumeHandleProperty*>(src)->get())
         static_cast<VolumeHandleProperty*>(src)->get()->addObserver(this);
 }
 
-void DependencyLinkEvaluatorVolumeHandle::volumeHandleDelete(const VolumeHandle* source) {
+void DependencyLinkEvaluatorVolumeHandle::volumeHandleDelete(const VolumeHandleBase* source) {
     tgtAssert(keys_.size() == values_.size(), "keys and values have different number of entries");
 
     //We create this property just to compare its serialization against the keys:
-    VolumeHandleProperty vhp("test", "Test", const_cast<VolumeHandle*>(source));
+    VolumeHandleProperty vhp("test", "Test", const_cast<VolumeHandle*>(static_cast<const VolumeHandle*>((source))));
     std::string compare = serializeProperty(&vhp);
 
     for (size_t i = 0; i < keys_.size(); ++i) {
@@ -63,6 +63,6 @@ void DependencyLinkEvaluatorVolumeHandle::volumeHandleDelete(const VolumeHandle*
     tgtAssert(keys_.size() == values_.size(), "keys and values have different number of entries");
 }
 
-void DependencyLinkEvaluatorVolumeHandle::volumeChange(const VolumeHandle*) {}
+void DependencyLinkEvaluatorVolumeHandle::volumeChange(const VolumeHandleBase*) {}
 
 } // namespace

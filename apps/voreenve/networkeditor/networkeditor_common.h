@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,13 +36,16 @@
 
 namespace voreen {
 
-const qreal ZValueArrowGraphicsItem               = 1.f;
-const qreal ZValueRootGraphicsItemMouseOver       = 24.f;
-const qreal ZValuePropertyListGraphicsItem        = 23.f;
-const qreal ZValueLinkArrowGraphicsItem           = 22.f;
-const qreal ZValueOpenPropertyListButton          = 21.f;
-const qreal ZValueRootGraphicsItemNormal          = 2.f;
-const qreal ZValueLinkArrowGraphicsItemStub       = 30.f;
+const qreal ZValueArrowGraphicsItem                 = 2.f;
+const qreal ZValueRootGraphicsItemMouseOver         = 24.f;
+const qreal ZValuePropertyListGraphicsItem          = 23.f;
+const qreal ZValueLinkArrowGraphicsItem             = 22.f;
+const qreal ZValueOpenPropertyListButton            = 21.f;
+const qreal ZValueRootGraphicsItemNormal            = 3.f;
+const qreal ZValueLinkArrowGraphicsItemStub         = 30.f;
+const qreal ZValueNoteGraphicsItem                  = 50.f;
+const qreal ZValueAnnotationFenceGraphicsItem       = 1.f;
+const qreal ZValueAnnotationFenceHandleGraphicsItem = 51.f;
 
 // This enum serves as a central place for registering UserTypes used for qgraphicsitem_cast's
 // (see QGraphicsItem in Qt doc)
@@ -62,7 +65,9 @@ enum UserTypes {
     UserTypesProgressBarGraphicsItem = 13,
     UserTypesWidgetIndicatorButton = 14,
     UserTypesArrowHeadSelectionGraphicsItem = 15,
-    UserTypesOpenPropertyListButton = 16
+    UserTypesOpenPropertyListButton = 16,
+    UserTypesAnnotationGraphicsItem = 17,
+    UserTypesAnnotationCloseButton = 18
 };
 
 template<class T>

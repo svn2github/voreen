@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,12 +44,12 @@ namespace voreen {
 
 class ProcessorNetwork;
 
-class NetworkEvaluator : public ProcessorNetworkObserver {
+class VRN_CORE_API NetworkEvaluator : public ProcessorNetworkObserver {
 public:
     /**
      * Wrapper around the process() calls. Can be used e.g. for benchmarking.
      */
-    class ProcessWrapper  {
+    class VRN_CORE_API ProcessWrapper  {
         friend class NetworkEvaluator;
     public:
         virtual ~ProcessWrapper() {}
@@ -185,6 +185,16 @@ public:
      * Returns all render ports currently used by the network that contain valid data.
      */
     std::vector<RenderPort*> collectRenderPorts() const;
+
+    /**
+     * Returns all performance records currently used by the network.
+     */
+    std::vector<const PerformanceRecord*> collectPerformanceRecords() const;
+
+    /**
+     * Clears all performance records of the processors in the network.
+     */
+    void clearPerformanceRecords();
 
     /**
      * Marks the assigned network as modified, which causes

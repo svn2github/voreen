@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -86,7 +86,6 @@ protected:
 
     bool disconnected_;
     QBoxLayout* layout_;
-    Property* prop_;
     QToolButton* lodControl_;
 
     mutable CustomLabel* nameLabel_;

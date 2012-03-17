@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,38 +33,50 @@
 #include "tgt/glmath.h"
 #include <vector>
 
+#include "voreen/core/io/serialization/xmlserializer.h"
+#include "voreen/core/io/serialization/xmldeserializer.h"
+
 namespace voreen {
 
 template<class T>
-class PointListGeometry : public Geometry
-{
-
+class PointListGeometry : public Geometry {
 public:
-    PointListGeometry() : Geometry() { points_ = new std::vector<T>(); }
-    virtual ~PointListGeometry() { delete points_; points_ = 0; }
-    virtual void render() {
-
-        if (!points_)
-            return;
-
+    virtual void render() const {
         glBegin(GL_POINTS);
-        for (size_t i=0; i < points_->size(); ++i){
+        for (size_t i=0; i < points_.size(); ++i){
             // assuming data type stored in the point list is compatible to tgt::vertex
             // if not: template instantiation will fail (compile error)
-            tgt::vertex((*points_)[i]);
+            tgt::vertex(points_[i]);
         }
         glEnd();
     }
 
-    void addPoint(T point) {points_->push_back(point);}
-    void removeLast() {points_->pop_back();}
-    void clear() {points_->clear();}
-    const std::vector<T>& getData() const { return *points_; }
-    void setData(std::vector<T> points) { *points_ = points; }
-    size_t getNumPoints() const { return points_->size(); }
+    void addPoint(T point) {points_.push_back(point);}
+    void removeLast() {points_.pop_back();}
+    void clear() {points_.clear();}
+    const std::vector<T>& getData() const { return points_; }
+    void setData(std::vector<T> points) { points_ = points; }
+    size_t getNumPoints() const { return points_.size(); }
+    T getPoint(size_t i) const { return points_[i]; }
+
+    typename std::vector<T>::iterator begin() { return points_.begin(); };
+    typename std::vector<T>::const_iterator begin() const { return points_.begin(); };
+    typename std::vector<T>::iterator end() { return points_.end(); };
+    typename std::vector<T>::const_iterator end() const { return points_.end(); };
+
+    T& operator[](size_t index) { return points_[index]; };
+    const T& operator[](size_t index) const { return points_[index]; };
+
+    virtual void serialize(XmlSerializer& s) const {
+        s.serialize("points", points_);
+    }
+
+    virtual void deserialize(XmlDeserializer& s) {
+        s.deserialize("points", points_);
+    }
 
 protected:
-    std::vector<T>* points_;
+    std::vector<T> points_;
 
 };
 
@@ -72,17 +84,10 @@ protected:
 
 class PointListGeometryVec3 : public PointListGeometry<tgt::vec3> {
 public:
-    PointListGeometryVec3() { }
-    ~PointListGeometryVec3() { }
-
-    void render()
-    {
-        //vector<tgt::vec3>& points = static_cast< vector<tgt::vec3> >(points_);
+    void render() const {
         glBegin(GL_POINTS);
-        for ( size_t i = 0; i < points_->size(); i++ )
-        {
-            //tgt::vec3& v = static_cast<tgt::vec3>(points[i]);
-            tgt::vec3& v = this->points_->at(i);
+        for ( size_t i = 0; i < points_.size(); i++) {
+            const tgt::vec3& v = this->points_.at(i);
             glVertex3f(v.x, v.y, v.z);
         }
         glEnd();

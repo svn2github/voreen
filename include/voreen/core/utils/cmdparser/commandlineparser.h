@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,6 +34,8 @@
 // These includes in the header file is intentional
 // The user should only has to include "commandlineparser.h" to use the full functionality
 // The 'basic' classes
+
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/utils/cmdparser/command.h"
 #include "voreen/core/utils/cmdparser/singlecommand.h"
 #include "voreen/core/utils/cmdparser/multiplecommand.h"
@@ -44,7 +46,7 @@
 
 namespace voreen {
 
-class CommandlineParser {
+class VRN_CORE_API CommandlineParser {
 public:
     /**
      * Default constructor which does nothing fancy at all

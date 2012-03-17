@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,8 +35,9 @@
 #include "tgt/textureunit.h"
 
 #include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
+#include "voreen/core/ports/coprocessorport.h"
 #include "voreen/core/processors/processorwidgetfactory.h"
-#include "voreen/core/ports/allports.h"
 #include "voreen/core/processors/processorwidget.h"
 #include "voreen/core/properties/eventproperty.h"
 #include "voreen/core/properties/transfuncproperty.h"
@@ -44,8 +45,8 @@
 
 #include "voreen/core/io/serialization/xmlserializer.h"
 #include "voreen/core/io/serialization/xmldeserializer.h"
-#include "voreen/core/processors/processorfactory.h"
-#include "voreen/core/datastructures/transfunc/transfuncfactory.h"
+#include "voreen/core/io/progressbar.h"
+#include "voreen/core/io/timetofinishreporter.h"
 
 #include <sstream>
 
@@ -65,14 +66,15 @@ Processor::Processor()
     : PropertyOwner()
     , initialized_(false)
     , progressBar_(0)
+    , ttfReporter_(0)
     , name_("Processor")
     , moduleName_("undefined")
     , processorWidget_(0)
     , invalidationVisited_(false)
     , interactionModeVisited_(false)
     , eventVisited_(false)
-{
-}
+    , expensiveComputationStatus_(COMPUTATION_STATUS_NONE)
+{}
 
 Processor::~Processor() {
     if (isInitialized()) {
@@ -86,15 +88,11 @@ Processor* Processor::clone() const {
 
     // first serialize
     XmlSerializer s;
-    s.registerFactory(ProcessorFactory::getInstance());
-    s.registerFactory(TransFuncFactory::getInstance());
     s.serialize("this", this);
     s.write(stream);
 
     // then deserialize again
     XmlDeserializer d;
-    d.registerFactory(ProcessorFactory::getInstance());
-    d.registerFactory(TransFuncFactory::getInstance());
     d.read(stream);
     Processor* proc = 0;
     d.deserialize("this", proc);
@@ -102,9 +100,13 @@ Processor* Processor::clone() const {
     return proc;
 }
 
-void Processor::initialize() throw (VoreenException) {
 
-    tgtAssert(VoreenApplication::app(), "VoreenApplication not instantiated");
+void Processor::initialize() throw (tgt::Exception) {
+
+    if (!VoreenApplication::app()) {
+        LERROR("VoreenApplication not instantiated");
+        throw new VoreenException("VoreenApplication not instantiated");
+    }
 
     if (isInitialized()) {
         LWARNING("initialize(): '" << getName() << "' already initialized");
@@ -112,17 +114,15 @@ void Processor::initialize() throw (VoreenException) {
     }
 
     // create and initialize processor widget
-    if (VoreenApplication::app()->getProcessorWidgetFactory()) {
-        processorWidget_ = VoreenApplication::app()->getProcessorWidgetFactory()->createWidget(this);
-        if (processorWidget_) {
-            processorWidget_->initialize();
-
-            // inform the observers about the new widget
-            std::vector<ProcessorObserver*> observers = Observable<ProcessorObserver>::getObservers();
-            for (size_t i = 0; i < observers.size(); ++i)
-                observers[i]->processorWidgetCreated(this);
-        }
+    processorWidget_ = VoreenApplication::app()->createProcessorWidget(this);
+    if (processorWidget_) {
+        processorWidget_->initialize();
+        // inform the observers about the new widget
+        std::vector<ProcessorObserver*> observers = Observable<ProcessorObserver>::getObservers();
+        for (size_t i = 0; i < observers.size(); ++i)
+            observers[i]->processorWidgetCreated(this);
     }
+
 
     // initialize ports
     const std::vector<Port*>& ports = getPorts();
@@ -135,11 +135,9 @@ void Processor::initialize() throw (VoreenException) {
     const std::vector<Property*>& properties = getProperties();
     for (size_t i=0; i < properties.size(); ++i)
         properties[i]->initialize();
-
-    initialized_ = true;
 }
 
-void Processor::deinitialize() throw (VoreenException) {
+void Processor::deinitialize() throw (tgt::Exception) {
     if (!isInitialized()) {
         LWARNING("deinitialize(): '" << getName() << "' (" << getClassName() << ") not initialized");
         return;
@@ -167,8 +165,6 @@ void Processor::deinitialize() throw (VoreenException) {
     std::vector<ProcessorObserver*> observers = Observable<ProcessorObserver>::getObservers();
     for (size_t i = 0; i < observers.size(); ++i)
         observers[i]->processorWidgetDeleted(this);
-
-    initialized_ = false;
 }
 
 void Processor::beforeProcess() {
@@ -273,10 +269,6 @@ bool Processor::isUtility() const {
     return false;
 }
 
-std::string Processor::getProcessorInfo() const {
-    return "No information available";
-}
-
 const std::vector<Port*>& Processor::getInports() const {
     return inports_;
 }
@@ -320,6 +312,14 @@ Port* Processor::getPort(const std::string& name) const {
     }
 
     return 0;
+}
+
+const PerformanceRecord* Processor::getPerformanceRecord() const {
+    return &performanceRecord_;
+}
+
+void Processor::resetPerformanceRecord() {
+    performanceRecord_.deleteSamples();
 }
 
 void Processor::invalidate(int inv) {
@@ -482,6 +482,10 @@ MetaDataContainer& Processor::getMetaDataContainer() const {
     return metaDataContainer_;
 }
 
+std::string Processor::getCachePath() const {
+    return VoreenApplication::app()->getCachePath() + "/" + getClassName();
+}
+
 void Processor::setProgressBar(ProgressBar* progressBar) {
     progressBar_ = progressBar;
 }
@@ -489,14 +493,31 @@ void Processor::setProgressBar(ProgressBar* progressBar) {
 void Processor::setProgress(float progress) {
     if (progressBar_)
         progressBar_->setProgress(progress);
+
+    if (ttfReporter_)
+        ttfReporter_->setProgress(progress);
+}
+
+void Processor::setProgressTier(int tier, const std::string& tierName) {
+    if (progressBar_)
+        progressBar_->setProgressTier(tier);
+
+    if (ttfReporter_)
+        ttfReporter_->setProgressTier(tier, tierName);
 }
 
 ProcessorWidget* Processor::getProcessorWidget() const {
     return processorWidget_;
 }
 
-bool Processor::usesExpensiveComputation() const {
-    return false;
+void Processor::setExpensiveComputationStatus(Processor::ComputationStatus val) {
+    expensiveComputationStatus_ = val;
+    if ((val & COMPUTATION_STATUS_TIMETOFINISH) && (ttfReporter_ == 0))
+        ttfReporter_ = new TimeToFinishReporter(getClassName());
+}
+
+Processor::ComputationStatus Processor::getExpensiveComputationStatus() const {
+    return expensiveComputationStatus_;
 }
 
 void Processor::addEventProperty(EventPropertyBase* prop) {
@@ -568,7 +589,7 @@ void Processor::deregisterWidget() {
     processorWidget_ = 0;
 }
 
-void Processor::initializePort(Port* port) throw (VoreenException) {
+void Processor::initializePort(Port* port) throw (tgt::Exception) {
     tgtAssert(port, "Null pointer passed");
     if (port->isInitialized()) {
         LWARNING("initializePort() port '" << getName() << "." << port->getName()
@@ -579,7 +600,7 @@ void Processor::initializePort(Port* port) throw (VoreenException) {
     port->initialize();
 }
 
-void Processor::deinitializePort(Port* port) throw (VoreenException) {
+void Processor::deinitializePort(Port* port) throw (tgt::Exception) {
     tgtAssert(port, "Null pointer passed");
     if (!port->isInitialized()) {
         LWARNING("deinitializePort() port '" << getName() << "." << port->getName()

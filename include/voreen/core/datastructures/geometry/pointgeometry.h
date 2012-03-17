@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,10 +41,18 @@ class PointGeometry : public Geometry {
 public:
     PointGeometry() {}
     virtual ~PointGeometry() {}
-    virtual void render() = 0;
+    virtual void render() const = 0;
 
     const T& getData() const { return point_; }
     void setData(const T& point) { point_ = point; }
+
+    virtual void serialize(XmlSerializer& s) const {
+        s.serialize("point", point_);
+    }
+
+    virtual void deserialize(XmlDeserializer& s) {
+        s.deserialize("point", point_);
+    }
 
 protected:
     T point_;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -94,15 +94,13 @@ VolumeHandlePropertyWidget::VolumeHandlePropertyWidget(VolumeHandleProperty* vol
 
     volumeLoadButton_ = new VolumeLoadButton(volumeContainer_, this);
 
-    connect(volumeLoadButton_, SIGNAL(VolumeAdded(int)), this, SLOT(changeVolume(int)));
+    dimensionLabelCaption_ = new CustomLabel(this);
+    spacingLabelCaption_ = new CustomLabel(this);
+    memSizeLabelCaption_ = new CustomLabel(this);
 
-    CustomLabel* dimensionLabel = new CustomLabel(this);
-    CustomLabel* spacingLabel = new CustomLabel(this);
-    CustomLabel* memSizeLabel = new CustomLabel(this);
-
-    dimensionLabel->setText(" Dimensions");
-    spacingLabel->setText(" Spacing");
-    memSizeLabel->setText(" MemSize");
+    dimensionLabelCaption_->setText(" Dimensions");
+    spacingLabelCaption_->setText(" Spacing");
+    memSizeLabelCaption_->setText(" MemSize");
 
     volumeNameLabel_ = new CustomLabel(this);
     pathLabel_ = new CustomLabel(this);
@@ -132,9 +130,9 @@ VolumeHandlePropertyWidget::VolumeHandlePropertyWidget(VolumeHandleProperty* vol
     previewLayout->addWidget(previewLabel_);
     previewLayout->addLayout(infoLayout);
     infoLayout->addWidget(pathLabel_, 0, 0, 1, 2, 0);
-    infoLayout->addWidget(dimensionLabel, 1, 0);
-    infoLayout->addWidget(spacingLabel, 2, 0);
-    infoLayout->addWidget(memSizeLabel, 3, 0);
+    infoLayout->addWidget(dimensionLabelCaption_, 1, 0);
+    infoLayout->addWidget(spacingLabelCaption_, 2, 0);
+    infoLayout->addWidget(memSizeLabelCaption_, 3, 0);
 
     infoLayout->addWidget(dimensionLabel_, 1, 1);
     infoLayout->addWidget(spacingLabel_, 2, 1);
@@ -158,6 +156,9 @@ VolumeHandlePropertyWidget::VolumeHandlePropertyWidget(VolumeHandleProperty* vol
     mainLayout->addLayout(separatorLayout);
     mainLayout->addLayout(previewLayout);
 
+    connect(volumeLoadButton_, SIGNAL(volumeLoaded(const VolumeHandleBase*)),
+        this, SLOT(volumeLoaded(const VolumeHandleBase*)));
+
     updateFromProperty();
 }
 
@@ -180,12 +181,15 @@ void VolumeHandlePropertyWidget::updateFromProperty() {
         spacingLabel_->show();
         memSizeLabel_->show();
         previewLabel_->show();
+        dimensionLabelCaption_->show();
+        spacingLabelCaption_->show();
+        memSizeLabelCaption_->show();
 
         std::string name = VolumeViewHelper::getStrippedVolumeName(handle);
         std::string path = VolumeViewHelper::getVolumePath(handle);
         if(name.size() > 30) {
             volumeNameLabel_->setToolTip(QString::fromStdString(name));
-            int end = name.size();
+            int end = static_cast<int>(name.size());
             std::string startString;
             std::string endString;
             for(size_t i = 0; i < 14; i++){
@@ -196,7 +200,7 @@ void VolumeHandlePropertyWidget::updateFromProperty() {
         }
         if (path.size() > 30) {
             pathLabel_->setToolTip(QString::fromStdString(path));
-            int end = path.size();
+            int end = static_cast<int>(path.size());
             std::string startString;
             std::string endString;
             for(size_t i = 0; i < 14; i++){
@@ -206,12 +210,12 @@ void VolumeHandlePropertyWidget::updateFromProperty() {
             path = startString+"..."+endString;
         }
 
-        volumeNameLabel_->setText(QString::fromStdString(" " + name+ " ("+ VolumeViewHelper::getVolumeType(handle->getVolume())+") "));
+        volumeNameLabel_->setText(QString::fromStdString(" " + name + VolumeViewHelper::getVolumeTimestep(handle) + " ("+ VolumeViewHelper::getVolumeType(static_cast<VolumeHandleBase*>(handle)->getRepresentation<Volume>())+") "));
         pathLabel_->setText(QString::fromStdString(" "+path));
-        dimensionLabel_->setText(QString::fromStdString(VolumeViewHelper::getVolumeDimension(handle->getVolume())));
-        spacingLabel_->setText(QString::fromStdString(VolumeViewHelper::getVolumeSpacing(handle->getVolume())));
-        memSizeLabel_->setText(QString::fromStdString(VolumeViewHelper::getVolumeMemorySize(handle->getVolume())));
-        previewLabel_->setPixmap(VolumeViewHelper::generateBorderedPreview(handle->getVolume(), 70, 0));
+        dimensionLabel_->setText(QString::fromStdString(VolumeViewHelper::getVolumeDimension(handle)));
+        spacingLabel_->setText(QString::fromStdString(VolumeViewHelper::getVolumeSpacing(handle)));
+        memSizeLabel_->setText(QString::fromStdString(VolumeViewHelper::getVolumeMemorySize(static_cast<VolumeHandleBase*>(handle)->getRepresentation<Volume>())));
+        previewLabel_->setPixmap(VolumeViewHelper::generateBorderedPreview(handle, 70, 0));
 
         // adjust selected index of volume selector box to currently assigned volume
         volumeSelectorBox_->setCurrentIndex(0);
@@ -220,7 +224,7 @@ void VolumeHandlePropertyWidget::updateFromProperty() {
                 "Sizes of volume container and volume selector box do not match");
             for (size_t i=0; i < volumeContainer_->size(); ++i) {
                 if (handle == volumeContainer_->at(i)) {
-                    volumeSelectorBox_->setCurrentIndex(i+1);
+                    volumeSelectorBox_->setCurrentIndex(static_cast<int>(i+1));
                     break;
                 }
 
@@ -231,12 +235,16 @@ void VolumeHandlePropertyWidget::updateFromProperty() {
     else {
         volumeNameLabel_->setText(tr(" no volume"));
         volumeNameLabel_->adjustSize();
+
         pathLabel_->hide();
         previewLabel_->setPixmap(QPixmap());
         dimensionLabel_->hide();
         spacingLabel_->hide();
         memSizeLabel_->hide();
         previewLabel_->hide();
+        dimensionLabelCaption_->hide();
+        spacingLabelCaption_->hide();
+        memSizeLabelCaption_->hide();
     }
 }
 
@@ -250,9 +258,9 @@ void VolumeHandlePropertyWidget::updateFromContainer() {
     white.fill();
     volumeSelectorBox_->addItem(white, tr("Select volume ..."));
     for (size_t i = 0; i < volumeContainer_->size(); i++) {
-        VolumeHandle* handle = volumeContainer_->at(i);
-        volumeSelectorBox_->addItem(VolumeViewHelper::generateBorderedPreview(handle->getVolume(), 30, 1),
-            QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle)),
+        VolumeHandleBase* handle = volumeContainer_->at(i);
+        volumeSelectorBox_->addItem(VolumeViewHelper::generateBorderedPreview(handle, 30, 1),
+            QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle) + VolumeViewHelper::getVolumeTimestep(handle)),
             QString::fromStdString(VolumeViewHelper::getVolumeName(handle)));
     }
 
@@ -274,10 +282,10 @@ void VolumeHandlePropertyWidget::setVolumeContainer(VolumeContainer* volumeConta
 }
 
 
-void VolumeHandlePropertyWidget::volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {
-    int i = volumeContainer_->size()-1;
-    VolumeHandle* handle = volumeContainer_->at(i);
-    volumeSelectorBox_->addItem(VolumeViewHelper::generateBorderedPreview(handle->getVolume(), 30, 1),
+void VolumeHandlePropertyWidget::volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {
+    int i = static_cast<int>(volumeContainer_->size())-1;
+    VolumeHandleBase* handle = volumeContainer_->at(i);
+    volumeSelectorBox_->addItem(VolumeViewHelper::generateBorderedPreview(handle, 30, 1),
         QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle)),
         QString::fromStdString(VolumeViewHelper::getVolumeName(handle)));
 
@@ -287,8 +295,7 @@ void VolumeHandlePropertyWidget::volumeAdded(const VolumeCollection* /*source*/,
     emit modified();
 }
 
-void VolumeHandlePropertyWidget::volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* handle) {
-
+void VolumeHandlePropertyWidget::volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandleBase* handle) {
     VolumeHandleProperty* handleProp = dynamic_cast<VolumeHandleProperty*>(prop_);
     if (!handleProp)
         return;
@@ -296,7 +303,7 @@ void VolumeHandlePropertyWidget::volumeRemoved(const VolumeCollection* /*source*
     int selected = volumeSelectorBox_->currentIndex();
     int removed = -1;
     for (int i = 0; i < volumeSelectorBox_->count(); i++) {
-        if (volumeSelectorBox_->itemText(i).toStdString() == VolumeViewHelper::getStrippedVolumeName(const_cast<VolumeHandle*>(handle)) && volumeSelectorBox_->findData(QString::fromStdString(VolumeViewHelper::getVolumeName(const_cast<VolumeHandle*>(handle))))== i ){
+        if (volumeSelectorBox_->itemText(i).toStdString() == VolumeViewHelper::getStrippedVolumeName(const_cast<VolumeHandleBase*>(handle)) && volumeSelectorBox_->findData(QString::fromStdString(VolumeViewHelper::getVolumeName(const_cast<VolumeHandleBase*>(handle))))== i ){
             volumeSelectorBox_->removeItem(i);
             removed = i;
             break;
@@ -323,10 +330,22 @@ void VolumeHandlePropertyWidget::volumeRemoved(const VolumeCollection* /*source*
     emit modified();
 }
 
-void VolumeHandlePropertyWidget::volumeChanged(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {
+void VolumeHandlePropertyWidget::volumeChanged(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {
     updateFromContainer();
     updateFromProperty();
+}
 
+// private slot
+void VolumeHandlePropertyWidget::volumeLoaded(const VolumeHandleBase* handle) {
+    tgtAssert(handle, "null pointer passed");
+    if (!volumeContainer_)
+        return;
+
+    // select loaded volume
+    for (size_t i=0; i<volumeContainer_->size(); i++) {
+        if (handle == volumeContainer_->at(i))
+            changeVolume(static_cast<int>(i+1));
+    }
 }
 
 void VolumeHandlePropertyWidget::changeVolume(int volumeIndex) {
@@ -336,8 +355,8 @@ void VolumeHandlePropertyWidget::changeVolume(int volumeIndex) {
         LERROR("No volume handle property");
         return;
     }
-    if (volumeIndex != 0) {
-        handleProp->set(volumeContainer_->at(volumeIndex - 1)); // -1 offset because there is a none selection available
+    if (volumeIndex != 0 && static_cast<size_t>(volumeIndex) <= volumeContainer_->size()) {
+        handleProp->set(dynamic_cast<VolumeHandle*>(volumeContainer_->at(volumeIndex - 1))); // -1 offset because there is a none selection available
     }
     else {
         handleProp->set(0);
@@ -346,7 +365,7 @@ void VolumeHandlePropertyWidget::changeVolume(int volumeIndex) {
 }
 
 void VolumeHandlePropertyWidget::showNameLabel(bool) {
-    if(nameLabel_)
+    if (nameLabel_)
         nameLabel_->hide();
 }
 

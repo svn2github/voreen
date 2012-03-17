@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -32,7 +32,6 @@
     #include <sys/time.h>
 #endif
 
-#include "tgt/config.h"
 #include "tgt/types.h"
 
 namespace tgt {
@@ -45,7 +44,7 @@ namespace tgt {
  *   started multiple times; the runtime is not affected by pauses in which the
  *   stopwatch was stopped.
  */
-class Stopwatch {
+class TGT_API Stopwatch {
 protected:
     /// is the stopwatch currently running or not?
     bool isStopped_;

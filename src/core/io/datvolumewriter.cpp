@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,12 +41,12 @@ DatVolumeWriter::DatVolumeWriter() {
     extensions_.push_back("dat");
 }
 
-void DatVolumeWriter::write(const std::string& filename, VolumeHandle* volumeHandle)
+void DatVolumeWriter::write(const std::string& filename, const VolumeHandleBase* volumeHandle)
     throw (tgt::IOException)
 {
 
     tgtAssert(volumeHandle, "No volume handle");
-    Volume* volume = volumeHandle->getVolume();
+    const Volume* volume = volumeHandle->getRepresentation<Volume>();
     if (!volume) {
         LWARNING("No volume");
         return;
@@ -59,30 +59,29 @@ void DatVolumeWriter::write(const std::string& filename, VolumeHandle* volumeHan
     std::fstream datout(datname.c_str(), std::ios::out);
     std::fstream rawout(rawname.c_str(), std::ios::out | std::ios::binary);
 
-    if (datout.bad() || rawout.bad())
+    if (!datout.is_open() || !rawout.is_open() || datout.bad() || rawout.bad())
         throw tgt::IOException();
 
-    char* data = 0;
-    size_t numbytes = 0;
-    datout << getDatFileString(volumeHandle, rawname, &data, numbytes);
+    datout << getDatFileString(volumeHandle, rawname);
     if (datout.bad())
         throw tgt::IOException();
     datout.close();
 
     // write raw file
+    const char* data = static_cast<const char*>(volume->getData());
+    size_t numbytes = volume->getNumBytes();
     rawout.write(data, numbytes);
     if (rawout.bad())
         throw tgt::IOException();
     rawout.close();
 }
 
-std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, const std::string& rawFileName,
-                                              char** volData, size_t& numBytes)
+std::string DatVolumeWriter::getDatFileString(const VolumeHandleBase* const volumeHandle, const std::string& rawFileName)
 {
     std::ostringstream datout;
     tgtAssert(volumeHandle, "No volume handle");
-    Volume* volume = volumeHandle->getVolume();
-    if ((!volume) || (!volData)) {
+    const Volume* volume = volumeHandle->getRepresentation<Volume>();
+    if (!volume) {
         LWARNING("No volume or no storage for casted volume data!");
         return "";
     }
@@ -91,75 +90,184 @@ std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, 
     std::string format;
     std::string model = "I";
 
-    if (VolumeUInt8* vol = dynamic_cast<VolumeUInt8*>(volume)) {
+    if (dynamic_cast<const VolumeUInt8*>(volume)) {
         format = "UCHAR";
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
     }
-    else if (VolumeInt8* vol = dynamic_cast<VolumeInt8*>(volume)) {
+    else if (dynamic_cast<const VolumeInt8*>(volume)) {
         format = "CHAR";
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
     }
-    else if (VolumeUInt16* vol = dynamic_cast<VolumeUInt16*>(volume)) {
+    else if (const VolumeUInt16* vol = dynamic_cast<const VolumeUInt16*>(volume)) {
         if (vol->getBitsStored() == 12)
             format = "USHORT_12";
         else
             format = "USHORT";
-
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
-
     }
-    else if (VolumeInt16* vol = dynamic_cast<VolumeInt16*>(volume)) {
+    else if (dynamic_cast<const VolumeInt16*>(volume)) {
         format = "SHORT";
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
     }
-    else if (VolumeFloat* vol = dynamic_cast<VolumeFloat*>(volume)) {
+    else if (dynamic_cast<const VolumeUInt32*>(volume)) {
+        format = "UINT";
+    }
+    else if (dynamic_cast<const VolumeInt32*>(volume)) {
+        format = "INT";
+    }
+    else if (dynamic_cast<const VolumeUInt64*>(volume)) {
+        format = "UINT64";
+    }
+    else if (dynamic_cast<const VolumeInt64*>(volume)) {
+        format = "INT64";
+    }
+    else if (dynamic_cast<const VolumeFloat*>(volume)) {
         format = "FLOAT";
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
-
     }
-    else if (Volume4xUInt8* vol = dynamic_cast<Volume4xUInt8*>(volume)) {
+    else if (dynamic_cast<const VolumeDouble*>(volume)) {
+        format = "DOUBLE";
+    }
+    // vec2 types
+    else if (dynamic_cast<const Volume2xUInt8*>(volume)) {
         format = "UCHAR";
-        model = "RGBA";
-
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
+        model = "LA"; //< luminance alpha
+    }
+    else if (dynamic_cast<const Volume2xInt8*>(volume)) {
+        format = "CHAR";
+        model = "LA"; //< luminance alpha
+    }
+    else if (const Volume2xUInt16* vol = dynamic_cast<const Volume2xUInt16*>(volume)) {
+        if (vol->getBitsStored() == 12)
+            format = "USHORT_12";
+        else
+            format = "USHORT";
+        model = "LA"; //< luminance alpha
 
     }
-    else if (Volume3xUInt8* vol = dynamic_cast<Volume3xUInt8*>(volume)) {
-        format = "UCHAR";
-        model = "RGB";
-
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
-
+    else if (dynamic_cast<const Volume2xInt16*>(volume)) {
+        format = "SHORT";
+        model = "LA"; //< luminance alpha
     }
-    else if (Volume4xUInt16* vol = dynamic_cast<Volume4xUInt16*>(volume)) {
-        format = "USHORT";
-        model = "RGBA";
-
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
-
+    else if (dynamic_cast<const Volume2xUInt32*>(volume)) {
+        format = "UINT";
+        model = "LA"; //< luminance alpha
     }
-    else if (Volume3xUInt16* vol = dynamic_cast<Volume3xUInt16*>(volume)) {
-        format = "USHORT";
-        model = "RGB";
-
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
-
-    } else if (Volume3xFloat* vol = dynamic_cast<Volume3xFloat*>(volume)) {
+    else if (dynamic_cast<const Volume2xInt32*>(volume)) {
+        format = "INT";
+        model = "LA"; //< luminance alpha
+    }
+    else if (dynamic_cast<const Volume2xUInt64*>(volume)) {
+        format = "UINT64";
+        model = "LA"; //< luminance alpha
+    }
+    else if (dynamic_cast<const Volume2xInt64*>(volume)) {
+        format = "INT64";
+        model = "LA"; //< luminance alpha
+    }
+    else if (dynamic_cast<const Volume2xFloat*>(volume)) {
         format = "FLOAT";
-        model = "RGB";
+        model = "LA"; //< luminance alpha
+    }
+    else if (dynamic_cast<const Volume2xDouble*>(volume)) {
+        format = "DOUBLE";
+        model = "LA"; //< luminance alpha
+    }
+    // vec3 types
+    else if (dynamic_cast<const Volume3xUInt8*>(volume)) {
+        format = "UCHAR";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xInt8*>(volume)) {
+        format = "CHAR";
+        model = "RGB"; 
+    }
+    else if (const Volume3xUInt16* vol = dynamic_cast<const Volume3xUInt16*>(volume)) {
+        if (vol->getBitsStored() == 12)
+            format = "USHORT_12";
+        else
+            format = "USHORT";
+        model = "RGB"; 
 
-        *volData = reinterpret_cast<char*>(vol->voxel());
-        numBytes = vol->getNumBytes();
-    } else
+    }
+    else if (dynamic_cast<const Volume3xInt16*>(volume)) {
+        format = "SHORT";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xUInt32*>(volume)) {
+        format = "UINT";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xInt32*>(volume)) {
+        format = "INT";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xUInt64*>(volume)) {
+        format = "UINT64";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xInt64*>(volume)) {
+        format = "INT64";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xFloat*>(volume)) {
+        format = "FLOAT";
+        model = "RGB"; 
+    }
+    else if (dynamic_cast<const Volume3xDouble*>(volume)) {
+        format = "DOUBLE";
+        model = "RGB"; 
+    }
+    // vec4 types
+    else if (dynamic_cast<const Volume4xUInt8*>(volume)) {
+        format = "UCHAR";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xInt8*>(volume)) {
+        format = "CHAR";
+        model = "RGBA"; 
+    }
+    else if (const Volume4xUInt16* vol = dynamic_cast<const Volume4xUInt16*>(volume)) {
+        if (vol->getBitsStored() == 12)
+            format = "USHORT_12";
+        else
+            format = "USHORT";
+        model = "RGBA"; 
+
+    }
+    else if (dynamic_cast<const Volume4xInt16*>(volume)) {
+        format = "SHORT";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xUInt32*>(volume)) {
+        format = "UINT";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xInt32*>(volume)) {
+        format = "INT";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xUInt64*>(volume)) {
+        format = "UINT64";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xInt64*>(volume)) {
+        format = "INT64";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xFloat*>(volume)) {
+        format = "FLOAT";
+        model = "RGBA"; 
+    }
+    else if (dynamic_cast<const Volume4xDouble*>(volume)) {
+        format = "DOUBLE";
+        model = "RGBA"; 
+    }
+    // special types
+    else if (dynamic_cast<const VolumeMat3Float*>(volume)) {
+        format = "FLOAT";
+        model = "MAT3";
+    }
+    else if (dynamic_cast<const VolumeTensor2Float*>(volume)) {
+        format = "FLOAT";
+        model = "TENSOR_UP";
+    } 
+    else
         LERROR("Format currently not supported");
 
     datout << "ObjectFileName:\t" << tgt::FileSystem::fileName(rawFileName) << std::endl;
@@ -167,15 +275,16 @@ std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, 
     tgt::ivec3 dimensions = volume->getDimensions();
     datout << "Resolution:\t" << dimensions.x << " " << dimensions.y << " " << dimensions.z << std::endl;
 
-    tgt::vec3 spacing = volume->getSpacing();
+    tgt::vec3 spacing = volumeHandle->getSpacing();
     datout << "SliceThickness:\t" << spacing.x << " " << spacing.y << " " << spacing.z << std::endl;
 
     datout << "Format:\t\t" << format << std::endl;
     datout << "ObjectModel:\t" << model << std::endl;
     datout << "Modality:\t" << volumeHandle->getModality() << std::endl;
+    datout << "Checksum:\t" << volumeHandle->getHash() << std::endl;
 
     // write transformation matrix unless it is the identity matrix
-    tgt::mat4 transformation = volume->getTransformation();
+    tgt::mat4 transformation = volumeHandle->getPhysicalToWorldMatrix();
     if (transformation != tgt::mat4::createIdentity())
         datout << "TransformMatrix: row0\t" << transformation[0][0] << " " << transformation[0][1] << " "
                << transformation[0][2] << " " << transformation[0][3] << std::endl
@@ -185,10 +294,6 @@ std::string DatVolumeWriter::getDatFileString(VolumeHandle* const volumeHandle, 
                << transformation[2][2] << " " << transformation[2][3] << std::endl
                << "TransformMatrix: row3\t" << transformation[3][0] << " " << transformation[3][1] << " "
                << transformation[3][2] << " " << transformation[3][3] << std::endl;
-
-    std::string metaString = volume->meta().getString();
-    if (!metaString.empty())
-        datout << "MetaString:\t" << metaString << std::endl;
 
     return datout.str();
 }

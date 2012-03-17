@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,6 @@
 #include "voreen/qt/widgets/property/grouppropertywidget.h"
 
 #include <QTabWidget>
-#include <QGroupBox>
 #include <QPushButton>
 
 namespace voreen {
@@ -94,6 +93,7 @@ void GroupPropertyWidget::hideGroup(bool toggled){
     std::vector<QPropertyWidget*>::iterator it = propertyWidgets_.begin();
     if(toggled) {
         hideWidgetButton_ ->setIcon(QIcon(":/icons/expand-plus.png"));
+
         while(it != propertyWidgets_.end()) {
             (*it)->hide();
             ++it;
@@ -116,5 +116,18 @@ void GroupPropertyWidget::updateFromProperty() {
         ++it;
     }
 }
+
+bool GroupPropertyWidget::isAnyPropertyVisible(Property::LODSetting lod) {
+    for(size_t i=0; i<propertyWidgets_.size(); i++) {
+        QPropertyWidget* propWidget = propertyWidgets_[i];
+        if(propWidget) {
+            Property* prop = propWidget->getProperty();
+            if(prop && prop->isVisible() && (prop->getLevelOfDetail() <= lod))
+                return true;
+        }
+    }
+    return false;
+}
+
 
 } // namespace

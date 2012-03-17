@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -31,7 +31,6 @@
 #include <list>
 #include <iostream>
 
-#include "tgt/config.h"
 #include "tgt/types.h"
 #include "tgt/assert.h"
 #include "tgt/filesystem.h"
@@ -85,13 +84,24 @@ protected:
     static const std::string loggerCat_;
 
     // getter - setter
-    T* get(const std::string& filename) { return resourcesByFilename_[filename]->data_; }
-    const T* get(const std::string& filename) const { return resourcesByFilename_[filename]->data_; }
+    T* get(const std::string& filename);
+    //const T* get(const std::string& filename) const;
 };
-
 
 template <class T>
 const std::string ResourceManager<T>::loggerCat_("tgt.Manager");
+
+//#ifdef TGT_BUILD_DLL
+
+template <class T>
+T* ResourceManager<T>::get(const std::string& filename) {
+    return resourcesByFilename_[filename]->data_; 
+}
+
+//template <class T>
+//const T* ResourceManager<T>::get(const std::string& filename) const {
+//    return resourcesByFilename_[filename]->data_;
+//}
 
 template <class T>
 void ResourceManager<T>::reg(T* ptr, const std::string& filename) {
@@ -214,6 +224,8 @@ std::vector<std::string> ResourceManager<T>::getFilenames() {
     }
     return filenames;
 }
+
+//#endif
 
 } // namespace tgt
 

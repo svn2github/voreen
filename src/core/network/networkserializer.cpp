@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -102,6 +102,14 @@ void NetworkSerializer::process(TiXmlDocument& document) {
         case 6:
             NetworkConverter6to7().convert(processorNetworkNode);
         case 7:
+            NetworkConverter7to8().convert(processorNetworkNode);
+        case 8:
+            NetworkConverter8to9().convert(processorNetworkNode);
+        case 9:
+            NetworkConverter9to10().convert(processorNetworkNode);
+        case 10:
+            NetworkConverter10to11().convert(processorNetworkNode);
+        case 11:
             break;
 
         default:

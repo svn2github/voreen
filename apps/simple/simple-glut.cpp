@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,10 +34,12 @@
 #include <GL/glut.h>
 
 #include "tgt/shadermanager.h"
+#include "tgt/logmanager.h"
 #include "tgt/glut/glutcanvas.h"
 
 #include "voreen/core/voreenapplication.h"
 #include "voreen/core/utils/voreenpainter.h"
+#include "voreen/core/io/serialization/serialization.h"
 #include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/network/workspace.h"
 #include "voreen/core/network/processornetwork.h"
@@ -58,21 +60,29 @@ VoreenPainter* painter = 0;
 
 void initialize() {
     Workspace* workspace = new Workspace();
-    workspace->load(VoreenApplication::app()->getWorkspacePath("/standard.vws"));
+    try {
+        workspace->load(VoreenApplication::app()->getWorkspacePath("/standard.vws"));
+    }
+    catch (SerializationException& e) {
+        LERRORC("simple-glut.initialize", "Failed to load standard workspace: " << e.what());
+        exit(EXIT_FAILURE);
+    }
 
-    // initialize the network evaluator
+    // initialize the network evaluator and retrieve CanvasRenderer processors from the loaded network
     networkEvaluator = new NetworkEvaluator();
     network = workspace->getProcessorNetwork();
     std::vector<CanvasRenderer*> canvasRenderer = network->getProcessorsByType<CanvasRenderer>();
-
-    if (canvasRenderer.size() > 0) {
-        // init painter and connect it to the canvas
-        painter = new VoreenPainter(canvas, networkEvaluator, canvasRenderer[0]);
-        canvas->setPainter(painter);
-        canvasRenderer[0]->setCanvas(canvas);
-        // give the network to the network evaluator
-        networkEvaluator->setProcessorNetwork(network);
+    if (canvasRenderer.empty()) {
+        LERRORC("simple-glut.initialize", "Loaded standard workspace does not contain a CanvasRenderer");
+        exit(EXIT_FAILURE);
     }
+    
+    // init painter and connect it to the canvas
+    painter = new VoreenPainter(canvas, networkEvaluator, canvasRenderer[0]);
+    canvas->setPainter(painter);
+    canvasRenderer[0]->setCanvas(canvas);
+    // give the network to the network evaluator
+    networkEvaluator->setProcessorNetwork(network);
 }
 
 void finalize() {
@@ -84,8 +94,8 @@ void finalize() {
     networkEvaluator = 0;
 
     if (app) {
-        app->deinitGL();
-        app->deinit();
+        app->deinitializeGL();
+        app->deinitialize();
     }
     delete app;
     app = 0;
@@ -113,20 +123,20 @@ void keyPressed(unsigned char key, int /*x*/, int /*y*/) {
 }
 
 int main(int argc, char** argv) {
-    VoreenApplication* app = new VoreenApplication("simple-GLUT", "simple-GLUT", argc, argv,
+    VoreenApplication* app = new VoreenApplication("simple-GLUT", "Simple-GLUT", argc, argv,
         VoreenApplication::APP_ALL);
-    app->init();
+    app->initialize();
 
     glutInit(&argc, argv);
 
     // initialize canvas
-    canvas = new tgt::GLUTCanvas("Voreen - The Volume Rendering Engine",
+    canvas = new tgt::GLUTCanvas("Voreen - The Volume Rendering Engine (Simple-GLUT)",
                                   tgt::ivec2(512, 512), tgt::GLCanvas::RGBADD);
     canvas->init();
 
     glutKeyboardFunc(keyPressed);
 
-    app->initGL();
+    app->initializeGL();
     initialize();
 
     glutMainLoop();

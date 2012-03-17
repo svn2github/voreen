@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -39,14 +39,18 @@ namespace voreen {
  * @see MetaDataBase
  */
 
-class ZoomMetaData : public MetaDataBase {
+class VRN_CORE_API ZoomMetaData : public MetaDataBase {
 public:
     ZoomMetaData(const tgt::Matrix3d transform = tgt::Matrix3d());
     virtual ~ZoomMetaData();
+
+    virtual std::string getClassName() const { return "ZoomMetaData"; }
+    virtual Serializable* create() const;
+    virtual MetaDataBase* clone() const;
+    virtual std::string toString() const;
+
     virtual void serialize(XmlSerializer& s) const; ///< @see Serializable::serialize
     virtual void deserialize(XmlDeserializer& s);  ///< @see Serializable::deserialize
-    virtual const std::string getTypeString(const std::type_info& type) const; ///< @see SerializableFactory::getTypeString
-    virtual Serializable* createType(const std::string& typeString); ///< @see SerializableFactory::createType
     void setTransform(tgt::mat3 transform);
     tgt::Matrix3d getTransform() const;
 

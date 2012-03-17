@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -27,8 +27,8 @@
 
 #include <vector>
 
-#include "tgt/config.h"
 #include "tgt/assert.h"
+#include "tgt/singleton.h"
 #include "tgt/vector.h"
 #include "tgt/vertex.h"
 
@@ -42,7 +42,8 @@
 
 namespace tgt {
 
-class Tesselator {
+class TGT_API Tesselator {
+SINGLETON_CLASS_HEADER(Tesselator)
 private:
 
 #ifdef WIN32
@@ -360,6 +361,6 @@ InterleavedType Tesselator::extractTriangleMesh(const std::vector<InterleavedTyp
 
 }
 
-#define TessMgr tgt::Singleton<tgt::Tesselator>::getRef()
+#define TessMgr tgt::Tesselator::getRef()
 
 #endif //TGT_TESSELATOR_H

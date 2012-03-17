@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,26 +44,26 @@ void ZoomMetaData::deserialize(XmlDeserializer& s) {
     s.deserialize("transform", transform_);
 }
 
-const std::string ZoomMetaData::getTypeString(const std::type_info& type) const {
-    if (type == typeid(ZoomMetaData))
-        return "ZoomMetaData";
-    else
-        return "";
-}
-
-Serializable* ZoomMetaData::createType(const std::string& typeString) {
-    if (typeString == "ZoomMetaData")
-        return new ZoomMetaData;
-    else
-        return 0;
-}
-
 void ZoomMetaData::setTransform(tgt::mat3 transform) {
     transform_ = transform;
 }
 
 tgt::Matrix3d ZoomMetaData::getTransform() const {
     return transform_;
+}
+
+MetaDataBase* ZoomMetaData::clone() const {
+    return new ZoomMetaData(transform_);
+}
+
+Serializable* ZoomMetaData::create() const {
+    return new ZoomMetaData();
+}
+
+std::string ZoomMetaData::toString() const {
+    std::stringstream s;
+    s << transform_;
+    return s.str();
 }
 
 } // namespace

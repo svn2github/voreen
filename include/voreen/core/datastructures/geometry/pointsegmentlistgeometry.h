@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,6 +33,9 @@
 #include "tgt/glmath.h"
 #include <vector>
 
+#include "voreen/core/io/serialization/xmlserializer.h"
+#include "voreen/core/io/serialization/xmldeserializer.h"
+
 namespace voreen {
 
 template<class T>
@@ -47,7 +50,7 @@ public:
 
     virtual ~PointSegmentListGeometry() { }
 
-    virtual void render() {
+    virtual void render() const {
         glBegin(GL_POINTS);
         for (size_t i=0; i < segmentList_.size(); ++i){
             for (size_t j=0; j < segmentList_[i].size(); ++j){
@@ -78,9 +81,14 @@ public:
         setHasChanged(true);
     }
 
+    const std::vector<T>& getSegment(int i) const {
+        tgtAssert(i >= 0 && i < getNumSegments(), "invalid index");
+        return segmentList_.at(i);
+    }
+
     const std::vector< std::vector<T> >& getData() const { return segmentList_; }
 
-    const std::vector<T>& getPoints() {
+    const std::vector<T>& getPoints() const {
 
         // generate point list, if not present
         if (pointList_.empty() && numPoints_ > 0) {
@@ -96,6 +104,15 @@ public:
 
     int getNumPoints() const { return numPoints_; }
 
+    virtual void serialize(XmlSerializer& s) const {
+        s.serialize("segments", segmentList_);
+    }
+
+    virtual void deserialize(XmlDeserializer& s) {
+        s.deserialize("segments", segmentList_);
+        setHasChanged(true);
+    }
+
 protected:
 
     // contains a list of segments, each segment consists of points
@@ -103,7 +120,7 @@ protected:
 
     // contains the flattened segment list: a list of all points
     // is generated on first access
-    std::vector<T> pointList_;
+    mutable std::vector<T> pointList_;
 
     int numPoints_;
 

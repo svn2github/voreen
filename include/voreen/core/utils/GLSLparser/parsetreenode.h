@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -77,13 +77,10 @@ public:
 
     void addChild(ParseTreeNode* const child);
 
-    bool welcome(ParseTreeVisitor* const visitor) {
-        return visitor->visit(this);
-    }
-
 private:
     const int symbolID_;
 
+    // FIXME: vector containing children is only needed in few cases, e.g. preprocessor, plotfunction
     typedef std::vector<ParseTreeNode*> ChildVector;
     ChildVector children_;
 };

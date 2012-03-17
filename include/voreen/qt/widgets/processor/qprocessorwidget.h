@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_QPROCESSORWIDGET_H
 
 #include "tgt/vector.h"
+#include "voreen/qt/voreenqtdefine.h"
 #include "voreen/core/processors/processorwidget.h"
 #include <QDialog>
 #include <QWidget>
@@ -37,7 +38,7 @@
 
 namespace voreen {
 
-class QProcessorWidget : public QWidget, public ProcessorWidget {
+class VRN_QT_API QProcessorWidget : public QWidget, public ProcessorWidget {
 Q_OBJECT
 public:
     QProcessorWidget(Processor* processor, QWidget* parent = 0);

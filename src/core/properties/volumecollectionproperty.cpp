@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,25 +32,36 @@
 #include "voreen/core/io/volumeserializerpopulator.h"
 #include "voreen/core/io/volumeserializer.h"
 
-#include "voreen/core/properties/propertywidgetfactory.h"
-
 namespace voreen {
 
 VolumeCollectionProperty::VolumeCollectionProperty(const std::string& id, const std::string& guiText,
                     VolumeCollection* const value, Processor::InvalidationLevel invalidationLevel) :
                     TemplateProperty<VolumeCollection*>(id, guiText, value, invalidationLevel)
-{
+{}
 
+VolumeCollectionProperty::VolumeCollectionProperty() 
+    : TemplateProperty<VolumeCollection*>("", "", 0, Processor::INVALID_RESULT)
+{}
+
+Property* VolumeCollectionProperty::create() const {
+    return new VolumeCollectionProperty();
 }
 
-void VolumeCollectionProperty::deinitialize() throw (VoreenException) {
+Variant VolumeCollectionProperty::getVariant(bool) const {
+    return Variant(get());
+}
+
+void VolumeCollectionProperty::setVariant(const Variant& val, bool) {
+    set(val.getVolumeCollection());
+}
+
+int VolumeCollectionProperty::getVariantType() const {
+    return Variant::VariantTypeVolumeCollection;
+}
+
+void VolumeCollectionProperty::deinitialize() throw (tgt::Exception) {
     delete value_;
     value_ = 0;
-}
-
-PropertyWidget* VolumeCollectionProperty::createWidget(PropertyWidgetFactory* f)     {
-    return f->createWidget(this);
-    //return 0;
 }
 
 void VolumeCollectionProperty::serialize(XmlSerializer& s) const {
@@ -68,10 +79,6 @@ void VolumeCollectionProperty::deserialize(XmlDeserializer& s) {
         set(collection);
 
     invalidate();
-}
-
-std::string VolumeCollectionProperty::getTypeString() const {
-    return "VolumeCollection";
 }
 
 } // namespace voreen

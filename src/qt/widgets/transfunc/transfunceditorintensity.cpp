@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,15 +36,20 @@
 
 #include "voreen/core/datastructures/transfunc/transfuncintensity.h"
 #include "voreen/core/datastructures/volume/volume.h"
+#include "voreen/core/io/serialization/meta/realworldmappingmetadata.h"
 
 #include "tgt/logmanager.h"
 #include "tgt/qt/qtcanvas.h"
 
+#include <QPushButton>
 #include <QCheckBox>
 #include <QFileDialog>
 #include <QLayout>
+#include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QSplitter>
 #include <QToolButton>
 
@@ -72,10 +77,10 @@ TransFuncEditorIntensity::~TransFuncEditorIntensity() {
 
 QLayout* TransFuncEditorIntensity::createMappingLayout() {
     transCanvas_ = new TransFuncMappingCanvas(0, transferFuncIntensity_);
-    transCanvas_->setMinimumWidth(200);
+    transCanvas_->setMinimumWidth(140);
 
     QWidget* additionalSpace = new QWidget();
-    additionalSpace->setMinimumHeight(13);
+    additionalSpace->setMinimumHeight(2);
 
     // threshold slider
     QHBoxLayout* hboxSlider = new QHBoxLayout();
@@ -89,10 +94,12 @@ QLayout* TransFuncEditorIntensity::createMappingLayout() {
     lowerThresholdSpin_->setRange(0, maximumIntensity_ - 1);
     lowerThresholdSpin_->setValue(0);
     lowerThresholdSpin_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    lowerThresholdSpin_->setKeyboardTracking(false);
     upperThresholdSpin_ = new QSpinBox();
     upperThresholdSpin_->setRange(1, maximumIntensity_);
     upperThresholdSpin_->setValue(maximumIntensity_);
     upperThresholdSpin_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    upperThresholdSpin_->setKeyboardTracking(false);
     QHBoxLayout* hboxSpin = new QHBoxLayout();
     //the spacing is added so that spinboxes and doubleslider are aligned vertically
     hboxSpin->addSpacing(6);
@@ -101,13 +108,52 @@ QLayout* TransFuncEditorIntensity::createMappingLayout() {
     hboxSpin->addWidget(upperThresholdSpin_);
     hboxSpin->addSpacing(21);
 
+    //mapping settings:
+    QHBoxLayout* hboxMapping = new QHBoxLayout();
+    lowerMappingSpin_ = new QDoubleSpinBox();
+    upperMappingSpin_ = new QDoubleSpinBox();
+    upperMappingSpin_->setRange(-99999.0f, 99999.0f);
+    lowerMappingSpin_->setRange(-99999.0f, 99999.0f);
+
+    fitDomainToData_ = new QPushButton();
+    fitDomainToData_->setText("Fit to Data");
+
+    QLabel* mappingLabel = new QLabel();
+    mappingLabel->setText("TF Domain Bounds");
+
+    hboxMapping->addSpacing(6);
+    hboxMapping->addWidget(lowerMappingSpin_);
+    hboxMapping->addStretch();
+    hboxMapping->addWidget(mappingLabel);
+    hboxMapping->addWidget(fitDomainToData_);
+    hboxMapping->addStretch();
+    hboxMapping->addWidget(upperMappingSpin_);
+    hboxMapping->addSpacing(21);
+
+    //data bounds
+    QHBoxLayout* hboxData = new QHBoxLayout();
+    lowerData_ = new QLabel();
+    //lowerData_->setReadOnly(true);
+    upperData_ = new QLabel();
+    //upperData_->setReadOnly(true);
+    dataLabel_ = new QLabel();
+    dataLabel_->setText("Data Bounds");
+
+    hboxData->addSpacing(6);
+    hboxData->addWidget(lowerData_);
+    hboxData->addStretch();
+    hboxData->addWidget(dataLabel_);
+    hboxData->addStretch();
+    hboxData->addWidget(upperData_);
+    hboxData->addSpacing(21);
+
     //add gradient that displays the transferfunction as image
     textureCanvas_ = new tgt::QtCanvas("", tgt::ivec2(1, 1), tgt::GLCanvas::RGBADD, 0, true);
     texturePainter_ = new TransFuncTexturePainter(textureCanvas_);
     texturePainter_->initialize();
     texturePainter_->setTransFunc(transferFuncIntensity_);
     textureCanvas_->setPainter(texturePainter_, false);
-    textureCanvas_->setFixedHeight(15);
+    textureCanvas_->setFixedHeight(12);
     textureCanvas_->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 
     // CheckBox for threshold clipping
@@ -127,6 +173,8 @@ QLayout* TransFuncEditorIntensity::createMappingLayout() {
     vBox->addWidget(additionalSpace);
     vBox->addLayout(hboxSlider);
     vBox->addLayout(hboxSpin);
+    vBox->addLayout(hboxMapping);
+    vBox->addLayout(hboxData);
     vBox->addSpacing(1);
     vBox->addWidget(textureCanvas_);
     vBox->addLayout(hboxClip);
@@ -160,6 +208,7 @@ QLayout* TransFuncEditorIntensity::createButtonLayout() {
     //}
 
     buttonLayout->setSpacing(0);
+    buttonLayout->setMargin(0);
     buttonLayout->addWidget(clearButton_);
     buttonLayout->addWidget(loadButton_);
     buttonLayout->addWidget(saveButton_);
@@ -175,18 +224,19 @@ QLayout* TransFuncEditorIntensity::createColorLayout() {
     // ColorPicker
     colorPicker_ = new ColorPicker();
     colorPicker_->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-    colorPicker_->setMaximumHeight(160);
+    colorPicker_->setMinimumWidth(100);
+    colorPicker_->setMaximumHeight(150);
 
     // ColorLuminacePicker
     colorLumPicker_ = new ColorLuminancePicker();
     colorLumPicker_->setFixedWidth(20);
-    colorLumPicker_->setMaximumHeight(160);
+    colorLumPicker_->setMaximumHeight(150);
 
 
     QHBoxLayout* hBoxColor = new QHBoxLayout();
+    hBoxColor->setMargin(0);
     hBoxColor->addWidget(colorPicker_);
     hBoxColor->addWidget(colorLumPicker_);
-
 
     if (orientation_ == Qt::Vertical)
         return hBoxColor;
@@ -222,7 +272,7 @@ void TransFuncEditorIntensity::createWidgets() {
         mapping->setLayout(mappingLayout);
         color->setLayout(buttonColor);
     }
-    splitter->setChildrenCollapsible(false);
+    splitter->setChildrenCollapsible(true);
     splitter->addWidget(mapping);
     splitter->addWidget(color);
 
@@ -230,6 +280,7 @@ void TransFuncEditorIntensity::createWidgets() {
     splitter->setStretchFactor(1, QSizePolicy::Preferred); // color should not be stretched
 
     QHBoxLayout* mainLayout = new QHBoxLayout();
+    mainLayout->setMargin(4);
     mainLayout->addWidget(splitter);
 
     setLayout(mainLayout);
@@ -267,6 +318,11 @@ void TransFuncEditorIntensity::createConnections() {
     // threshold spinboxes
     connect(lowerThresholdSpin_, SIGNAL(valueChanged(int)), this, SLOT(lowerThresholdSpinChanged(int)));
     connect(upperThresholdSpin_, SIGNAL(valueChanged(int)), this, SLOT(upperThresholdSpinChanged(int)));
+
+    connect(lowerMappingSpin_, SIGNAL(valueChanged(double)), this, SLOT(lowerMappingSpinChanged(double)));
+    connect(upperMappingSpin_, SIGNAL(valueChanged(double)), this, SLOT(upperMappingSpinChanged(double)));
+    connect(fitDomainToData_, SIGNAL(clicked()), this, SLOT(fitDomainToData()));
+
 
     connect(checkClipThresholds_, SIGNAL(toggled(bool)), transCanvas_, SLOT(toggleClipThresholds(bool)));
 }
@@ -315,6 +371,23 @@ void TransFuncEditorIntensity::resetThresholds() {
 
     transCanvas_->setThreshold(0.f, 1.f);
     transferFuncIntensity_->setThresholds(0.f, 1.f);
+}
+
+void TransFuncEditorIntensity::fitDomainToData() {
+    if(volumeHandle_) {
+        const Volume* vol = volumeHandle_->getRepresentation<Volume>();
+
+        if(vol) {
+            float min = vol->minValue();
+            float max = vol->maxValue();
+            RealWorldMapping rwm = volumeHandle_->getRealWorldMapping();
+            min = rwm.normalizedToRealWorld(min);
+            max = rwm.normalizedToRealWorld(max);
+            
+            lowerMappingSpin_->setValue(min);
+            upperMappingSpin_->setValue(max);
+        }
+    }
 }
 
 void TransFuncEditorIntensity::loadTransferFunction() {
@@ -454,8 +527,22 @@ void TransFuncEditorIntensity::upperThresholdSpinChanged(int value) {
     applyThreshold();
 }
 
-void TransFuncEditorIntensity::applyThreshold() {
+void TransFuncEditorIntensity::lowerMappingSpinChanged(double value) {
+    upperMappingSpinChanged(value);
+}
 
+void TransFuncEditorIntensity::upperMappingSpinChanged(double /*value*/) {
+    if (!transferFuncIntensity_)
+        return;
+
+    float min = lowerMappingSpin_->value();
+    float max = upperMappingSpin_->value();
+    transferFuncIntensity_->setDomain(tgt::vec2(min, max), 0);
+
+    updateTransferFunction();
+}
+
+void TransFuncEditorIntensity::applyThreshold() {
     if (!transferFuncIntensity_)
         return;
 
@@ -478,6 +565,9 @@ void TransFuncEditorIntensity::updateFromProperty() {
         texturePainter_->setTransFunc(transferFuncIntensity_);
         transCanvas_->setTransFunc(transferFuncIntensity_);
 
+        lowerMappingSpin_->setValue(transferFuncIntensity_->getDomain(0).x);
+        upperMappingSpin_->setValue(transferFuncIntensity_->getDomain(0).y);
+
         if (property_->get() && !transferFuncIntensity_) {
             if (isEnabled()) {
                 LWARNING("Current transfer function not supported by this editor. Disabling.");
@@ -487,7 +577,7 @@ void TransFuncEditorIntensity::updateFromProperty() {
     }
 
     // check whether the volume associated with the TransFuncProperty has changed
-    VolumeHandle* newHandle = property_->getVolumeHandle();
+    const VolumeHandleBase* newHandle = property_->getVolumeHandle();
     if (newHandle != volumeHandle_) {
         volumeHandle_ = newHandle;
         volumeChanged();
@@ -509,6 +599,8 @@ void TransFuncEditorIntensity::updateFromProperty() {
 }
 
 void TransFuncEditorIntensity::restoreThresholds() {
+    lowerMappingSpin_->setValue(transferFuncIntensity_->getDomain(0).x);
+    upperMappingSpin_->setValue(transferFuncIntensity_->getDomain(0).y);
 
     if (!transferFuncIntensity_) {
         LWARNING("No valid transfer function assigned");
@@ -558,10 +650,11 @@ void TransFuncEditorIntensity::restoreThresholds() {
 }
 
 void TransFuncEditorIntensity::volumeChanged() {
-    if (volumeHandle_ && volumeHandle_->getVolume()) {
-        int bits = volumeHandle_->getVolume()->getBitsStored() / volumeHandle_->getVolume()->getNumChannels();
+    if (volumeHandle_ && volumeHandle_->getRepresentation<Volume>()) {
+        int bits = volumeHandle_->getRepresentation<Volume>()->getBitsStored() / volumeHandle_->getRepresentation<Volume>()->getNumChannels();
         if (bits > 16)
             bits = 16; // handle float data as if it was 16 bit to prevent overflow
+
         int maxNew = static_cast<int>(pow(2.f, static_cast<float>(bits)))-1;
         if (maxNew != maximumIntensity_) {
             float lowerRelative = lowerThresholdSpin_->value() / static_cast<float>(maximumIntensity_);
@@ -579,6 +672,25 @@ void TransFuncEditorIntensity::volumeChanged() {
             upperThresholdSpin_->updateGeometry();
             upperThresholdSpin_->blockSignals(false);
         }
+
+        //calculate Min/Max values:
+        const Volume* vol = volumeHandle_->getRepresentation<Volume>();
+
+        float min = vol->minValue();
+        float max = vol->maxValue();
+
+        RealWorldMapping rwm = volumeHandle_->getRealWorldMapping();
+        min = rwm.normalizedToRealWorld(min);
+        max = rwm.normalizedToRealWorld(max);
+        std::string unit = rwm.getUnit();
+
+        lowerData_->setText(QString::number(min));
+        upperData_->setText(QString::number(max));
+
+        if(unit == "")
+            dataLabel_->setText("Data Bounds");
+        else
+            dataLabel_->setText(QString("Data Bounds [") + QString::fromStdString(unit) + "]");
 
         // propagate new volume to transfuncMappingCanvas
         transCanvas_->volumeChanged(volumeHandle_);

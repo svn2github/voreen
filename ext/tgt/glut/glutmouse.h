@@ -25,7 +25,6 @@
 #ifndef TGT_GLUTMOUSE_H
 #define TGT_GLUTMOUSE_H
 
-#include "tgt/config.h"
 #include "tgt/mouse.h"
 #include <GL/glut.h>
 

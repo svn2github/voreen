@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,9 +37,13 @@ namespace tgt {
 
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QLayout;
+class QLineEdit;
 class QSpinBox;
+class QDoubleSpinBox;
 class QToolButton;
+class QPushButton;
 
 namespace voreen {
 
@@ -169,6 +173,9 @@ public slots:
      */
     void upperThresholdSpinChanged(int value);
 
+    void lowerMappingSpinChanged(double value);
+    void upperMappingSpinChanged(double value);
+
     /**
      * Resets the transfer function to default.
      */
@@ -190,6 +197,8 @@ public slots:
      * and emits a signal for repaint of the volume rendering.
      */
     void causeVolumeRenderingRepaint();
+
+    void fitDomainToData();
 
 protected:
     /**
@@ -249,6 +258,12 @@ protected:
     DoubleSlider* doubleSlider_;            ///< 2 slider for adjusting the thresholds
     QSpinBox* lowerThresholdSpin_;          ///< spinbox for lower threshold
     QSpinBox* upperThresholdSpin_;          ///< spinbox for upper threshold
+    QDoubleSpinBox* lowerMappingSpin_;          ///< spinbox for lower mapping value 
+    QDoubleSpinBox* upperMappingSpin_;          ///< spinbox for upper mapping value 
+    QLabel* lowerData_;          ///< spinbox for lower mapping value 
+    QLabel* upperData_;          ///< spinbox for upper mapping value 
+    QLabel* dataLabel_;
+    QPushButton* fitDomainToData_;
 
     int maximumIntensity_; ///< maximum intensity that can occur in the dataset
 

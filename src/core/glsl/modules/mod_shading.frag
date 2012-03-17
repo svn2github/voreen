@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -178,9 +178,9 @@ vec3 phongShading(in vec3 pos, in vec3 normal, in vec3 ka, in vec3 kd, in vec3 k
  * @param kd The diffuse material color to be used.
  * @param ks The specular material color to be used.
  */
-vec3 phongShading(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeParams, in vec3 ka, in vec3 kd, in vec3 ks) {
+vec3 phongShading(in vec3 gradient, in vec3 vposTex, in VOLUME_STRUCT volumeParams, in vec3 ka, in vec3 kd, in vec3 ks) {
     // transform voxel position to the volume's object space
-    vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
+    vec3 vpos = texToPhysical(vposTex, volumeParams);
     vec3 N = normalize(gradient);
     vec3 L = volumeParams.lightPositionOBJ_ - vpos;              // using light position in volume object space
     vec3 V = normalize(volumeParams.cameraPositionOBJ_ - vpos);  // using camera position in volume object space
@@ -211,9 +211,9 @@ vec3 phongShading(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volume
  * @param kd The diffuse material color to be used.
  * @param ks The specular material color to be used.
  */
-vec3 phongShadingDS(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeParams, in vec3 kd, in vec3 ks) {
+vec3 phongShadingDS(in vec3 gradient, in vec3 vposTex, in VOLUME_STRUCT volumeParams, in vec3 kd, in vec3 ks) {
     // transform voxel position to the volume's object space
-    vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
+    vec3 vpos = texToPhysical(vposTex, volumeParams);
     vec3 N = normalize(gradient);
     vec3 L = volumeParams.lightPositionOBJ_ - vpos;              // using light position in volume object space
     vec3 V = normalize(volumeParams.cameraPositionOBJ_ - vpos);  // using camera position in volume object space
@@ -242,9 +242,9 @@ vec3 phongShadingDS(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volu
  * @param volumeParams the parameters of the volume to be shaded
  * @param ks The specular material color to be used.
  */
-vec3 phongShadingS(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeParams, in vec3 ks) {
+vec3 phongShadingS(in vec3 gradient, in vec3 vposTex, in VOLUME_STRUCT volumeParams, in vec3 ks) {
     // transform voxel position to the volume's object space
-    vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
+    vec3 vpos = texToPhysical(vposTex, volumeParams);
     vec3 N = normalize(gradient);
     vec3 L = volumeParams.lightPositionOBJ_ - vpos;              // using light position in volume object space
     vec3 V = normalize(volumeParams.cameraPositionOBJ_ - vpos);  // using camera position in volume object space
@@ -272,9 +272,9 @@ vec3 phongShadingS(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volum
  * @param kd The diffuse material color to be used.
  * @param ka The ambient material color to be used.
  */
-vec3 phongShadingDA(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeParams, in vec3 kd, in vec3 ka) {
+vec3 phongShadingDA(in vec3 gradient, in vec3 vposTex, in VOLUME_STRUCT volumeParams, in vec3 kd, in vec3 ka) {
     // transform voxel position to the volume's object space
-    vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
+    vec3 vpos = texToPhysical(vposTex, volumeParams);
     vec3 N = normalize(gradient);
     vec3 L = volumeParams.lightPositionOBJ_ - vpos;    // using light position in volume object space
 
@@ -301,9 +301,9 @@ vec3 phongShadingDA(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volu
  * @param volumeParams the parameters of the volume to be shaded
  * @param kd The diffuse material color to be used.
  */
-vec3 phongShadingD(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeParams, in vec3 kd) {
+vec3 phongShadingD(in vec3 gradient, in vec3 vposTex, in VOLUME_STRUCT volumeParams, in vec3 kd) {
     // transform voxel position to the volume's object space
-    vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
+    vec3 vpos = texToPhysical(vposTex, volumeParams);
     vec3 N = normalize(gradient);
     vec3 L = volumeParams.lightPositionOBJ_ - vpos;    // using light position in volume object space
 
@@ -327,9 +327,9 @@ vec3 phongShadingD(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volum
  * @param volumeParams the parameters of the volume to be shaded
  * @param numShades The number of different shadings.
  */
-vec3 toonShading(in vec3 gradient, in vec3 vposTex, in VOLUME_PARAMETERS volumeParams, in vec3 kd, in int numShades) {
+vec3 toonShading(in vec3 gradient, in vec3 vposTex, in VOLUME_STRUCT volumeParams, in vec3 kd, in int numShades) {
     // transform voxel position to the volume's object space
-    vec3 vpos = (vposTex-0.5)*volumeParams.volumeCubeSize_;
+    vec3 vpos = texToPhysical(vposTex, volumeParams);
     vec3 N = normalize(gradient);
     vec3 L = volumeParams.lightPositionOBJ_ - vpos;    // using light position in volume object space
     float NdotL = max(dot(N,L),0.0);

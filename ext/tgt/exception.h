@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,10 +25,10 @@
 #ifndef TGT_EXCEPTION
 #define TGT_EXCEPTION
 
+#include "tgt/types.h"
+
 #include <exception>
 #include <string>
-
-#include "tgt/config.h"
 
 namespace tgt {
 
@@ -39,7 +39,7 @@ namespace tgt {
 /**
  * Base class for all exceptions.
  */
-class Exception : public std::exception {
+class TGT_API Exception : public std::exception {
 public:
     Exception(const std::string& what = "") : what_(what) {}
     virtual ~Exception() throw() {}
@@ -54,7 +54,7 @@ protected:
 /**
  * Base class for all file based exceptions.
  */
-class FileException : public Exception {
+class TGT_API FileException : public Exception {
 public:
     /// @param filename The name of the affected file.
     FileException(const std::string& what = "", const std::string filename = "")
@@ -76,7 +76,7 @@ protected:
 /**
  * Thrown when a file was not found.
  */
-class FileNotFoundException : public FileException {
+class TGT_API FileNotFoundException : public FileException {
 public:
     /// @param filename The name of the file which was not found.
     FileNotFoundException(const std::string& what = "", const std::string& filename = "");
@@ -89,7 +89,7 @@ public:
  * Thrown when a file couldn't be opened. No proper permessions may be the cause
  * for example.
  */
-class FileAccessException : public FileException {
+class TGT_API FileAccessException : public FileException {
 public:
     /// @param filename The name of the file which couldn't be opened.
     FileAccessException(const std::string& what = "", const std::string& filename = "");
@@ -102,7 +102,7 @@ public:
  * Thrown when a file was tried to load but file/format of the file is
  * corrupted.
  */
-class CorruptedFileException : public FileException {
+class TGT_API CorruptedFileException : public FileException {
 public:
     CorruptedFileException(const std::string& what = "", const std::string& filename = "");
     virtual ~CorruptedFileException() throw() {}
@@ -113,7 +113,7 @@ public:
 /**
  * Thrown when a file was tried to load or save in an unsupported format.
  */
-class UnsupportedFormatException : public FileException {
+class TGT_API UnsupportedFormatException : public FileException {
 public:
     /// @param extension The extension which is not supported.
     UnsupportedFormatException(const std::string& extension, const std::string& filename = "");
@@ -128,7 +128,7 @@ public:
  * thrown when no special error information is available when dealing with i/o
  * operations. This is the case when using fstream for instance.
  */
-class IOException : public FileException {
+class TGT_API IOException : public FileException {
 public:
     IOException(const std::string& what = "", const std::string& filename = "");
     virtual ~IOException() throw() {}

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,7 +31,7 @@
 #include "voreen/core/io/volumeserializerpopulator.h"
 #include "voreen/core/datastructures/volume/volumeatomic.h"
 #include "voreen/core/datastructures/volume/volumecollection.h"
-#include "voreen/core/datastructures/volume/volumeoperator.h"
+#include "voreen/core/datastructures/volume/operators/volumeoperatorconvert.h"
 #include "tgt/vector.h"
 
 #ifdef VRN_WITH_DEVIL
@@ -129,7 +129,7 @@ bool CommandStackImg::execute(const std::vector<std::string>& parameters) {
     if (targetDataset_) {
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), targetDataset_);
+        serializer->write(parameters.back(), targetDataset_);
     }
     delete targetDataset_;
     return true;
@@ -251,9 +251,11 @@ bool CommandStackRaw::execute(const std::vector<std::string>& parameters) {
 
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-    serializer->save(parameters.back(), targetDataset_);
+    VolumeHandle targetHandle(targetDataset_, tgt::vec3(1.0f), tgt::vec3(0.0f));
+    oldVolumePosition(&targetHandle);
+    serializer->write(parameters.back(), &targetHandle);
 
-    delete targetDataset_;
+    //delete targetDataset_; //gets deleted by handle
     return true;
 }
 
@@ -272,33 +274,34 @@ CommandConvert::CommandConvert() :
 }
 
 bool CommandConvert::execute(const std::vector<std::string>& parameters) {
-    Volume* targetDataset_;
+    VolumeHandle* targetDataset_ = 0;
 
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[1]);
-    Volume* sourceDataset_ = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[1]);
+    const VolumeHandleBase* sourceDataset_ = volumeCollection->first();
 
-    VolumeOperatorConvert voConvert(sourceDataset_);
+    VolumeOperatorConvert voConvert;
     if (parameters[0] == "8") {
-        targetDataset_ = new VolumeUInt8(sourceDataset_->getDimensions(), sourceDataset_->getSpacing(), sourceDataset_->getTransformation());
-        voConvert.apply<void>(targetDataset_);
+        //targetDataset_ = new VolumeUInt8(sourceDataset_->getDimensions(), sourceDataset_->getSpacing(), sourceDataset_->getTransformation());
+        targetDataset_ = voConvert.apply<uint8_t>(sourceDataset_);
     }
     else if (parameters[0] == "12") {
-        targetDataset_ = new VolumeUInt16(sourceDataset_->getDimensions(), sourceDataset_->getSpacing(), sourceDataset_->getTransformation(), 12);
-        voConvert.apply<void>(targetDataset_);
+        //targetDataset_ = new VolumeUInt16(sourceDataset_->getDimensions(), sourceDataset_->getSpacing(), sourceDataset_->getTransformation(), 12);
+        targetDataset_ = voConvert.apply<uint16_t>(sourceDataset_);
+        targetDataset_->getWritableRepresentation<Volume>()->setBitsStored(12);
     }
     else if (parameters[0] == "16") {
-        targetDataset_ = new VolumeUInt16(sourceDataset_->getDimensions(), sourceDataset_->getSpacing(), sourceDataset_->getTransformation());
-        voConvert.apply<void>(targetDataset_);
+        //targetDataset_ = new VolumeUInt16(sourceDataset_->getDimensions(), sourceDataset_->getSpacing(), sourceDataset_->getTransformation());
+        targetDataset_ = voConvert.apply<uint16_t>(sourceDataset_);
     }
     else {
         delete sourceDataset_;
         throw tgt::Exception("Unknown target!");
     }
 
-    serializer->save(parameters.back(), targetDataset_);
+    serializer->write(parameters.back(), targetDataset_);
 
     delete volumeCollection;
     delete targetDataset_;
@@ -319,10 +322,10 @@ bool CommandConvertFormat::execute(const std::vector<std::string>& parameters) {
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-    VolumeCollection* volumeCollection = serializer->load(parameters[0]);
-    Volume* sourceDataset = volumeCollection->first()->getVolume();
+    VolumeCollection* volumeCollection = serializer->read(parameters[0]);
+    const VolumeHandleBase* sourceDataset = volumeCollection->first();
 
-    serializer->save(parameters.back(), sourceDataset);
+    serializer->write(parameters.back(), sourceDataset);
 
     delete volumeCollection;
     //delete serializer;

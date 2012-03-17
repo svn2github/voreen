@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,10 +30,11 @@
 #define VRN_VERSIONQT_H
 
 #include "voreen/core/version.h"
+#include "voreen/qt/voreenqtdefine.h"
 
 namespace voreen {
 
-class VoreenVersionQt {
+class VRN_QT_API VoreenVersionQt {
 public:
     static const std::string getQtVersion();
     static void logAll(const std::string& loggerCat = "voreen.VoreenVersionQt");

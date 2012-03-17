@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,15 +28,16 @@
 
 #include "voreen/core/io/serialization/meta/metadatacontainer.h"
 
-#include "voreen/core/io/serialization/meta/aggregationmetadata.h"
-#include "voreen/core/io/serialization/meta/positionmetadata.h"
-#include "voreen/core/io/serialization/meta/primitivemetadata.h"
-#include "voreen/core/io/serialization/meta/selectionmetadata.h"
-#include "voreen/core/io/serialization/meta/windowstatemetadata.h"
-#include "voreen/core/io/serialization/meta/zoommetadata.h"
 #include "voreen/core/processors/processor.h"
 
 namespace voreen {
+
+MetaDataContainer::MetaDataContainer(const MetaDataContainer& mdc) {
+    for (std::map<std::string, MetaDataBase*>::const_iterator it = mdc.metaData_.begin(); it != mdc.metaData_.end(); ++it) {
+        const MetaDataBase* md = it->second;
+        addMetaData(it->first, md->clone());
+    }
+}
 
 MetaDataContainer::~MetaDataContainer() {
     clearMetaData();
@@ -47,13 +48,20 @@ void MetaDataContainer::addMetaData(const std::string& key, MetaDataBase* meta) 
     metaData_[key] = meta;
 }
 
-bool MetaDataContainer::hasMetaData(const std::string& key) {
+bool MetaDataContainer::hasMetaData(const std::string& key) const {
     return metaData_.find(key) != metaData_.end();
 }
 
 MetaDataBase* MetaDataContainer::getMetaData(const std::string& key) {
     if (hasMetaData(key))
         return metaData_[key];
+    else
+        return 0;
+}
+
+const MetaDataBase* MetaDataContainer::getMetaData(const std::string& key) const {
+    if (hasMetaData(key))
+        return metaData_.find(key)->second;//metaData_.at(key); the function "at" does not exists under Visual Studio 2008
     else
         return 0;
 }
@@ -66,8 +74,16 @@ void MetaDataContainer::removeMetaData(const std::string& key) {
     metaData_.erase(metaData_.find(key));
 }
 
+void MetaDataContainer::renameMetaData(const std::string& oldKey, const std::string& newKey) {
+    if (!hasMetaData(oldKey))
+        return;
+
+    metaData_[newKey] = metaData_[oldKey];
+    metaData_.erase(metaData_.find(oldKey));
+}
+
 void MetaDataContainer::clearMetaData() {
-    for (MetaDataMap::iterator it = metaData_.begin(); it != metaData_.end(); ++it)
+    for (std::map<std::string, MetaDataBase*>::iterator it = metaData_.begin(); it != metaData_.end(); ++it)
         delete it->second;
 
     metaData_.clear();
@@ -77,62 +93,37 @@ void MetaDataContainer::serialize(XmlSerializer& s) const {
     if (metaData_.empty())
         return;
 
-    // Initialize meta data factories, if it is not done already...
-    if (!factoriesInitialized_)
-        initializeFactories();
-
-    // Register known meta data factories...
-    for (FactoryCollection::const_iterator it = factories_.begin(); it != factories_.end(); ++it)
-        s.registerFactory(*it);
-
-    // Register factories for meta data to serialize
-    for (MetaDataMap::const_iterator it = metaData_.begin(); it != metaData_.end(); ++it)
-        s.registerFactory(it->second);
-
     s.serialize("MetaData", metaData_, "MetaItem", "name");
 }
 
 void MetaDataContainer::deserialize(XmlDeserializer& s) {
-    if (!factoriesInitialized_)
-        initializeFactories();
-
-    // Register known meta data factories...
-    for (FactoryCollection::const_iterator it = factories_.begin(); it != factories_.end(); ++it)
-        s.registerFactory(*it);
-
-    // Register actual containing meta data factories.
-    for (MetaDataMap::const_iterator it = metaData_.begin(); it != metaData_.end(); ++it)
-        s.registerFactory(it->second);
-
     clearMetaData();
 
     try {
         s.deserialize("MetaData", metaData_, "MetaItem", "name");
-    } catch (XmlSerializationNoSuchDataException&) {
+    }
+    catch (XmlSerializationNoSuchDataException&) {
         // There were no meta data during serialization, so we can just ignore the exception...
         s.removeLastError();
     }
 }
 
-bool MetaDataContainer::factoriesInitialized_ = false;
+std::vector<std::string> MetaDataContainer::getKeys() const {
+    std::vector<std::string> keys;
+    for (std::map<std::string, MetaDataBase*>::const_iterator it = metaData_.begin(); it != metaData_.end(); ++it) {
+        keys.push_back(it->first);
+    }
+    return keys;
+}
 
-MetaDataContainer::FactoryCollection MetaDataContainer::factories_;
+MetaDataContainer& MetaDataContainer::operator=(const MetaDataContainer& mdc) {
+    clearMetaData();
+    for (std::map<std::string, MetaDataBase*>::const_iterator it = mdc.metaData_.begin(); it != mdc.metaData_.end(); ++it) {
+        const MetaDataBase* md = it->second;
+        addMetaData(it->first, md->clone());
+    }
 
-void MetaDataContainer::initializeFactories() {
-    // primitive types
-    factories_.push_back(new BoolMetaData());
-    factories_.push_back(new StringMetaData());
-    factories_.push_back(new IntMetaData());
-    factories_.push_back(new FloatMetaData());
-
-    // additional types
-    factories_.push_back(new AggregationMetaDataContainer());
-    factories_.push_back(new PositionMetaData());
-    factories_.push_back(new WindowStateMetaData());
-    factories_.push_back(new SelectionMetaData<Processor*>());
-    factories_.push_back(new ZoomMetaData);
-
-    factoriesInitialized_ = true;
+    return *this;
 }
 
 } // namespace

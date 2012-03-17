@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,17 +28,20 @@
 
 #include "voreen/core/properties/propertyvector.h"
 #include "voreen/core/properties/condition.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 #include <sstream>
 
 
 namespace voreen {
 
-const std::string PropertyVector::loggerCat_("voreen.Properties.PropertyVector");
+const std::string PropertyVector::loggerCat_("voreen.PropertyVector");
 
 PropertyVector::PropertyVector(const std::string& id, const std::string& guiText, std::vector<Property*> properties)
     : Property(id, guiText),
       properties_(properties)
+{}
+
+PropertyVector::PropertyVector() 
+    : Property("", "")
 {}
 
 PropertyVector::~PropertyVector() {
@@ -48,11 +51,6 @@ PropertyVector::~PropertyVector() {
 
 std::string PropertyVector::getName() const {
     return "PropertyVector";
-}
-
-PropertyWidget* PropertyVector::createWidget(PropertyWidgetFactory* f) {
-
-    return f->createWidget(this);
 }
 
 const std::vector<Property*>& PropertyVector::getProperties() const {
@@ -107,18 +105,18 @@ int PropertyVector::size() const {
     return static_cast<int>(properties_.size());
 }
 
-void PropertyVector::initialize() throw (VoreenException) {
+void PropertyVector::initialize() throw (tgt::Exception) {
     for (std::vector<Property*>::iterator it = properties_.begin(); it != properties_.end(); ++it)
         (*it)->initialize();
 }
 
-void PropertyVector::deinitialize() throw (VoreenException) {
+void PropertyVector::deinitialize() throw (tgt::Exception) {
     for (std::vector<Property*>::iterator it = properties_.begin(); it != properties_.end(); ++it)
         (*it)->deinitialize();
 }
 
-std::string PropertyVector::getTypeString() const {
-    return "PropertyVector";
+Property* PropertyVector::create() const {
+    return new PropertyVector();
 }
 
 }   // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,7 +27,6 @@
  **********************************************************************/
 
 #include "voreen/core/properties/intproperty.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 namespace voreen {
 
@@ -38,12 +37,34 @@ IntProperty::IntProperty(const std::string& id, const std::string& guiText,
                             invalidationLevel)
 {}
 
-PropertyWidget* IntProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+IntProperty::IntProperty() 
+    : NumericProperty<int>("", "", 0, 0, 100, 1, Processor::INVALID_RESULT)
+{}
+
+Property* IntProperty::create() const {
+    return new IntProperty();
 }
 
-std::string IntProperty::getTypeString() const {
-    return "Integer";
+Variant IntProperty::getVariant(bool normalized) const {
+    if (normalized) {
+        float ratio = static_cast<float>(get() - getMinValue()) / static_cast<float>(getMaxValue() - getMinValue());
+        return Variant(ratio);
+    }
+    else
+        return Variant(get());
+}
+
+void IntProperty::setVariant(const Variant& val, bool normalized) {
+    if (normalized) {
+        float ratio = val.getFloat();
+        set(getMinValue() + static_cast<int>(ratio * (getMaxValue() - getMinValue())));
+    }
+    else
+        set(val.getInt());
+}
+
+int IntProperty::getVariantType() const {
+    return Variant::VariantTypeInteger;
 }
 
 }   // namespace

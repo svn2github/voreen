@@ -25,7 +25,6 @@
 #ifndef TGT_QTCANVAS_H
 #define TGT_QTCANVAS_H
 
-#include "tgt/config.h"
 #include "tgt/glcanvas.h"
 
 #include <QtOpenGL/QGLWidget>
@@ -34,13 +33,14 @@
 #include <QKeyEvent>
 
 #include <deque>
+#include "voreen/qt/voreenqtdefine.h"
 
 namespace tgt {
 
 /**
  * Qt implementation of GLCanvas. Inherits QGLWidget and combines the Qt methods and tgt methods.
  */
-class QtCanvas : public QGLWidget, public GLCanvas {
+class VRN_QT_API QtCanvas : public QGLWidget, public GLCanvas {
 public:
     /**
      * The constructor. Allows the user to specify a shared widget that this canvas will share

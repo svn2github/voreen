@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,7 +44,7 @@ namespace voreen {
  *
  * @see OptionProperty
  */
-class OptionPropertyBase : public TemplateProperty<std::string> {
+class VRN_CORE_API OptionPropertyBase : public TemplateProperty<std::string> {
 public:
     OptionPropertyBase(const std::string& id, const std::string& guiText,
                        Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT)
@@ -91,9 +91,13 @@ class OptionProperty : public OptionPropertyBase {
 public:
     OptionProperty(const std::string& id, const std::string& guiText,
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
+    OptionProperty();
     virtual ~OptionProperty() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "OptionProperty"; }
+    virtual std::string getTypeDescription() const { return "OptionProperty"; }
 
     virtual void addOption(const std::string& key, const std::string& description, const T& value);
 
@@ -106,6 +110,10 @@ public:
     std::string getDescription() const;
     T getValue() const;
 
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
+
     const std::vector<Option<T> >& getOptions() const { return options_; }
     void setOptions(const std::vector<Option<T> >& options) { options_ = options; }
     virtual std::vector<std::string> getKeys() const;
@@ -116,7 +124,6 @@ public:
     virtual void serialize(XmlSerializer& s) const;
 
 protected:
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
     const Option<T>* getOption(const std::string& key) const;
 
     std::vector<Option<T> > options_;
@@ -132,9 +139,15 @@ OptionProperty<T>::OptionProperty(const std::string& id, const std::string& guiT
 {
     addValidation(OptionPropertyValidation(this)); // is at position 0 in the validations_ vector
 }
+
 template<class T>
-std::string voreen::OptionProperty<T>::getTypeString() const {
-    return "OptionProperty";
+voreen::OptionProperty<T>::OptionProperty() 
+    : OptionPropertyBase("", "", Processor::INVALID_RESULT)
+{}
+
+template<class T>
+Property* voreen::OptionProperty<T>::create() const {
+    return new OptionProperty<T>();
 }
 
 template<class T>
@@ -196,6 +209,21 @@ T OptionProperty<T>::getValue() const {
 }
 
 template<class T>
+Variant OptionProperty<T>::getVariant(bool) const {
+    return Variant(get());
+}
+
+template<class T>
+void OptionProperty<T>::setVariant(const Variant& val, bool) {
+    set(val.getString());
+}
+
+template<class T>
+int OptionProperty<T>::getVariantType() const {
+    return Variant::VariantTypeString;
+}
+
+template<class T>
 std::string OptionProperty<T>::getDescription() const {
     if (options_.empty()) {
         LWARNINGC("OptionProperty", "OptionProperty is empty (no options)");
@@ -242,11 +270,6 @@ std::vector<std::string> OptionProperty<T>::getDescriptions() const {
 }
 
 template<class T>
-PropertyWidget* OptionProperty<T>::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
-}
-
-template<class T>
 const Option<T>* voreen::OptionProperty<T>::getOption(const std::string& key) const {
     for (size_t i=0; i<options_.size(); ++i)
         if (options_[i].key_ == key)
@@ -261,23 +284,82 @@ void OptionProperty<T>::serialize(XmlSerializer& s) const {
     s.serialize("value", getKey());
 }
 
-typedef OptionProperty<int> IntOptionProperty;
-typedef OptionProperty<float> FloatOptionProperty;
-typedef OptionProperty<GLenum> GLEnumOptionProperty;
+//
+// concrete types
+//
+
+class IntOptionProperty : public OptionProperty<int> {
+public:
+    IntOptionProperty(const std::string& id, const std::string& guiText,
+                      Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT) :
+        OptionProperty<int>(id, guiText, invalidationLevel)
+    {}
+    
+    IntOptionProperty() : 
+        OptionProperty<int>("", "", Processor::INVALID_RESULT) 
+    {}
+
+    virtual Property* create() const {
+        return new IntOptionProperty();
+    }
+
+    virtual std::string getClassName() const       { return "IntOptionProperty"; }
+    virtual std::string getTypeDescription() const { return "IntegerOption"; }
+};
+
+class FloatOptionProperty : public OptionProperty<float> {
+public:
+    FloatOptionProperty(const std::string& id, const std::string& guiText,
+                        Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT) :
+        OptionProperty<float>(id, guiText, invalidationLevel)
+    {}
+
+    FloatOptionProperty() : 
+        OptionProperty<float>("", "", Processor::INVALID_RESULT) 
+    {}
+
+    virtual std::string getClassName() const       { return "FloatOptionProperty"; }
+    virtual std::string getTypeDescription() const { return "FloatOption"; }
+};
+
+class GLEnumOptionProperty : public OptionProperty<GLenum> {
+public:
+    GLEnumOptionProperty(const std::string& id, const std::string& guiText,
+                         Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT) :
+        OptionProperty<GLenum>(id, guiText, invalidationLevel)
+    {}
+
+    GLEnumOptionProperty() : 
+        OptionProperty<GLenum>("", "", Processor::INVALID_RESULT) 
+    {}
+
+    virtual Property* create() const {
+        return new GLEnumOptionProperty();
+    }
+
+    virtual std::string getClassName() const       { return "GLEnumOptionProperty"; }
+    virtual std::string getTypeDescription() const { return "GLenumOption"; }
+};
 
 // since option ids are already strings, an additional value is not necessarily required for string option properties
 class StringOptionProperty : public OptionProperty<std::string> {
-
 public:
-
     StringOptionProperty(const std::string& id, const std::string& guiText,
                          Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT) :
         OptionProperty<std::string>(id, guiText, invalidationLevel)
     {}
 
-    virtual std::string getTypeString() const {
-        return "StringOptionProperty";
+    StringOptionProperty() :
+        OptionProperty<std::string>("", "", Processor::INVALID_RESULT)
+    {}
+
+
+    virtual Property* create() const {
+        return new StringOptionProperty();
     }
+
+    virtual std::string getClassName() const       { return "StringOptionProperty"; }
+    virtual std::string getTypeDescription() const { return "StringOption"; }
 
     virtual void addOption(const std::string& key, const std::string& description) {
         addOption(key, description, key);

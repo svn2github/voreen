@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,8 +28,6 @@
 
 #include "voreen/core/properties/boolproperty.h"
 #include "voreen/core/properties/condition.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
-
 
 namespace voreen {
 
@@ -37,6 +35,25 @@ BoolProperty::BoolProperty(const std::string& id, const std::string& guiText, bo
                    Processor::InvalidationLevel invalidationLevel)
     : TemplateProperty<bool>(id, guiText, value, invalidationLevel)
 {}
+
+BoolProperty::BoolProperty() {
+}
+
+Property* BoolProperty::create() const {
+    return new BoolProperty();
+}
+
+Variant BoolProperty::getVariant(bool) const {
+    return Variant(get());
+}
+
+void BoolProperty::setVariant(const Variant& val, bool) {
+    set(val.getBool());
+}
+
+int BoolProperty::getVariantType() const {
+    return Variant::VariantTypeBool;
+}
 
 void BoolProperty::serialize(XmlSerializer& s) const {
     Property::serialize(s);
@@ -55,14 +72,6 @@ void BoolProperty::deserialize(XmlDeserializer& s) {
     catch (Condition::ValidationFailed& e) {
         s.addError(e);
     }
-}
-
-PropertyWidget* BoolProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
-}
-
-std::string BoolProperty::getTypeString() const {
-    return "Boolean";
 }
 
 }   // namespace

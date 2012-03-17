@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -54,7 +54,7 @@ void PropertyGraphicsItem::createLabel() {
     QString labelText = "";
     labelText.append(QString::fromStdString(property_->getGuiName()));
     labelText.append("<br><\br>");
-    QString type = QString::fromStdString(property_->getTypeString());
+    QString type = QString::fromStdString(property_->getTypeDescription());
 
     QString typeLine("<span style=\"font-size:7pt;color:#BDBDBD\"> %1 </span>");
     labelText.append(typeLine.arg(type));
@@ -70,7 +70,7 @@ void PropertyGraphicsItem::createLabel(const QString& prefix) {
     labelText.append(" - ");
     labelText.append(QString::fromStdString( property_->getGuiName()));
     labelText.append("<br><\br>");
-    QString type = QString::fromStdString(property_->getTypeString());
+    QString type = QString::fromStdString(property_->getTypeDescription());
 
     QString typeLine("<span style=\"font-size:7pt;color:#BDBDBD\"> %1 </span>");
     labelText.append(typeLine.arg(type));

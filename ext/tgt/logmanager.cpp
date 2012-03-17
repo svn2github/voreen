@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -290,7 +290,10 @@ bool HtmlLog::isOpen() {
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+SINGLETON_CLASS_SOURCE(LogManager)        
+
 LogManager::LogManager(const std::string& logDir)
+//    : Singleton<LogManager>()
     : logDir_(logDir), consoleLog_(0)
 {}
 

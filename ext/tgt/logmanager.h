@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -29,10 +29,10 @@
 #include <sstream>
 #include <vector>
 
-#include "tgt/config.h"
 #include "tgt/assert.h"
 #include <stdarg.h>
 #include "tgt/singleton.h"
+#include "tgt/types.h"
 
 namespace tgt {
 
@@ -51,7 +51,7 @@ enum LogLevel {
 /**
  * Holds the information for filtering messages.
  */
-struct LogFilter {
+struct TGT_API LogFilter {
     std::string cat_;
     bool children_;
     LogLevel level_;
@@ -60,7 +60,7 @@ struct LogFilter {
 /**
  * Abstract basis class for logging messages.
  */
-class Log {
+class TGT_API Log {
 public:
 	virtual ~Log() {}
 
@@ -108,7 +108,7 @@ protected:
 
 
 /// Implements logging to a plain Textfile
-class TextLog : public Log {
+class TGT_API TextLog : public Log {
 public:
 	TextLog(const std::string &filename, bool dateStamping = true, bool timeStamping= true,
             bool showCat = true, bool showLevel = true);
@@ -125,7 +125,7 @@ protected:
  * Implements logging to stdout. Colored output on unix systems.
  * You can only have one ConsoleLog in the LogMgr
  */
-class ConsoleLog : public Log {
+class TGT_API ConsoleLog : public Log {
 public:
     ConsoleLog(bool dateStamping = false, bool timeStamping= false, bool showCat = true, bool showLevel = true);
     ~ConsoleLog() {};
@@ -140,7 +140,7 @@ protected:
 };
 
 ///Implements a colored html log.
-class HtmlLog : public Log {
+class TGT_API HtmlLog : public Log {
 public:
 	HtmlLog(const std::string &filename, bool dateStamping = false, bool timeStamping= true,
             bool showCat = true, bool showLevel = true);
@@ -155,6 +155,7 @@ protected:
 	FILE* file_;
 };
 
+
 /**
  * The Logmanager distributes logmessages to all Logs registered to the manager.
  * Logmessages consist of a message, a logging category and a loglevel.
@@ -168,7 +169,8 @@ protected:
  * LDEBUG statements are removed if TGT_DEBUG is not defined!
  * @author Stefan Diepenbrock
  */
-class LogManager {
+class TGT_API LogManager {
+SINGLETON_CLASS_HEADER(LogManager)
 public:
 	LogManager(const std::string& logDir = "");
 	~LogManager();
@@ -178,7 +180,7 @@ public:
 	std::string getLogDir() const { return logDir_; }
 
     /// Log message
-	void log(const std::string &cat, LogLevel level, const std::string &msg, const std::string &extendedInfo="");
+	void log(const std::string& cat, LogLevel level, const std::string& msg, const std::string& extendedInfo="");
 
     /// Add a log to the manager, from now all messages received by the manager are also distributed to this log.
     /// All logs are deleted upon destruction of the manager.
@@ -196,10 +198,10 @@ protected:
 	std::vector<Log*> logs_;
     ConsoleLog* consoleLog_;
 };
-
+    
 } // namespace
 
-#define LogMgr tgt::Singleton<tgt::LogManager>::getRef()
+#define LogMgr tgt::LogManager::getRef()
 
 // Use "do { ... } while (0)" to allow "if (foo) LINFO("bar"); else ...", which would fail
 // otherwise.

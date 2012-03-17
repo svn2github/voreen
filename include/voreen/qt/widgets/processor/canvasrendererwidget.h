@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,33 +33,35 @@
 #include "voreen/qt/widgets/processor/qprocessorwidget.h"
 
 #include "tgt/qt/qtcanvas.h"
+#include "voreen/qt/voreenqtdefine.h"
 
 namespace voreen {
 
 class NetworkEvaluator;
-class SnapshotPlugin;
+class SnapshotElement;
 
-class CanvasRendererWidget : public QProcessorWidget {
-    Q_OBJECT
+class VRN_QT_API CanvasRendererWidget : public QProcessorWidget {
+Q_OBJECT
 public:
-    CanvasRendererWidget(QWidget* parent, CanvasRenderer* canvasRenderer, NetworkEvaluator* evaluator);
-    virtual ~CanvasRendererWidget();
+    CanvasRendererWidget(QWidget* parent, CanvasRenderer* canvasRenderer);
+    ~CanvasRendererWidget();
 
     void initialize();
 
-    void showSnapshotTool();
+    //void showSnapshotTool();
+    void setSnapshotElement(SnapshotElement* element);
 
-    virtual void updateFromProcessor();
+    void updateFromProcessor();
+
 protected:
-    void keyPressEvent(QKeyEvent*);
+    //void keyPressEvent(QKeyEvent*);
     void resizeEvent(QResizeEvent*);
 
-    void createSnapshotTool();
+    //void createSnapshotTool();
 
 private:
     tgt::QtCanvas* canvasWidget_;
-    NetworkEvaluator* evaluator_;
-    SnapshotPlugin* snapshotTool_;
+    SnapshotElement* snapshotElement_;
 };
 
 } // namespace voreen

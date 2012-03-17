@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -43,14 +43,11 @@ namespace voreen {
  * In this class there are some basic tools necessary to manipulate the TiXmlElement itself. A subclass should only
  * overwrite the NetworkConverter::convert(TiXmlElement*) method and don't add any other public methods.</br>
  * some outside method should care about specific version numbers and which NetworkConverter's method is to be called.</br>
- * Note: As far as this system is implemented now, the NetworkConverter doesn't check, if the version is really the one
+ * Note: As far as this system is implemented now, the NetworkConverter doesn't check if the version is really the one
  * it is meant for. So it might get jumbled up if the supervising class makes an error.</br>
- * This class presents one method called NetworkConverter::changeVersion(TiXmlNode*, int, int) which should be
- * called at the end of the overwritten NetworkConverter::convert(TiXmlElement*) method with the appropriate parameters.
  */
 class NetworkConverter {
 public:
-
     virtual ~NetworkConverter() {}
 
     /**
@@ -83,7 +80,7 @@ public:
 };
 
 /**
- * The @c NetworkConverter4to5 converts the serialized XML data for a
+ * The @c NetworkConverter5to6 converts the serialized XML data for a
  * version 5 @c ProcessorNetwork to XML data for a version 6 @c ProcessorNetwork.
  *
  * @see NetworkConverter
@@ -94,12 +91,56 @@ public:
 };
 
 /**
- * The @c NetworkConverter4to5 converts the serialized XML data for a
+ * The @c NetworkConverter6to7 converts the serialized XML data for a
  * version 6 @c ProcessorNetwork to XML data for a version 7 @c ProcessorNetwork.
  *
  * @see NetworkConverter
  */
 class NetworkConverter6to7 : public NetworkConverter {
+public:
+    virtual void convert(TiXmlElement* elem);
+};
+
+/**
+ * The @c NetworkConverter7to8 converts the serialized XML data for a
+ * version 7 @c ProcessorNetwork to XML data for a version 8 @c ProcessorNetwork.
+ *
+ * @see NetworkConverter
+ */
+class NetworkConverter7to8 : public NetworkConverter {
+public:
+    virtual void convert(TiXmlElement* elem);
+};
+
+/**
+ * The @c NetworkConverter8to9 converts the serialized XML data for a
+ * version 8 @c ProcessorNetwork to XML data for a version 9 @c ProcessorNetwork.
+ *
+ * @see NetworkConverter
+ */
+class NetworkConverter8to9 : public NetworkConverter {
+public:
+    virtual void convert(TiXmlElement* elem);
+};
+
+/**
+ * The @c NetworkConverter8to9 converts the serialized XML data for a
+ * version 9 @c ProcessorNetwork to XML data for a version 10 @c ProcessorNetwork.
+ *
+ * @see NetworkConverter
+ */
+class NetworkConverter9to10 : public NetworkConverter {
+public:
+    virtual void convert(TiXmlElement* elem);
+};
+
+/**
+ * The @c NetworkConverter8to9 converts the serialized XML data for a
+ * version 9 @c ProcessorNetwork to XML data for a version 10 @c ProcessorNetwork.
+ *
+ * @see NetworkConverter
+ */
+class NetworkConverter10to11 : public NetworkConverter {
 public:
     virtual void convert(TiXmlElement* elem);
 };

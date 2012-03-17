@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,6 +35,7 @@
 #include <vector>
 #include <set>
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/utils/exception.h"
 
 namespace voreen {
@@ -68,7 +69,7 @@ namespace voreen {
  * If you want to do something fancy with \sa checkParameters , you have to write this too, because the version
  * of this class only checks the parameters for the right count.
  */
-class Command {
+class VRN_CORE_API Command {
 public:
     /**
      * The constructor which just saves the arguments to out own member variables.

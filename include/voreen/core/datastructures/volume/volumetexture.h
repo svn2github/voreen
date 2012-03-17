@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,56 +35,19 @@
 namespace voreen {
 
 /**
- * This class is basically a tgt::Texture with some Voreen specific extensions
- * used for splitting and NPOT support.
-*/
+ * This class is basically a tgt::Texture.
+  */
 class VolumeTexture : public tgt::Texture {
 public:
     /**
      * With data and internalformat argument, type_ is set to GL_TEXTURE_3D
      * and \e NO new chunk of data will be allocated on the heap.
      */
-    VolumeTexture(GLubyte* data,
-                  const tgt::mat4& matrix,
-                  const tgt::vec3& llf,
-                  const tgt::vec3& urb,
-                  const tgt::ivec3& dimensions,
+    VolumeTexture(const GLubyte* data, const tgt::ivec3& dimensions,
                   GLint format,
                   GLint internalformat,
                   GLenum dataType,
                   tgt::Texture::Filter filter);
-
-    /**
-     * Returns the center position relativ the the corresponding volume data
-     * in coordinates mapped to [-1, 1]
-     */
-    tgt::vec3 getCenter() const;
-
-    /// Returns the texture matrix which should be used with this texture
-    tgt::mat4 getMatrix() const;
-
-    /// Get lower left front
-    tgt::vec3 getLLF() const;
-
-    /// Get upper right back
-    tgt::vec3 getURB() const;
-
-    /**
-     * Get cube vertices
-     *
-     * @return An array of 8 tgt::vec3 which represent the cube vertices
-     */
-    const tgt::vec3* getCubeVertices() const;
-
-    tgt::vec3 getCubeSize() const;
-
-protected:
-    tgt::mat4 matrix_;          ///< matrix which should be used to transform texture coordinates to the useful portion
-    tgt::vec3 llf_;             ///< lower left front of the useful portion
-    tgt::vec3 urb_;             ///< upper right back of the useful portion
-    tgt::vec3 center_;          ///< center position of the useful portion relative to the original Volume mapped to [-1, 1]
-    tgt::vec3 cubeVertices_[8]; ///< cube vertices of the useful portion
-    tgt::vec3 cubeSize_;        ///< size of the cube of the useful portion in each direction
 };
 
 } // namespace voreen

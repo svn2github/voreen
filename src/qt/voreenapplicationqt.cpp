@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,23 +26,27 @@
  *                                                                    *
  **********************************************************************/
 
-#ifdef VRN_MODULE_PYTHON
-// include this at first
-#include "voreen/modules/python/pythonmodule.h"
-#include "voreen/modules/python/qt/pyvoreenqt.h"
-#endif
-
 #include "voreen/qt/voreenapplicationqt.h"
+#include "voreen/qt/voreenmoduleqt.h"
+#include "voreen/qt/coremoduleqt.h"
 #include "voreen/qt/versionqt.h"
 #include "voreen/qt/progressdialog.h"
+#include "voreen/core/utils/stringconversion.h"
 #include "tgt/init.h"
 #include "tgt/qt/qttimer.h"
 #include "tgt/filesystem.h"
 #include "tgt/shadermanager.h"
 
+#ifndef VRN_NO_REGISTRATION_HEADER_GENERATION
+    #include "modules/gen_moduleregistration_qt.h"
+#else
+    #include "modules/moduleregistration_qt.h"
+#endif
+
 #include <QApplication>
 #include <QMainWindow>
 #include <QDir>
+#include <QSettings>
 
 using std::string;
 
@@ -54,14 +58,12 @@ namespace {
 namespace voreen {
 
 VoreenApplicationQt* VoreenApplicationQt::qtApp_ = 0;
+const std::string VoreenApplicationQt::loggerCat_ = "voreenqt.VoreenApplicationQt";
 
 VoreenApplicationQt::VoreenApplicationQt(const std::string& name, const std::string& displayName,
-                                         int argc, char** argv, ApplicationType appType)
+                                         int argc, char** argv, ApplicationFeatures appType)
     : VoreenApplication(name, displayName, argc, argv, appType)
     , mainWindow_(0)
-#ifdef VRN_MODULE_PYTHON
-    , pythonQt_(0)
-#endif
 {
     QCoreApplication::setOrganizationName("Voreen");
     QCoreApplication::setOrganizationDomain("voreen.org");
@@ -71,18 +73,14 @@ VoreenApplicationQt::VoreenApplicationQt(const std::string& name, const std::str
 }
 
 VoreenApplicationQt::~VoreenApplicationQt() {
-#ifdef VRN_MODULE_PYTHON
-    delete pythonQt_;
-    pythonQt_ = 0;
-#endif
 }
 
-void VoreenApplicationQt::init() {
-    VoreenApplication::init();
+void VoreenApplicationQt::initialize() {
+    VoreenApplication::initialize();
     if (!initialized_)
         return;
 
-    VoreenVersionQt::logAll(name_ + "." + displayName_);
+    LINFO("Qt version: " << VoreenVersionQt::getQtVersion());
 
     // Set the path for temporary files
     temporaryPath_ = QDir::tempPath().toStdString();
@@ -92,7 +90,7 @@ void VoreenApplicationQt::init() {
     //
 
     // shader path
-    if (appType_ & APP_SHADER) {
+    if (appFeatures_ & APP_SHADER) {
 #ifdef VRN_INSTALL_PREFIX
         shaderPathQt_ = basePath_ + "/share/voreen/shaders";
 #else
@@ -105,19 +103,43 @@ void VoreenApplicationQt::init() {
     #endif
 #endif
     }
+
+    //
+    // Modules
+    //
+
+    // core pseudo module is always included
+    addQtModule(new CoreModuleQt());
+
+    // module autoloading
+    if (appFeatures_ & APP_AUTOLOAD_MODULES) {
+        LDEBUG("Loading Voreen Qt modules from module registration header");
+        addAllQtModules(this);
+        std::vector<std::string> moduleNames;
+        for (size_t i=0; i<qtModules_.size(); i++)
+            moduleNames.push_back(qtModules_[i]->getName());
+        LINFO("Voreen Qt modules: " << strJoin(moduleNames, ", "));
+    }
+    else {
+        LDEBUG("Module auto loading disabled");
+    }
 }
 
-void VoreenApplicationQt::initGL() throw (VoreenException) {
-    VoreenApplication::initGL();
+void VoreenApplicationQt::deinitialize() {
+    VoreenApplication::deinitialize();
+
+    qtModules_.clear(); //< have been deleted by VoreenApplication::deinit();
+}
+
+void VoreenApplicationQt::initializeGL() throw (VoreenException) {
+    VoreenApplication::initializeGL();
+    glewInit();
 
     ShdrMgr.addPath(getShaderPathQt());
+}
 
-#ifdef VRN_MODULE_PYTHON
-    if (PythonModule::getInstance() && PythonModule::getInstance()->isInitialized())
-        pythonQt_ = new PyVoreenQt();
-    else
-        LWARNING("Skipped instantiation of VoreenPythonQt: Python module not initialized");
-#endif
+void VoreenApplicationQt::deinitializeGL() throw (VoreenException) {
+    VoreenApplication::deinitializeGL();
 }
 
 void VoreenApplicationQt::setMainWindow(QMainWindow* mainWindow) {
@@ -142,6 +164,32 @@ ProgressDialog* VoreenApplicationQt::createProgressDialog() const {
 
 std::string VoreenApplicationQt::getShaderPathQt(const std::string& filename) const {
     return shaderPathQt_ + (filename.empty() ? "" : "/" + filename);
+}
+
+void VoreenApplicationQt::addQtModule(VoreenModuleQt* qtModule) {
+    tgtAssert(qtModule, "null pointer passed");
+
+    // qt modules are subject to standard module handling
+    VoreenApplication::addModule(qtModule);
+
+    // additionally store qt modules separately (currently no use for this, though)
+    if (std::find(qtModules_.begin(), qtModules_.end(), qtModule) == qtModules_.end())
+        qtModules_.push_back(qtModule);
+    else
+        LWARNING("Qt Module '" << qtModule->getName() << "' has already been registered. Skipping.");
+}
+
+const std::vector<VoreenModuleQt*>& VoreenApplicationQt::getQtModules() const {
+    return qtModules_;
+}
+
+VoreenModuleQt* VoreenApplicationQt::getQtModule(const std::string& moduleName) const {
+    for (size_t i = 0 ; i < qtModules_.size() ; ++i) {
+        VoreenModuleQt* qtModule = qtModules_.at(i);
+        if (qtModule->getName() == moduleName)
+            return qtModule;
+    }
+    return 0;
 }
 
 } // namespace

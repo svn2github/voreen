@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,7 @@
 #ifndef VRN_DEPENDENCYLINKEVALUATORS_H
 #define VRN_DEPENDENCYLINKEVALUATORS_H
 
-#include "voreen/core/properties/link/dependencylinkevaluatorbase.h"
+#include "voreen/core/properties/link/dependencylinkevaluator.h"
 #include "voreen/core/properties/boolproperty.h"
 #include "voreen/core/properties/vectorproperty.h"
 #include "voreen/core/properties/intproperty.h"
@@ -41,83 +41,17 @@
 
 namespace voreen {
 
-template<class T>
-class DependencyLinkEvaluatorGeneric : public DependencyLinkEvaluatorBase {
+///Special DependencyLinkEvaluator for VolumeHandle that deletes entries in the history if the corresponding VolumeHandle is deleted.
+class VRN_CORE_API DependencyLinkEvaluatorVolumeHandle : public DependencyLinkEvaluator, public VolumeHandleObserver {
 public:
-    virtual bool arePropertiesLinkable(const Property* p1, const Property* /*p2*/) const {
-        return dynamic_cast<const T*>(p1);
-    }
-};
+    std::string getClassName() const { return "DependencyLinkEvaluatorVolumeHandle"; }
+    LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorVolumeHandle(); }
 
-//----------------------------------------------
+    void eval(Property* src, Property* dest) throw (VoreenException);
+    void propertiesChanged(Property* src, Property* dst);
 
-class DependencyLinkEvaluatorBool : public DependencyLinkEvaluatorGeneric<BoolProperty> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorBool"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorBool(); }
-};
-
-//----------------------------------------------
-
-class DependencyLinkEvaluatorFileDialog : public DependencyLinkEvaluatorGeneric<FileDialogProperty> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorFileDialog"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorFileDialog(); }
-};
-
-////----------------------------------------------
-
-class DependencyLinkEvaluatorInt : public DependencyLinkEvaluatorGeneric<IntProperty> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorInt"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorInt(); }
-};
-
-////----------------------------------------------
-
-class DependencyLinkEvaluatorString : public DependencyLinkEvaluatorGeneric<StringProperty> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorString"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorString(); }
-};
-
-////----------------------------------------------
-
-class DependencyLinkEvaluatorIntVec2 : public DependencyLinkEvaluatorGeneric<IntVec2Property> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorIntVec2"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorIntVec2(); }
-};
-
-////----------------------------------------------
-
-class DependencyLinkEvaluatorIntVec3 : public DependencyLinkEvaluatorGeneric<IntVec3Property> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorIntVec3"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorIntVec3(); }
-};
-
-////----------------------------------------------
-
-class DependencyLinkEvaluatorIntVec4 : public DependencyLinkEvaluatorGeneric<IntVec4Property> {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorIntVec4"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorIntVec4(); }
-};
-
-//----------------------------------------------
-
-///Special DependancyLinkEvaluator for VolumeHandle that deletes entries in the history if the corresponding VolumeHandle is deleted.
-class DependencyLinkEvaluatorVolumeHandle : public DependencyLinkEvaluatorGeneric<VolumeHandleProperty>, public VolumeHandleObserver {
-public:
-    virtual std::string getClassName() const { return "DependancyLinkEvaluatorVolumeHandle"; }
-    virtual LinkEvaluatorBase* create() const { return new DependencyLinkEvaluatorVolumeHandle(); }
-
-    virtual void eval(Property* src, Property* dest) throw (VoreenException);
-    virtual void propertiesChanged(Property* src, Property* dst);
-
-    void volumeChange(const VolumeHandle*);
-    void volumeHandleDelete(const VolumeHandle* source);
+    void volumeChange(const VolumeHandleBase*);
+    void volumeHandleDelete(const VolumeHandleBase* source);
 };
 
 } // namespace

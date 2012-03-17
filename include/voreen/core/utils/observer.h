@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,8 @@
 #ifndef VRN_OBSERVER_H
 #define VRN_OBSERVER_H
 
+#include "voreen/core/voreencoredefine.h"
+
 #include "tgt/assert.h"
 #include "tgt/logmanager.h"
 
@@ -51,7 +53,7 @@ class ObservableBase;
  *
  * @see Observable
  */
-class Observer {
+class VRN_CORE_API Observer {
 
 friend class ObservableBase; // for allowing ObservableBase to call addObserved() and removeObserved()
 
@@ -124,7 +126,7 @@ private:
  *
  * @see Observable
  */
-class ObservableBase {
+class VRN_CORE_API ObservableBase {
 
 friend class Observer; // for allowing Observer to call addObserver() and removeObserver()
 
@@ -185,7 +187,10 @@ public:
      * @param observer Observer of type T to be inserted
      * @return true if the insertion has been successful, false otherwise
      */
-    bool addObserver(const Observer* observer) const;
+    bool addObserver(const T* observer) const {
+        return ObservableBase::addObserver(observer);
+    }
+
 
     /**
      * Removes the passed Observed object from the list of observers observing
@@ -195,62 +200,35 @@ public:
      * @return true if the observer was removed, false if the passed object
      *  is not registered at this observable.
      */
-    bool removeObserver(const Observer* observer) const;
+    bool removeObserver(const T* observer) const {
+        return ObservableBase::removeObserver(observer);
+    }
 
     /**
      * Returns whether this object is observed by the
      * passed one.
      */
-    bool isObservedBy(const Observer* observer) const;
+    bool isObservedBy(const T* observer) const {
+        return (observers_.find(observer) != observers_.end());
+    }
 
 protected:
-
     /**
      * Returns all observers currently registered at this observable.
      */
-    const std::vector<T*> getObservers() const;
+    const std::vector<T*> getObservers() const {
+        
+        std::vector<T*> typedObservers;
+        std::set<const Observer*>::const_iterator it;
+        for (it = observers_.begin(); it != observers_.end(); ++it) {
+            // note: the only way to get elements into the observers_ vector is by
+            // calling addObserver() that does a type check => static_cast is safe here
+            typedObservers.push_back(static_cast<T*>(const_cast<Observer*>(*it)));
+        }
+        
+        return typedObservers;
+    }
 };
-
-
-// ---------------------------------------------------------------------------
-//   Template Definitions
-// ---------------------------------------------------------------------------
-
-template<class T>
-bool Observable<T>::addObserver(const Observer* observer) const {
-
-    if (!dynamic_cast<const T*>(observer)) {
-        tgtAssert(false, "Object of template type expected!");
-        LERRORC("voreen.Observable<T>", "addObserver() : Object of type T expected");
-        return false;
-    }
-
-    return ObservableBase::addObserver(observer);
-}
-
-template<class T>
-bool Observable<T>::removeObserver(const Observer* observer) const {
-    return ObservableBase::removeObserver(observer);
-}
-
-template<class T>
-bool Observable<T>::isObservedBy(const Observer* observer) const {
-    return (observers_.find(observer) != observers_.end());
-}
-
-template<class T>
-const std::vector<T*> Observable<T>::getObservers() const {
-
-    std::vector<T*> typedObservers;
-    std::set<const Observer*>::const_iterator it;
-    for (it = observers_.begin(); it != observers_.end(); ++it) {
-        // note: the only way to get elements into the observers_ vector is by
-        // calling addObserver() that does a type check => static_cast is safe here
-        typedObservers.push_back(static_cast<T*>(const_cast<Observer*>(*it)));
-    }
-
-    return typedObservers;
-}
 
 }  // namespace
 

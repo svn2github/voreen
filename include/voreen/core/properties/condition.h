@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #ifndef VRN_CONDITION_H
 #define VRN_CONDITION_H
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/properties/allactions.h"
 
 namespace voreen {
@@ -40,7 +41,7 @@ class OptionPropertyBase;
  * if the condition is met. The foremost purpose is to monitor the state of
  * a Property and react to its changes (Look at TemplateProperty and TemplateProperty(\w*)Condition).
  */
-class Condition {
+class VRN_CORE_API Condition {
 public:
     Condition(const Action& action = NoAction(), const Action& elseaction = NoAction());
     Condition(const Condition& condition);
@@ -79,7 +80,7 @@ public:
     /**
      * Exception thrown when validation of the Condition failed.
      */
-    class ValidationFailed : public std::exception {
+    class VRN_CORE_API ValidationFailed : public std::exception {
     public:
         ValidationFailed(const Condition* condition = 0);
         virtual ~ValidationFailed() throw () {}
@@ -117,7 +118,7 @@ private:
  * This Condition is always met() and thus always execs its Actions when check()ed.
  * Used to implement the onChange()-Mechanism in TemplateProperty
  */
-class TrueCondition : public Condition {
+class VRN_CORE_API TrueCondition : public Condition {
 public:
     TrueCondition(const Action& action = NoAction())
         : Condition(action) {}
@@ -149,7 +150,7 @@ protected:
 
 // ----------------------------------------------------------------------------
 
-class OptionPropertyValidation : public Condition {
+class VRN_CORE_API OptionPropertyValidation : public Condition {
 public:
     OptionPropertyValidation(OptionPropertyBase* observed)
         : Condition(NoAction(), NoAction()), observed_(observed)
@@ -165,7 +166,6 @@ protected:
     OptionPropertyBase* observed_;
     static const std::string loggerCat_;
 };
-
 
 } // namespace voreen
 

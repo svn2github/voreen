@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -54,7 +54,7 @@ RenderProcessor::RenderProcessor()
     , testSizeOriginVisited_(false)
 {}
 
-void RenderProcessor::initialize() throw (VoreenException) {
+void RenderProcessor::initialize() throw (tgt::Exception) {
 
     Processor::initialize();
 
@@ -65,7 +65,7 @@ void RenderProcessor::initialize() throw (VoreenException) {
     LGL_ERROR;
 }
 
-void RenderProcessor::deinitialize() throw (VoreenException) {
+void RenderProcessor::deinitialize() throw (tgt::Exception) {
 
     const std::vector<RenderPort*> pports = getPrivateRenderPorts();
     for (size_t i=0; i<pports.size(); ++i) {
@@ -146,9 +146,9 @@ bool RenderProcessor::testSizeOrigin(const RenderPort* p, void* so) const {
                 return false;
             }
 
-            const std::vector<Port*>& connectedOutports = inports[i]->getConnected();
+            const std::vector<const Port*> connectedOutports = inports[i]->getConnected();
             for (size_t j=0; j<connectedOutports.size(); ++j) {
-                RenderPort* op = static_cast<RenderPort*>(connectedOutports[j]);
+                const RenderPort* op = static_cast<const RenderPort*>(connectedOutports[j]);
 
                 if (!static_cast<RenderProcessor*>(op->getProcessor())->testSizeOrigin(op, so)) {
                     testSizeOriginVisited_ = false;
@@ -178,15 +178,12 @@ void RenderProcessor::manageRenderTargets() {
         if (rp && !rp->getRenderTargetSharing()) {
             if (rp->isConnected()) {
                 if (!rp->hasRenderTarget()) {
-                    rp->setRenderTarget(new RenderTarget());
                     rp->initialize();
                 }
             }
             else {
                 if (rp->hasRenderTarget()) {
-                    rp->getRenderTarget()->deinitialize();
-                    delete rp->getRenderTarget();
-                    rp->setRenderTarget(0);
+                    rp->deinitialize();
                 }
             }
         }
@@ -350,59 +347,84 @@ void RenderProcessor::setGlobalShaderParameters(tgt::Shader* shader, const tgt::
 }
 
 
-std::string RenderProcessor::generateHeader() {
-
-    std::string header;
-
-    // use highest available shading language version up to version 1.30
-    using tgt::GpuCapabilities;
-    if (isInitialized()) {
-        if (GpuCaps.getShaderVersion() >= GpuCapabilities::GlVersion::SHADER_VERSION_130) {
-            header += "#version 130\n";
-            header += "#define GLSL_VERSION_130\n";
-            header += "precision highp float;\n";
-        }
-        else if (GpuCaps.getShaderVersion() == GpuCapabilities::GlVersion::SHADER_VERSION_120)
-            header += "#version 120\n";
-        else if (GpuCaps.getShaderVersion() == GpuCapabilities::GlVersion::SHADER_VERSION_110)
-            header += "#version 110\n";
+std::string RenderProcessor::generateHeader(const tgt::GpuCapabilities::GlVersion* version) {
+    if (!tgt::GpuCapabilities::isInited()) {
+        LERROR("generateHeader() called before initialization of GpuCapabilities");
+        return "";
     }
 
-    //HACK:
-    if (isInitialized() && !GpuCaps.isNpotSupported())
-        header += "#define VRN_TEXTURE_RECTANGLE\n";
+    using tgt::GpuCapabilities;
+
+    tgt::GpuCapabilities::GlVersion useVersion;
+
+    //use supplied version if available, else use highest available.
+    //if no version is supplied, use up tp 1.30 as default.
+    if (version && GpuCaps.getShaderVersion() >= *version)
+        useVersion = *version;
+    else if(GpuCaps.getShaderVersion() > GpuCapabilities::GlVersion::SHADER_VERSION_410)
+        useVersion = GpuCapabilities::GlVersion::SHADER_VERSION_410;
     else
-        header += "#define VRN_TEXTURE_2D\n";
+        useVersion = GpuCaps.getShaderVersion();
 
-    if (isInitialized()) {
-        if (GLEW_NV_fragment_program2) {
-            GLint i = -1;
-            glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOOP_COUNT_NV, &i);
-            if (i > 0) {
-                std::ostringstream o;
-                o << i;
-                header += "#define VRN_MAX_PROGRAM_LOOP_COUNT " + o.str() + "\n";
-            }
-        }
+    std::stringstream versionHeader;
+    versionHeader << useVersion.major() << useVersion.minor();
 
-        //
-        // add some defines needed for workarounds in the shader code
-        //
-        if (GLEW_ARB_draw_buffers)
-            header += "#define VRN_GLEW_ARB_draw_buffers\n";
+    std::string header = "#version " + versionHeader.str();
+
+    if(header.length() < 12)
+        header += "0";
+
+    //Run in compability mode to use deprecated functionality
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_150)
+        header += " compatibility";
+    else if(useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_140)
+        header += "\n#extension GL_ARB_compatibility : enable";
+
+    header += "\n";
+
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_410)
+        header += "#define GLSL_VERSION_410\n";
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_400)
+        header += "#define GLSL_VERSION_400\n";
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_330)
+        header += "#define GLSL_VERSION_330\n";
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_150)
+        header += "#define GLSL_VERSION_150\n";
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_140)
+        header += "#define GLSL_VERSION_140\n";
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_130) {
+        header += "#define GLSL_VERSION_130\n";
+        header += "precision highp float;\n";
+    }
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_120)
+        header += "#define GLSL_VERSION_120\n";
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_110)
+        header += "#define GLSL_VERSION_110\n";
+
+    if (GpuCaps.getMaxProgramLoopCount() > 0) {
+        std::ostringstream o;
+        o << GpuCaps.getMaxProgramLoopCount();
+        header += "#define VRN_MAX_PROGRAM_LOOP_COUNT " + o.str() + "\n";
+    }
+
+    //
+    // add some defines needed for workarounds in the shader code
+    //
+    if (GLEW_ARB_draw_buffers)
+        header += "#define VRN_GLEW_ARB_draw_buffers\n";
 
     #ifdef __APPLE__
         header += "#define VRN_OS_APPLE\n";
         if (GpuCaps.getVendor() == GpuCaps.GPU_VENDOR_ATI)
             header += "#define VRN_VENDOR_ATI\n";
     #endif
-    }
 
-    if (tgt::Singleton<tgt::GpuCapabilities>::isInited() && GpuCaps.getShaderVersion() >= GpuCapabilities::GlVersion::SHADER_VERSION_130) {
+    if (GpuCaps.getShaderVersion() >= GpuCapabilities::GlVersion::SHADER_VERSION_130) {
         // define output for single render target
         header += "//$ @name = \"outport0\"\n";
         header += "out vec4 FragData0;\n";
-    } else {
+    }
+    else {
         header += "#define FragData0 gl_FragData[0]\n";
     }
 

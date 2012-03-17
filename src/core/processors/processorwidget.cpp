@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -99,6 +99,8 @@ void ProcessorWidget::restoreGeometryFromMeta() {
     WindowStateMetaData* meta = dynamic_cast<WindowStateMetaData*>(processor_->getMetaDataContainer().getMetaData("ProcessorWidget"));
     if (!meta) {
         LDEBUGC("voreen.core.ProcessorWidget", "restoreGeometryFromMeta(): No meta data object returned");
+        // make processor widgets visible by default
+        setVisible(true);
         return;
     }
 

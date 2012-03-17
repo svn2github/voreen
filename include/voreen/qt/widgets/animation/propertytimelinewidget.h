@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -50,10 +50,10 @@
 #include "voreen/core/animation/templatepropertytimeline.h"
 #include "voreen/core/animation/timelineobserver.h"
 
-class KeyframeGraphicsItem;
-class QPropertyWidget;
-
 namespace voreen {
+
+class QPropertyWidget;
+class KeyframeGraphicsItem;
 
 /**
 * Graphical representation of a PropertyTimeline in the animationcore.

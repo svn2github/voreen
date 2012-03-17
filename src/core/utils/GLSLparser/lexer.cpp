@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -189,8 +189,8 @@ char Lexer::nextChar() {
 
 bool Lexer::readCharConditioned(const char ref) throw (std::runtime_error) {
     char old = peek_;
-    size_t numLine = numLine_;
-    size_t numChar = numCharInLine_;
+    int numLine = numLine_;
+    int numChar = numCharInLine_;
 
     if (readChar() != ref) {
         // restore previous state in case the condition is not true
@@ -211,8 +211,8 @@ bool Lexer::readCharConditioned(bool (*pred)(const char)) throw (std::runtime_er
         return false;
 
     char old = peek_;
-    size_t numLine = numLine_;
-    size_t numChar = numCharInLine_;
+    int numLine = numLine_;
+    int numChar = numCharInLine_;
 
     if ((*pred)(readChar()) == false) {
         // restore previous state in case the condition is not true

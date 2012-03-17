@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -65,12 +65,16 @@ public:
      * @param minDist the minimum allowed orthogonal distance to the center of the trackball
      * @param maxDist the maximum allowed orthogonal distance to the center of the trackball
      */
-    TrackballNavigation(CameraProperty* camera, Mode mode = ROTATE_MODE, float minDist = 0.01f, float maxDist = 50.f);
+    TrackballNavigation(CameraProperty* camera, Mode mode = ROTATE_MODE, float minDist = 0.01f, float maxDist = 500.f);
     virtual ~TrackballNavigation();
 
     void setMode(Mode mode);
 
     Mode getMode() const;
+
+    bool isTracking() {
+        return tracking_;
+    }
 
     /**
      * React to a press-Event.

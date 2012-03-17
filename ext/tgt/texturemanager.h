@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -27,11 +27,12 @@
 
 #include <set>
 
-#include "tgt/config.h"
 #include "tgt/tgt_gl.h"
 #include "tgt/manager.h"
 #include "tgt/vector.h"
+#include "tgt/singleton.h"
 #include "tgt/texture.h"
+#include "tgt/types.h"
 
 namespace tgt {
 
@@ -39,10 +40,16 @@ class TextureReader;
 
 class ContainerFile;
 
+class TextureManager;
+#ifdef DLL_TEMPLATE_INST
+template class TGT_API ResourceManager<Texture>;
+#endif
+
 /**
 *   Texture Manager
 */
-class TextureManager : public ResourceManager<Texture> {
+class TGT_API TextureManager : public ResourceManager<Texture> {
+SINGLETON_CLASS_HEADER(TextureManager)
 private:
     static const std::string loggerCat_;
 
@@ -85,7 +92,7 @@ public:
             (use only if available!)
     */
     Texture* load(const std::string& filename, Texture::Filter filter = Texture::LINEAR, bool compress = false,
-		bool keepPixels = false, bool createOGLTex = true, bool useCache = true, bool textureRectangle = false);
+		bool keepPixels = false, bool createOGLTex = true, bool useCache = true);
 
     /**
     *   The same as load(...), but without using the intern path
@@ -100,7 +107,7 @@ public:
     */
     Texture* loadIgnorePath(const std::string& completeFilename, Texture::Filter filter = Texture::LINEAR,
         bool compress = false, bool keepPixels = false, bool createOGLTex = true,
-        bool useCache = true, bool textureRectangle = false);
+        bool useCache = true);
 
     /**
     *   Loads a texture from supplied pointer.
@@ -117,6 +124,6 @@ public:
 
 } // namespace tgt
 
-#define TexMgr tgt::Singleton<tgt::TextureManager>::getRef()
+#define TexMgr tgt::TextureManager::getRef()
 
 #endif //TGT_TEXTUREMANAGER_H

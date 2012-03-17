@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,10 +41,10 @@ class ArrowHeadSelectionGraphicsItem;
 /**
  * This is an abstract base class designed to be used for all arrow-like QGraphicsItems. These
  * arrows must start at a specific other QGraphicsItem and can end either in a QPointF or another
- * QGraphicsItem. </br>
+ * QGraphicsItem.
  * The arrow can have a specific normal color (\sa setNormalColor(const QColor&)), a selectedColor (
  * \sa setSelectedColor(const QColor&) ), a general tooltip (\sa setTooltipText(const QString&)) or
- * a custom designed tooltip (derive and overwrite \sa tooltip()).</br>
+ * a custom designed tooltip (derive and overwrite \sa tooltip()).
  * Both ends of the arrow can have a head which can be modified by derived classes. The variables
  * are \sa sourceHeadDirection_ and \sa destinationHeadDirection_.
  */
@@ -141,7 +141,7 @@ public:
 
 protected:
     /**
-     * This enum is used for determining from where to where a arrow head is drawn.</br>
+     * This enum is used for determining from where to where a arrow head is drawn.
      * E.g. ArrowHeadDirectionNS means a downward facing arrow head with the broad side on the
      * top and the arrow head - head at the buttom.
      */
@@ -183,6 +183,8 @@ protected:
      * \param direction The direction in which the arrow head will point
      * \param basePoint The base point from which the arrow head will be drawn. Should always be
      * the last point of the arrow (i.e. the arrowhead-head)
+     * \param arrowHeadItem The item which makes the arrow head selectable by passing the different
+     * mouse events to the arrow
      */
     QPolygonF createArrowHead(ArrowHeadDirection direction, const QPointF& basePoint, ArrowHeadSelectionGraphicsItem* arrowHeadItem) const;
 

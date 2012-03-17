@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,12 +25,12 @@
 #ifndef TGT_KEYEVENT_H
 #define TGT_KEYEVENT_H
 
-#include "tgt/config.h"
+#include "tgt/types.h"
 #include "tgt/event/event.h"
 
 namespace tgt {
 
-class KeyEvent : public Event {
+class TGT_API KeyEvent : public Event {
 public:
     enum KeyCode {
     /* The keyboard syms have been cleverly chosen to map to ASCII */

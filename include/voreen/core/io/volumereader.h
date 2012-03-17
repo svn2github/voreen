@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/datastructures/volume/volumecollection.h"
 #include "voreen/core/io/progressbar.h"
 
@@ -43,13 +44,27 @@ namespace voreen {
 class Volume;
 
 /**
- * Reads a volume dataset.
- * Implement this class in order to support a new format.
+ * Reads one or multiple volume data sets from a passed location.
+ * Implement this class in order to support a new volume data format.
  */
-class VolumeReader {
+class VRN_CORE_API VolumeReader {
 public:
     VolumeReader(ProgressBar* progress = 0);
     virtual ~VolumeReader() {}
+
+    /**
+     * Returns the name of this class as a string.
+     * Necessary due to the lack of code reflection in C++.
+     */
+    virtual std::string getClassName() const = 0;
+
+    /**
+     * Returns a description of the file format the reader supports.
+     *
+     * @note The description is to be shown in a file dialog 
+     *      and should therefore be short.
+     */
+    virtual std::string getFormatDescription() const = 0;
 
     /**
      * Virtual constructor.
@@ -63,10 +78,14 @@ public:
      *      This may be a file path, e.g. /file/to/volume.dat,
      *      or a complete URL with resource type and inner path, e.g.
      *      zip://path/to/archive.zip/volume.dat
+     *
      * @return VolumeCollection containing all volumes read from the url.
      *      the caller is responsible for freeing the memory.
+     *
+     * @throw tgt::FileException if the data set could not be loaded
      */
-    virtual VolumeCollection* read(const std::string& url) throw (tgt::FileException, std::bad_alloc) = 0;
+    virtual VolumeCollection* read(const std::string& url) 
+        throw (tgt::FileException, std::bad_alloc) = 0;
 
     /**
      * Instead of reading a whole dataset, only some slices are read from file and written
@@ -74,16 +93,20 @@ public:
      *
      * Override this function in order to provide a brick-wise loading routine.
      * The default implementation throws an exception.
+     *  
+     * @throw tgt::FileException if the data set could not be loaded
      */
     virtual VolumeCollection* readSlices(const std::string& url, size_t firstSlice = 0, size_t lastSlice = 0)
         throw(tgt::FileException, std::bad_alloc);
 
     /**
-     * Instead of reading the whole dataset, only a brick of volumedata, specified by
+     * Instead of reading the whole dataset, only a brick of volume data, specified by
      * its starting location and its dimensions, is read.
      *
      * Override this function in order to provide a brick-wise loading routine.
      * The default implementation throws an exception.
+     *
+     * @throw tgt::FileException if the data set could not be loaded
      */
     virtual VolumeCollection* readBrick(const std::string& url, tgt::ivec3 start, int dimensions)
         throw(tgt::FileException, std::bad_alloc);
@@ -95,17 +118,26 @@ public:
      * origin's path. Override it in order to access the VolumeOrigin directly.
      *
      * @param origin The origin the data set is to be read from.
+     *
      * @return VolumeHandle encapsulating the loaded volume. The caller is responsible for freeing the memory.
+     *
+     * @throw tgt::FileException if the data set could not be loaded
      */
-    virtual VolumeHandle* read(const VolumeOrigin& origin)
+    virtual VolumeHandleBase* read(const VolumeOrigin& origin)
         throw (tgt::FileException, std::bad_alloc);
 
     /**
-     * Returns whether this reader is persistent and should not be deleted after read() has
-     * completed. This is necessary in case a reader want to do incremental loading, for example,
-     * based on some view parameters. Then this reader must be freed through some other means.
+     * Returns a list of all volumes that are found at the passed location. It is not guaranteed 
+     * that the listed volumes can actually be loaded by the reader.
+     *
+     * The default implementation returns a single VolumeOrigin encapsulating the passed URL, 
+     * if the referenced file exists, or an empty vector otherwise. Subclasses that support 
+     * container files, i.e. files that may store multiple volumes, should override this function.
+     * Information that is not necessary for distinctly identifying a single volume but may still 
+     * be helpful for the user should be stored in the MetaDataContainer of the respective VolumeOrigin. 
      */
-    virtual bool isPersistent() const;
+    virtual std::vector<VolumeOrigin> listVolumes(const std::string& url) const
+        throw (tgt::FileException);
 
     /**
      * Converts the file path of the passed origin to a path relative to the passed base path.
@@ -133,16 +165,30 @@ public:
     /**
      * Returns a list of filename extensions that are supported by this reader.
      */
-    const std::vector<std::string>& getExtensions() const;
+    const std::vector<std::string>& getSupportedExtensions() const;
+
+    /**
+     * Returns a list of filenames that are supported by this reader.
+     */
+    const std::vector<std::string>& getSupportedFilenames() const;
 
     /**
      * Returns a list of protocols that are supported by this reader.
      */
-    const std::vector<std::string>& getProtocols() const;
+    const std::vector<std::string>& getSupportedProtocols() const;
+
+    /**
+     * Assigns a progress bar to the reader. May be null.
+     */
+    void setProgressBar(ProgressBar* progressBar);
+
+    /**
+     * Returns the assigned progress bar. May be null.
+     */
+    ProgressBar* getProgressBar() const;
 
 protected:
     void read(Volume* volume, FILE* fin);
-    ProgressBar* getProgressBar() const { return progress_; }
 
     /**
      * Reverses the order of the slice in x-direction. This method
@@ -164,6 +210,9 @@ protected:
 
     /// List of filename extensions supported by the reader.
     std::vector<std::string> extensions_;
+
+    /// List of filenames supported by the reader.
+    std::vector<std::string> filenames_;
 
     /// List of protocols supported by the reader.
     std::vector<std::string> protocols_;

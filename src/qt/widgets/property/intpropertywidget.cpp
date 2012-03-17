@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -38,9 +38,9 @@
 namespace voreen {
 
 IntPropertyWidget::IntPropertyWidget(IntProperty* prop, QWidget* parent, bool addVisibilityControl)
-    : QPropertyWidget(prop, parent),
-      property_(prop),
-      widget_(new SliderSpinBoxWidget(this))
+    : QPropertyWidget(prop, parent)
+    , property_(prop)
+    , widget_(new SliderSpinBoxWidget(this))
 {
     tgtAssert(property_, "no property");
     widget_->setSliderTracking(property_->hasTracking());

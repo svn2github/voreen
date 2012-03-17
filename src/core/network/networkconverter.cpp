@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -152,9 +152,6 @@ void NetworkConverter4to5::convert(TiXmlElement* elem) {
     changePropertyName(elem, "", "set.imageoverlayTop", "top");
     changePropertyName(elem, "", "set.imageoverlayHeight", "height");
     changePropertyName(elem, "", "set.imageoverlayOpacity", "opacity");
-    // ImageProcessorDepth processor
-    changePropertyName(elem, "", "set.minDepthPP", "minDepth");
-    changePropertyName(elem, "", "set.maxDepthPP", "maxDepth");
     // Labeling processor
     changePropertyName(elem, "", "set.labelingWidget", "labelingWidget");
     changePropertyName(elem, "", "set.Layout", "layout");
@@ -215,6 +212,44 @@ void NetworkConverter6to7::convert(TiXmlElement* elem) {
     changeProcessorType(elem, "ClippingPlaneWidget", "PlaneWidgetProcessor");
     changeProcessorType(elem, "CylinderRenderer", "QuadricRenderer");
     changeProcessorType(elem, "SphereRenderer", "QuadricRenderer");
+    changeProcessorType(elem, "EntryExitPoints", "MeshEntryExitPoints");
+    changeProcessorType(elem, "CubeProxyGeometry", "CubeMeshProxyGeometry");
+}
+
+void NetworkConverter7to8::convert(TiXmlElement* elem) {
+    changeProcessorType(elem, "VolumeSubSet", "VolumeCrop");
+}
+
+void NetworkConverter8to9::convert(TiXmlElement* elem) {
+    changeProcessorType(elem, "FiberWriter", "FiberSave");
+    changeProcessorType(elem, "RawTextureWriter", "RawTextureSave");
+}
+
+void NetworkConverter9to10::convert(TiXmlElement* elem) {
+    changeProcessorType(elem, "TensorEllipsoidRenderer", "TensorGlyphRenderer");
+    changeProcessorType(elem, "FiberTracker", "FiberTrackerFACT");
+    changeProcessorType(elem, "TensorlineTracker", "FiberTrackerTensorline");
+    changeProcessorType(elem, "VolumeBitScale", "VolumeFormatConversion");
+    changeProcessorType(elem, "BoundingBox", "BoundingBoxRenderer");
+}
+
+
+void NetworkConverter10to11::convert(TiXmlElement* elem) {
+    // change all LinkEvaluator*Id to LinkEvaluatorId
+    TiXmlElement* propertylinksNode = elem->FirstChildElement("PropertyLinks");
+    for (TiXmlElement* linkNode = propertylinksNode->FirstChildElement("PropertyLink")
+        ; linkNode != 0
+        ; linkNode = linkNode->NextSiblingElement("PropertyLink"))
+    {
+        TiXmlElement* evaluatorNode = linkNode->FirstChildElement("Evaluator");
+        const std::string* type = evaluatorNode->Attribute(std::string("type"));
+        size_t firstPosition = type->find("LinkEvaluator");
+        size_t lastPosition = type->rfind("Id");
+
+        // 13 is the length of the "LinkEvaluator" string
+        if (firstPosition != std::string::npos && lastPosition != std::string::npos && lastPosition > 13)
+            evaluatorNode->SetAttribute("type", "LinkEvaluatorId");
+    }    
 }
 
 } // namespace

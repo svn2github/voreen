@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,7 +28,6 @@
 
 #include "voreen/core/properties/filedialogproperty.h"
 #include "voreen/core/properties/condition.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 #include "tgt/filesystem.h"
 
@@ -47,6 +46,13 @@ FileDialogProperty::FileDialogProperty(const std::string& id, const std::string&
 
     if (fileMode == DIRECTORY)
         set(directory_);
+}
+
+FileDialogProperty::FileDialogProperty() {
+}
+
+Property* FileDialogProperty::create() const {
+    return new FileDialogProperty();
 }
 
 void FileDialogProperty::serialize(XmlSerializer& s) const {
@@ -74,7 +80,7 @@ void FileDialogProperty::deserialize(XmlDeserializer& s) {
     s.deserialize("value", value);
 
     // convert path relative to the document's path to an absolute one
-    if (!value.empty() && !s.getDocumentPath().empty() && !isalpha(value[0]))
+    if (!value.empty() && !s.getDocumentPath().empty())
         value = tgt::FileSystem::absolutePath(tgt::FileSystem::dirName(s.getDocumentPath()) + "/" + value);
 
     try {
@@ -83,14 +89,6 @@ void FileDialogProperty::deserialize(XmlDeserializer& s) {
     catch (Condition::ValidationFailed& e) {
         s.addError(e);
     }
-}
-
-PropertyWidget* FileDialogProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
-}
-
-std::string FileDialogProperty::getTypeString() const {
-    return "FileDialog";
 }
 
 }   // namespace

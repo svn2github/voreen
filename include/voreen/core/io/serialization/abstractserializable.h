@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_IABSTRACTSERIALIZABLE_H
 
 #include "voreen/core/io/serialization/serializable.h"
+#include "voreen/core/voreencoredefine.h"
 
 namespace voreen {
 
@@ -43,7 +44,7 @@ namespace voreen {
  *
  * @see Serializable
  */
-class AbstractSerializable : public Serializable {
+class VRN_CORE_API AbstractSerializable : public Serializable {
 };
 
 } // namespace

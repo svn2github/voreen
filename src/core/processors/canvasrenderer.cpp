@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,6 +28,7 @@
 
 #include "voreen/core/processors/canvasrenderer.h"
 #include "voreen/core/utils/voreenpainter.h"
+#include "voreen/core/processors/processorwidget.h"
 #include "voreen/core/processors/processorwidgetfactory.h"
 #include "voreen/core/voreenapplication.h"
 
@@ -59,17 +60,10 @@ CanvasRenderer::CanvasRenderer()
     showCursor_.onChange(CallMemberAction<CanvasRenderer>(this, &CanvasRenderer::cursorVisibilityChanged));
 }
 
-CanvasRenderer::~CanvasRenderer() {
-}
+CanvasRenderer::~CanvasRenderer() {}
 
 Processor* CanvasRenderer::create() const {
     return new CanvasRenderer();
-}
-
-std::string CanvasRenderer::getProcessorInfo() const {
-    return "The Canvas processor is an end node in the network. It copies its input \
-            to the associated OpenGL canvas and can take snapshots of arbitrary size, \
-            only limited by the graphics board's maximal 2D texture dimensions.";
 }
 
 void CanvasRenderer::process() {
@@ -158,25 +152,23 @@ bool CanvasRenderer::isReady() const {
     return true;
 }
 
-void CanvasRenderer::initialize() throw (VoreenException) {
+bool CanvasRenderer::isValid() const {
+    return false;
+}
+
+void CanvasRenderer::initialize() throw (tgt::Exception) {
     RenderProcessor::initialize();
 
-    if(getProcessorWidget())
+    if (getProcessorWidget())
         getProcessorWidget()->updateFromProcessor();
 
     shader_ = ShdrMgr.loadSeparate("passthrough.vert", "copyimage.frag", generateHeader(), false);
 
-    if (!shader_) {
-        initialized_ = false;
-        throw VoreenException("failed to load shaders");
-    }
-
     errorTex_ = TexMgr.load(VoreenApplication::app()->getTexturePath("error.tga"));
-
     canvasSize_.setMaxValue(tgt::ivec2(GpuCaps.getMaxTextureSize()));
 }
 
-void CanvasRenderer::deinitialize() throw (VoreenException) {
+void CanvasRenderer::deinitialize() throw (tgt::Exception) {
    ShdrMgr.dispose(shader_);
    shader_ = 0;
    if (errorTex_)

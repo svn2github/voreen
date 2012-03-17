@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,7 +44,7 @@ namespace voreen {
 
 class RenderTarget;
 
-class RenderPort : public Port {
+class VRN_CORE_API RenderPort : public Port {
 
     friend class RenderProcessor;
     friend class NetworkEvaluator;
@@ -94,6 +94,11 @@ public:
      * or if is an inport, and its (first) connected outport stores a valid rendering.
      */
     bool hasValidResult() const;
+
+    /**
+     * Returns the result of hasValidResult().
+     */
+    virtual bool hasData() const;
 
     /**
      * Returns the dimensions of the associated RenderTarget.
@@ -157,6 +162,14 @@ public:
      * all connected outports.
      */
     void resize(const tgt::ivec2& newsize);
+
+    /**
+     * Resizes the associated RenderTarget to the passed dimensions.
+     *
+     * If this function is called on an inport, the call is propagated to
+     * all connected outports.
+     */
+    void resize(int x, int y);
 
     /**
      * Re-create and initialize the outport's RenderTarget with the given format.
@@ -279,14 +292,14 @@ protected:
      *
      * @see Port::initialize
      */
-    virtual void initialize() throw (VoreenException);
+    virtual void initialize() throw (tgt::Exception);
 
     /**
      * Deinitializes the RenderTarget, if the port is an outport.
      *
      * @see Port::deinitialize
      */
-    virtual void deinitialize() throw (VoreenException);
+    virtual void deinitialize() throw (tgt::Exception);
 
     /**
      * Additionally propagates the connected port's size origin.
@@ -368,7 +381,7 @@ tgt::Vector4<T>* voreen::RenderPort::readColorBuffer() throw (VoreenException) {
 /**
  * @brief This class groups RenderPorts to allow easy rendering to multiple targets.
  */
-class PortGroup {
+class VRN_CORE_API PortGroup {
 public:
     /**
      * @param ignoreConnectivity If this is true all ports are attached to the FBO, otherwise only the connected ones.

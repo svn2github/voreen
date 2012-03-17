@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,10 +30,14 @@
 #define VRN_GLSLVISITOR_H
 
 #include "voreen/core/utils/GLSLparser/symboltable.h"
+#include "voreen/core/utils/GLSLparser/glsl/glslfunctioncall.h"
+#include "voreen/core/utils/GLSLparser/glsl/glslfunctiondefinition.h"
 #include "voreen/core/utils/GLSLparser/glsl/glsltoken.h"
 #include "voreen/core/utils/GLSLparser/glsl/glslstructspecifier.h"
+#include "voreen/core/utils/GLSLparser/glsl/glsltranslation.h"
 #include "voreen/core/utils/GLSLparser/glsl/glslsymbol.h"
 
+#include <set>
 #include <sstream>
 
 namespace voreen {
@@ -47,7 +51,12 @@ public:
 
     virtual bool visit(ParseTreeNode* const node);
 
-    void printSymbolTable() const;
+    void printGlobalSymbolTable();
+
+    void printSymbolTable(const std::string& tableName, const std::map<std::string, GLSLSymbol*>& table,
+        const unsigned int depth) const;
+
+    unsigned int getNumWarnings() const { return numWarnings_; }
 
     /**
      * Returns all declarations of uniform symbols within this GLSL program.
@@ -75,10 +84,26 @@ public:
      */
     std::vector<GLSLVariableSymbol*> getOuts(const bool keepInTable);
 
-private:
-    // Expressions
-    //
+    /**
+     * Returns a set with the indices of the special array gl_FragData which have
+     * been used during assignments as LHS operands.
+     */
+    const std::set<unsigned int>& getReferencedGlFragData() const { return glFragDataElements_; }
 
+protected:
+    std::string getPrefixLower(const std::string& input, const unsigned int len) const;
+
+    std::vector<GLSLVariableSymbol*> getStorageQualifiedVars(const bool keepInTable,
+        const GLSLVariableSymbol::StorageQualifier storageQualifier);
+
+    void pushSymbolTable(const std::string& newName);
+
+    void popSymbolTable();
+
+private:
+    typedef std::map<std::string, GLSLSymbol*> SymbolMap;
+
+private:
     // Declarations
     //
     void visitNode(GLSLDeclaration* const decl);
@@ -86,6 +111,18 @@ private:
     //void visitNode(GLSLStructDeclaratorList* const decls);
     //void visitNode(GLSLFieldDeclaration* const decl);
     //void visitNode(GLSLFunctionDeclaration* const decl);
+
+    // Expressions
+    //
+    GLSLValue* visitNode(GLSLExpression* const expr);
+    GLSLValue* visitNode(GLSLExpressionList* const exprLst);
+    GLSLValue* visitNode(GLSLAssignmentExpression* const assign);
+    GLSLValue* visitNode(GLSLBinaryExpression* const bin);
+    GLSLValue* visitNode(GLSLConditionalExpression* const cond);
+    GLSLValue* visitNode(GLSLFunctionCall* const funCall);
+    GLSLValue* visitNode(GLSLUnaryExpression* const unary);
+    GLSLValue* visitNode(GLSLPrimaryExpression* const primaryExpr);
+    GLSLValue* visitNode(GLSLPostfixExpression* const postfix);
 
     // Qualifiers
     //
@@ -97,11 +134,42 @@ private:
     //
     GLSLVariableSymbol visitNode(GLSLTypeSpecifier* const typeSpec);
 
+    // Statements
+    //
+    void visitNode(GLSLStatement* const statement);
+    void visitNode(GLSLCompoundStatement* const statements);
+    void visitNode(GLSLSimpleStatement* const statement);
+    void visitNode(GLSLCaseLabel* const lbl);
+    void visitNode(GLSLDeclarationStatement* const decl);
+    void visitNode(GLSLDoWhileStatement* const dwhl);
+    void visitNode(GLSLExpressionStatement* const expr);
+    void visitNode(GLSLForStatement* const fr);
+    void visitNode(GLSLJumpStatement* const jmp);
+    void visitNode(GLSLSelectionStatement* const sel);
+    void visitNode(GLSLSwitchStatement* const swtch);
+    void visitNode(GLSLWhileStatement* const whl);
+
+    // Misc
+    //
+    GLSLValue* visitNode(GLSLCondition* const cond);
+    void visitNode(GLSLExternalDeclaration* const extDecl);
+    void visitNode(GLSLFunctionDefinition* const funcDef);
+    void visitNode(GLSLFunctionPrototype* const funcProto);
+    void visitNode(GLSLParameter* const param);
+    void visitNode(GLSLTranslation* const trans);
+
     std::vector<GLSLAnnotation*> processAnnotation(AnnotationToken* const annotation);
 
 protected:
     typedef SymbolTable<GLSLSymbol> GLSLSymbolMap;
-    GLSLSymbolMap symbols_;
+    GLSLSymbolMap globalSymbols_;
+
+    GLSLSymbolMap* activeSymbols_;
+
+private:
+    GLSLTerminals terminals_;
+    unsigned int numWarnings_;
+    std::set<unsigned int> glFragDataElements_;
 };
 
 }   // namespace glslparser

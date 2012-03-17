@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,17 +34,17 @@ using namespace tgt;
 
 namespace voreen {
 
-Volume4xUInt8* calcGradients26(Volume* vol) {
+VolumeHandle* calcGradients26(const VolumeHandleBase* vol) {
     // generate 32 bit data set to store results
-    Volume4xUInt8* result = new Volume4xUInt8(vol->getDimensions(), vol->getSpacing(), vol->getTransformation(), 32);
-    if (vol->getBitsStored() == 8) {
-        VolumeUInt8* input = static_cast<VolumeUInt8*>(vol);
+    Volume4xUInt8* result = new Volume4xUInt8(vol->getDimensions(), 32);
+    if (vol->getRepresentation<Volume>()->getBitsStored() == 8) {
+        const VolumeUInt8* input = static_cast<const VolumeUInt8*>(vol->getRepresentation<Volume>());
 
         vec3 offset = vec3(1.0, 1.0, 1.0);
         ivec3 gradient;
 
-        ivec3 pos;
-        ivec3 dim = vol->getDimensions();
+        svec3 pos;
+        svec3 dim = vol->getDimensions();
         uint8_t gX,gY,gZ;
 
         for (pos.z = 0; pos.z < vol->getDimensions().z; ++pos.z) {
@@ -121,19 +121,19 @@ Volume4xUInt8* calcGradients26(Volume* vol) {
         delete result;
         return 0;
     }
-    return result;
-
+    return new VolumeHandle(result, vol);
 }
 
-Volume4xUInt8* filterGradientsMid(Volume* vol) {
+VolumeHandle* filterGradientsMid(const VolumeHandleBase* volh) {
+   const Volume* vol = volh->getRepresentation<Volume>();
    if (vol->getBitsStored() == 32) {
-       Volume4xUInt8* input = static_cast<Volume4xUInt8*>(vol);
+       const Volume4xUInt8* input = static_cast<const Volume4xUInt8*>(vol);
 
-       Volume4xUInt8* resultFiltered = new Volume4xUInt8(vol->getDimensions(), vol->getSpacing(), vol->getTransformation(), 32);
+       Volume4xUInt8* resultFiltered = new Volume4xUInt8(vol->getDimensions(), 32);
        vec3 delta = vec3(1.0);
 
-       ivec3 pos;
-       ivec3 dim = vol->getDimensions();
+       svec3 pos;
+       svec3 dim = vol->getDimensions();
        for (pos.z = 0; pos.z < vol->getDimensions().z; ++pos.z) {
            for (pos.y = 0; pos.y < vol->getDimensions().y; ++pos.y) {
                for (pos.x = 0; pos.x < vol->getDimensions().x; ++pos.x) {
@@ -164,7 +164,7 @@ Volume4xUInt8* filterGradientsMid(Volume* vol) {
                }
            }
        }
-       return resultFiltered;
+       return new VolumeHandle(resultFiltered, volh);
    }
    else {
        LERRORC("gradient", "filterGradients needs a 32-bit dataset as input");
@@ -172,18 +172,19 @@ Volume4xUInt8* filterGradientsMid(Volume* vol) {
    }
 }
 
-Volume4xUInt8* filterGradientsWeighted(Volume* vol, bool intensityCheck) {
+VolumeHandle* filterGradientsWeighted(const VolumeHandleBase* volh, bool intensityCheck) {
+    const Volume* vol = volh->getRepresentation<Volume>();
     if (vol->getBitsStored() == 32) {
-        Volume4xUInt8* input = static_cast<Volume4xUInt8*>(vol);
+        const Volume4xUInt8* input = static_cast<const Volume4xUInt8*>(vol);
 
-        Volume4xUInt8* resultFiltered = new Volume4xUInt8(vol->getDimensions(), vol->getSpacing(), vol->getTransformation(), 32);
+        Volume4xUInt8* resultFiltered = new Volume4xUInt8(vol->getDimensions(), 32);
         vec3 delta = vec3(1.0);
 
-        ivec3 pos;
-        ivec3 dim = vol->getDimensions();
-        for (pos.z = 0; pos.z < vol->getDimensions().z; ++pos.z) {
-            for (pos.y = 0; pos.y < vol->getDimensions().y; ++pos.y) {
-                for (pos.x = 0; pos.x < vol->getDimensions().x; ++pos.x) {
+        svec3 pos;
+        svec3 dim = vol->getDimensions();
+        for (pos.z = 0; pos.z < dim.z; ++pos.z) {
+            for (pos.y = 0; pos.y < dim.y; ++pos.y) {
+                for (pos.x = 0; pos.x < dim.x; ++pos.x) {
 
                     if (pos.x >= 1 && pos.x < dim.x-1 &&
                         pos.y >= 1 && pos.y < dim.y-1 &&
@@ -275,7 +276,7 @@ Volume4xUInt8* filterGradientsWeighted(Volume* vol, bool intensityCheck) {
                 }
             }
         }
-        return resultFiltered;
+        return new VolumeHandle(resultFiltered, volh);
     }
     else {
         LERRORC("gradient", "filterGradients needs a 32-bit dataset as input");
@@ -283,19 +284,20 @@ Volume4xUInt8* filterGradientsWeighted(Volume* vol, bool intensityCheck) {
     }
 }
 
-Volume4xUInt8* filterGradients(Volume* vol) {
+VolumeHandle* filterGradients(const VolumeHandleBase* volh) {
+    const Volume* vol = volh->getRepresentation<Volume>();
     if (vol->getBitsStored() == 32) {
-        Volume4xUInt8* input = static_cast<Volume4xUInt8*>(vol);
+        const Volume4xUInt8* input = static_cast<const Volume4xUInt8*>(vol);
 
-        Volume4xUInt8* resultFiltered = new Volume4xUInt8(vol->getDimensions(), vol->getSpacing(), vol->getTransformation(), 32);
+        Volume4xUInt8* resultFiltered = new Volume4xUInt8(vol->getDimensions(), 32);
         vec3 offset = vec3(1.0);
         // gradients are stored in the interval [0..256], with (128,128,128) being the zero gradient
         vec3 zeroGrad = vec3(128,128,128);
 
-        ivec3 pos;
+        svec3 pos;
         vec4 curGrad;
         vec4 filteredGrad;
-        ivec3 dim = vol->getDimensions();
+        svec3 dim = vol->getDimensions();
         for (pos.z = 0; pos.z < vol->getDimensions().z; ++pos.z) {
             for (pos.y = 0; pos.y < vol->getDimensions().y; ++pos.y) {
                 for (pos.x = 0; pos.x < vol->getDimensions().x; ++pos.x) {
@@ -343,7 +345,7 @@ Volume4xUInt8* filterGradients(Volume* vol) {
                 }
             }
         }
-        return resultFiltered;
+        return new VolumeHandle(resultFiltered, volh);
     }
     else {
         LERRORC("gradient", "filterGradients needs a 32-bit dataset as input");

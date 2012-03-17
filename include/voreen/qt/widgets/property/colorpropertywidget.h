@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,7 @@
 #ifndef VRN_COLORPROPERTYWIDGET_H
 #define VRN_COLORPROPERTYWIDGET_H
 
-#include "voreen/core/properties/templateproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
 
 #include "voreen/qt/widgets/property/qpropertywidget.h"
 
@@ -58,7 +58,7 @@ protected:
 class ColorPropertyWidget : public QPropertyWidget {
     Q_OBJECT
 public:
-    ColorPropertyWidget(TemplateProperty<tgt::vec4>* prop, QWidget* parent = 0);
+    ColorPropertyWidget(FloatVec4Property* prop, QWidget* parent = 0);
 
     void updateFromProperty();
 
@@ -72,7 +72,7 @@ protected:
     QColor toQColor(tgt::Color color);
 
 private:
-    TemplateProperty<tgt::vec4>* property_;
+    FloatVec4Property* property_;
     ClickableColorLabel* colorLbl_;
     QColor currentColor_;
 };

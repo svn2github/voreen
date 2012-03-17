@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,29 +41,21 @@ ImageProcessor::ImageProcessor(const std::string& shaderFilename)
 ImageProcessor::~ImageProcessor() {
 }
 
-void ImageProcessor::initialize() throw (VoreenException) {
+void ImageProcessor::initialize() throw (tgt::Exception) {
     RenderProcessor::initialize();
 
     if (!shaderFilename_.empty()) {
         program_ = ShdrMgr.loadSeparate("passthrough.vert", shaderFilename_ + ".frag", generateHeader(), false);
-        if (program_) {
-            invalidate(Processor::INVALID_PROGRAM);
-            if (getInvalidationLevel() >= Processor::INVALID_PROGRAM)
-                compile();
-        }
-        if (!program_) {
-            initialized_ = false;
-            throw VoreenException(getClassName() + ": Failed to load shaders!");
-        }
-        else {
-            program_->deactivate();
-        }
+        invalidate(Processor::INVALID_PROGRAM);
+        if (getInvalidationLevel() >= Processor::INVALID_PROGRAM)
+            compile();
+        program_->deactivate();
     }
     else
         program_ = 0;
 }
 
-void ImageProcessor::deinitialize() throw (VoreenException) {
+void ImageProcessor::deinitialize() throw (tgt::Exception) {
     ShdrMgr.dispose(program_);
     program_ = 0;
     LGL_ERROR;
@@ -74,6 +66,27 @@ void ImageProcessor::deinitialize() throw (VoreenException) {
 void ImageProcessor::compile() {
     if (program_)
         program_->rebuild();
+}
+
+/**
+* Read back depth buffer and determine min and max depth value.
+*
+* @param port the port to analyze the depth buffer
+* @return tgt::vec2 with x = minDepth, y = maxDepth
+*/
+tgt::vec2 ImageProcessor::computeDepthRange(RenderPort* port) {
+    port->getDepthTexture()->downloadTexture();
+    float* pixels = (float*)port->getDepthTexture()->getPixelData();
+    float curDepth = *(pixels);
+    float minDepth = curDepth;
+    float maxDepth = curDepth;
+    int numPixels = tgt::hmul(port->getSize());
+    for (int i = 0; i < numPixels; i++) {
+        curDepth = *(pixels++);
+        minDepth = std::min(minDepth, curDepth);
+        maxDepth = std::max(maxDepth, curDepth);
+    }
+    return tgt::vec2(minDepth, maxDepth);
 }
 
 } // voreen namespace

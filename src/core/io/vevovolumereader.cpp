@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -159,7 +159,8 @@ VolumeCollection* VevoVolumeReader::read(const string &fname)
     }
 
     VolumeCollection* volumeCollection = new VolumeCollection();
-    VolumeHandle* volumeHandle = new VolumeHandle(volDS_, 0.0f);
+    VolumeHandle* volumeHandle = new VolumeHandle(volDS_, spacing, tgt::vec3(0.0f));
+    oldVolumePosition(volumeHandle);
     volumeCollection->add(volumeHandle);
 
     return volumeCollection;
@@ -167,7 +168,7 @@ VolumeCollection* VevoVolumeReader::read(const string &fname)
 
 std::vector<string> VevoVolumeReader::splitLine(string s, const char *ch) {
     std::vector<string> res;
-    uint offset = 0;
+    size_t offset = 0;
     std::size_t idx = 0;
 
     while ((idx = s.find(ch, offset)) != string::npos) {
@@ -208,14 +209,13 @@ void VevoVolumeReader::loadFramesDescrFromFile(const string& fname,
     string s;
 
     while (getline(in, s)) {
-        size_t frameNum = 0, frameOffset = 0, frameSize = 0;
-        unsigned short f_direction;
-        double frameTstamp = 0.0;
         // remove \n
         s.erase(s.end() - 1);
         std::vector<string> v = splitLine(s, ",");
 
-        if (v.size()) {
+        if (!v.empty()) {
+            size_t frameNum = 0, frameOffset = 0, frameSize = 0;
+            double frameTstamp = 0.0;
 
             // check the order of the different attributes in the .rdi file
             // before adding a frame to the framesPerFile_ vector
@@ -233,11 +233,11 @@ void VevoVolumeReader::loadFramesDescrFromFile(const string& fname,
             }
 
             if (v[0].substr(0, 26) == "Image Data Probe Direction") {
-                f_direction = atoi(v[1].c_str());
+                unsigned short f_direction = atoi(v[1].c_str());
                 // we are now ready to add a frame:
                 string tmp(fname);
                 tmp.replace(fname.length() - 3, 3, "rdb");
-                VevoFrame v(frameNum, frameSize, frameOffset, frameTstamp, tmp, f_id, f_direction);
+                VevoFrame v(static_cast<int>(frameNum), frameSize, static_cast<int>(frameOffset), frameTstamp, tmp, f_id, f_direction);
                 frames.push_back(v);
             }
         }
@@ -267,7 +267,7 @@ struct VevoInfoFile* VevoVolumeReader::readCSVFile(const string& fname) {
         s.erase(s.end() - 1);
         std::vector<string> v = splitLine(s, ",");
 
-        if (v.size()) {
+        if (!v.empty()) {
             if (v[0].substr(0, 12) == "Image Length") {
                 vif->num_frames = atoi(v[1].c_str());
             }
@@ -457,7 +457,7 @@ size_t VevoVolumeReader::loadInvertedRawFrame(VevoFrame& frame, char *to, size_t
 
     size_t f_end = frame.offset_ + frame.size_;
 
-    int line_incr = xres * 2;
+    int line_incr = static_cast<int>(xres) * 2;
 
     size_t bytes_read = 0;
 
@@ -472,7 +472,7 @@ size_t VevoVolumeReader::loadInvertedRawFrame(VevoFrame& frame, char *to, size_t
 
         fin.read(to, line_incr);
         to += line_incr;
-        bytes_read += fin.gcount();
+        bytes_read += static_cast<size_t>(fin.gcount());
 
         fin.seekg( -line_incr, std::ios::cur);
         f_end -= line_incr;

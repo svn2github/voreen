@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -324,30 +324,6 @@ void Animation::setDuration(float duration) {
 
 void Animation::serialize(XmlSerializer& s) const {
     if (!isEmpty()) {
-        s.registerFactory(PropertyTimelineFactory::getInstance());
-        s.registerFactory(TemplatePropertyTimelineStateFactory::getInstance());
-        s.registerFactory(KeyValueFactory::getInstance());
-        s.registerFactory(ProcessorFactory::getInstance());
-
-        s.registerFactory(InterpolationFunctionFactory<int>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<float>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<bool>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::ivec2>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::ivec3>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::ivec4>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::vec2>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::vec3>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::vec4>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::mat2>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::mat3>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::mat4>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<tgt::Camera>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<ShaderSource>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<std::string>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<TransFunc*>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<VolumeHandle*>::getInstance());
-        s.registerFactory(InterpolationFunctionFactory<VolumeCollection*>::getInstance());
-
         s.serialize("processors", processors_, "Processor");
         s.serialize("undoSteps", undoSteps_);
         s.serialize("fps", fps_);
@@ -358,36 +334,41 @@ void Animation::serialize(XmlSerializer& s) const {
 }
 
 void Animation::deserialize(XmlDeserializer& s) {
-    s.registerFactory(PropertyTimelineFactory::getInstance());
-    s.registerFactory(TemplatePropertyTimelineStateFactory::getInstance());
-    s.registerFactory(KeyValueFactory::getInstance());
-    s.registerFactory(ProcessorFactory::getInstance());
-
-    s.registerFactory(InterpolationFunctionFactory<int>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<float>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<bool>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::ivec2>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::ivec3>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::ivec4>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::vec2>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::vec3>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::vec4>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::mat2>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::mat3>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::mat4>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<tgt::Camera>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<ShaderSource>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<std::string>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<TransFunc*>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<VolumeHandle*>::getInstance());
-    s.registerFactory(InterpolationFunctionFactory<VolumeCollection*>::getInstance());
-
     s.deserialize("processors", processors_, "Processor");
     s.deserialize("undoSteps", undoSteps_);
     s.deserialize("fps", fps_);
     s.deserialize("duration", duration_);
     s.deserialize("currentTime", currentTime_);
     s.deserialize("isRendering", isRendering_);
+}
+
+std::vector<SerializableFactory*> Animation::getSerializerFactories() {
+    std::vector<SerializableFactory*> result;
+
+    result.push_back(new PropertyTimelineFactory());
+    result.push_back(new TemplatePropertyTimelineStateFactory());
+    result.push_back(new KeyValueFactory());
+
+    result.push_back(new InterpolationFunctionFactory<int>());
+    result.push_back(new InterpolationFunctionFactory<float>());
+    result.push_back(new InterpolationFunctionFactory<bool>());
+    result.push_back(new InterpolationFunctionFactory<tgt::ivec2>());
+    result.push_back(new InterpolationFunctionFactory<tgt::ivec3>());
+    result.push_back(new InterpolationFunctionFactory<tgt::ivec4>());
+    result.push_back(new InterpolationFunctionFactory<tgt::vec2>());
+    result.push_back(new InterpolationFunctionFactory<tgt::vec3>());
+    result.push_back(new InterpolationFunctionFactory<tgt::vec4>());
+    result.push_back(new InterpolationFunctionFactory<tgt::mat2>());
+    result.push_back(new InterpolationFunctionFactory<tgt::mat3>());
+    result.push_back(new InterpolationFunctionFactory<tgt::mat4>());
+    result.push_back(new InterpolationFunctionFactory<tgt::Camera>());
+    result.push_back(new InterpolationFunctionFactory<ShaderSource>());
+    result.push_back(new InterpolationFunctionFactory<std::string>());
+    result.push_back(new InterpolationFunctionFactory<TransFunc*>());
+    result.push_back(new InterpolationFunctionFactory<VolumeHandle*>());
+    result.push_back(new InterpolationFunctionFactory<VolumeCollection*>());
+
+    return result;
 }
 
 } // namespace voreen

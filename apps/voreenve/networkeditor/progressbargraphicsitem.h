@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -60,12 +60,19 @@ public:
 
     void resize(const QPointF& center, qreal width, qreal height);
 
+    void setProgressTier(int tier);
+
 protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
     QRectF boundingRect_;
-
     QTime time_;
+
+    QColor backgroundColor1_;
+    QColor backgroundColor2_;
+    QColor upperForegroundColor1_;
+    QColor upperForegroundColor2_;
+    QColor lowerForegroundColor_;
 };
 
 } // namespace

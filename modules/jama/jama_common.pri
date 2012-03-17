@@ -1,0 +1,3 @@
+DEFINES += VRN_MODULE_JAMA
+
+INCLUDEPATH += "$${VRN_MODULE_DIR}/jama/ext/include"

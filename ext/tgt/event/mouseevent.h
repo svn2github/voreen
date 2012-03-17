@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,13 +25,12 @@
 #ifndef TGT_MOUSEEVENT_H
 #define TGT_MOUSEEVENT_H
 
-#include "tgt/config.h"
 #include "tgt/event/event.h"
 #include "tgt/vector.h"
 
 namespace tgt { 
 
-class MouseEvent : public Event {
+class TGT_API MouseEvent : public Event {
 public:
     enum MouseButtons {
         MOUSE_BUTTON_NONE =     0,

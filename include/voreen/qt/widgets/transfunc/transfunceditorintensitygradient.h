@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -164,11 +164,16 @@ private:
     QLayout* createMappingLayout();
 
     /**
-     * Creates the layout with all buttons.
+     * Creates the layout with all standard buttons.
      *
-     * @return the layout with all buttons
+     * @return the layout with all standard buttons
      */
     QLayout* createButtonLayout();
+
+    /**
+     * Creates the layout with all buttons for manipulation of primitives.
+     */
+    QLayout* createPrimitivesButtonLayout();
 
     /**
      * Creates the layout with transparency and fuzzines slider and control elements for the histogram.

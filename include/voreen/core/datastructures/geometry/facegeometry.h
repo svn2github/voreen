@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -68,7 +68,7 @@ namespace voreen {
  * @see VertexGeometry
  * @see MeshGeometry
  */
-class FaceGeometry : public Geometry {
+class VRN_CORE_API FaceGeometry : public Geometry {
 public:
     /**
      * Type of the vertex geometry list.
@@ -134,6 +134,13 @@ public:
     VertexGeometry& getVertex(size_t index);
 
     /**
+     * Sets the normal direction for this face used for rendering
+     *
+     * @param normal the normal direction for this face
+     */
+    void setFaceNormal(const tgt::vec3& normal);
+
+    /**
      * Removes all vertex geometries form this face geometry.
      */
     void clear();
@@ -179,10 +186,13 @@ public:
      */
     VertexGeometry& operator[](size_t index);
 
+    bool operator==(const FaceGeometry& rhs) const;
+    bool operator!=(const FaceGeometry& rhs) const;
+
     /**
      * @see Geometry::render
      */
-    virtual void render();
+    virtual void render() const;
 
     /**
      * Transforms the face geometry using the given transformation matrix.
@@ -216,11 +226,18 @@ public:
      */
     void clip(const tgt::vec4& clipplane, double epsilon = 1e-6);
 
+    virtual void serialize(XmlSerializer& s) const;
+
+    virtual void deserialize(XmlDeserializer& s);
+
 private:
     /**
      * Vertex geometry list.
      */
     VertexListType vertices_;
+
+    bool normalIsSet_;
+    tgt::vec3 normal_;
 };
 
 }    // namespace

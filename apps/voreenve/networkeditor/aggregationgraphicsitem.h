@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,7 +44,7 @@ typedef std::pair<const PropertyLink*, const PropertyLink*> ArrowLinkInformation
  * An AggregationGraphicsItem is the representation for a collection of \sa ProcessorGraphicsItems
  * and other AggregationGraphicsItems. They function as a single unit in the \sa NetworkEditor
  * and are treated like ProcessorGraphicsItems in the form of the shared superclass
- * \sa RootGraphicsItem.</br>
+ * \sa RootGraphicsItem.
  * In addition to the \sa Processors, this item stores all internal arrows (i.e. arrows leading
  * from one processor in this collection to another processors also in this collection. This
  * holds true for both \sa PortArrowGraphicsItems and \sa LinkArrowGraphicsItems. These lists
@@ -58,7 +58,7 @@ public:
      * This construction will create a new AggregationGraphicsItem containing a number of other
      * \sa RootGraphicsItems in a given \sa NetworkEditor. The name of the Aggregation will be
      * set to <code>Aggregation</code> and the ports of the new Aggregation is the sum of all
-     * ports of all contained processors.</br>
+     * ports of all contained processors.
      * The initial position will be set to the arithmetic mean value of all RootGraphicsItems
      * in the given list.
      * \param items The list of RootGraphicsItems which will be combined in this aggregation

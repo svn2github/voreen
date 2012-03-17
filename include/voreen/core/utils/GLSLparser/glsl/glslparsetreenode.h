@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,13 +41,18 @@ namespace glslparser {
 struct GLSLNodeTypes {
     enum {
         NODE_GLSLNODE,
+            NODE_TRANSLATION,
+            NODE_EXTERNAL_DECLARATION,
+                NODE_FUNCTION_DEFINITION,
+                NODE_DECLARATION,
+                    NODE_DECLARATION_LIST,
+                    NODE_STRUCT_DECLARATION,
+                    NODE_FIELD_DECLARATION,
+                    NODE_FUNCTION_DECLARATION,
+            NODE_CONDITION,
             NODE_VARIABLE,
             NODE_PARAMETER,
-            NODE_DECLARATION,
-                NODE_DECLARATION_LIST,
-                NODE_STRUCT_DECLARATION,
-                NODE_FIELD_DECLARATION,
-                NODE_FUNCTION_DECLARATION,
+            NODE_FUNCTION_PROTOTYPE,
             NODE_QUALIFIER,
                 NODE_STORAGE_QUALIFIER,
                 NODE_PRECISION_QUALIFIER,
@@ -58,17 +63,27 @@ struct GLSLNodeTypes {
             NODE_TYPE_SPECIFIER,
             NODE_STRUCT_SPECIFIER,
             NODE_EXPRESSION,
-                NODE_ARRAY_OPERATION,
                 NODE_ASSIGNMENT_EXPRESSION,
                 NODE_BINARY_EXPRESSION,
                 NODE_CONDITIONAL_EXPRESSION,
                 NODE_EXPRESSION_LIST,
-                NODE_FIELD_SELECTION,
                 NODE_FUNCTION_CALL,
-                NODE_PARENTHESIS_EXPRESSION,
-                NODE_POSTFIX_OPERATION,
+                NODE_POSTFIX_EXPRESSION,
+                NODE_PRIMARY_EXPRESSION,
                 NODE_UNARY_EXPRESSION,
-            NODE_STATEMENT
+            NODE_STATEMENT,
+            NODE_STATEMENT_LIST,
+                NODE_SIMPLE_STATEMENT,
+                    NODE_CASE_LABEL,
+                    NODE_DECLARATION_STATEMENT,
+                    NODE_DO_WHILE_STATEMENT,
+                    NODE_EXPRESSION_STATEMENT,
+                    NODE_FOR_STATEMENT,
+                    NODE_JUMP_STATEMENT,
+                    NODE_SELECTION_STATEMENT,
+                    NODE_SWITCH_STATEMENT,
+                    NODE_WHILE_STATEMENT,
+                NODE_COMPOUND_STATEMENT
     };
 };
 
@@ -80,6 +95,8 @@ public:
         : ParseTreeNode(symbolID)
     {
     }
+
+    virtual int getNodeType() const { return GLSLNodeTypes::NODE_GLSLNODE; }
 };
 
 }   // namespace glslparser

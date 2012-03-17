@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -45,7 +45,7 @@ VolumeCollection::~VolumeCollection()     {
     clear();
 }
 
-void VolumeCollection::add(VolumeHandle* volumeHandle) {
+void VolumeCollection::add(VolumeHandleBase* volumeHandle) {
 
     tgtAssert(volumeHandle, "Null pointer as VolumeHandle passed");
     if (!contains(volumeHandle)) {
@@ -63,9 +63,8 @@ void VolumeCollection::add(const VolumeCollection* volumeCollection) {
     }
 }
 
-void VolumeCollection::remove(const VolumeHandle* volumeHandle){
-
-    std::vector<VolumeHandle*>::iterator handleIter = find(volumeHandle);
+void VolumeCollection::remove(const VolumeHandleBase* volumeHandle){
+    std::vector<VolumeHandleBase*>::iterator handleIter = find(volumeHandle);
     if (handleIter != volumeHandles_.end()) {
         volumeHandles_.erase(handleIter);
         notifyVolumeRemoved(volumeHandle);
@@ -79,24 +78,24 @@ void VolumeCollection::remove(const VolumeCollection* volumeCollection) {
     }
 }
 
-std::vector<VolumeHandle*>::iterator VolumeCollection::find(const VolumeHandle* volumeHandle) {
+std::vector<VolumeHandleBase*>::iterator VolumeCollection::find(const VolumeHandleBase* volumeHandle) {
     return std::find(volumeHandles_.begin(), volumeHandles_.end(), volumeHandle);
 }
 
-std::vector<VolumeHandle*>::const_iterator VolumeCollection::find(const VolumeHandle* volumeHandle) const {
+std::vector<VolumeHandleBase*>::const_iterator VolumeCollection::find(const VolumeHandleBase* volumeHandle) const {
     return std::find(volumeHandles_.begin(), volumeHandles_.end(), volumeHandle);
 }
 
-bool VolumeCollection::contains(const VolumeHandle* volumeHandle) const {
+bool VolumeCollection::contains(const VolumeHandleBase* volumeHandle) const {
     return (find(volumeHandle) != volumeHandles_.end());
 }
 
-VolumeHandle* VolumeCollection::at(size_t i) const {
+VolumeHandleBase* VolumeCollection::at(size_t i) const {
     tgtAssert(i < volumeHandles_.size(), "Invalid index");
     return volumeHandles_.at(i);
 }
 
-VolumeHandle* VolumeCollection::first() const {
+VolumeHandleBase* VolumeCollection::first() const {
     return (!empty() ? volumeHandles_.front() : 0);
 }
 
@@ -136,11 +135,42 @@ VolumeCollection* VolumeCollection::selectTimestep(float timestep) const {
 voreen::VolumeCollection* VolumeCollection::selectOrigin(const VolumeOrigin& origin) const {
     VolumeCollection* collection = new VolumeCollection();
     for (size_t i=0; i<volumeHandles_.size(); ++i) {
-        if (volumeHandles_[i]->getOrigin() == origin)
+        VolumeHandle* vh = dynamic_cast<VolumeHandle*>(volumeHandles_[i]);
+        if (vh && vh->getOrigin() == origin)
             collection->add(volumeHandles_[i]);
     }
     return collection;
 }
+
+voreen::VolumeCollection* VolumeCollection::selectOriginTimestep(const VolumeOrigin& origin, float timestep) const {
+    VolumeCollection* collection = new VolumeCollection();
+    for (size_t i=0; i<volumeHandles_.size(); ++i) {
+        VolumeHandle* vh = dynamic_cast<VolumeHandle*>(volumeHandles_[i]);
+        if (vh && vh->getOrigin() == origin && vh->getTimestep() == timestep)
+            collection->add(volumeHandles_[i]);
+    }
+    return collection;
+}
+
+VolumeCollection* VolumeCollection::subCollection(size_t start, size_t end) const {
+    VolumeCollection* subCollection = new VolumeCollection();
+    tgtAssert(start <= end, "invalid indices");
+    tgtAssert(start < volumeHandles_.size(), "invalid start index");
+    tgtAssert(end < volumeHandles_.size(), "invalid end index");
+    for (size_t index = start; index <= end; index++)
+        subCollection->add(volumeHandles_.at(index));
+    return subCollection;
+}
+
+VolumeCollection* VolumeCollection::subCollection(const std::vector<size_t>& indices) const {
+    VolumeCollection* subCollection = new VolumeCollection();
+    for (size_t i=0; i<indices.size(); i++) {
+        tgtAssert(indices.at(i) < volumeHandles_.size(), "invalid index");
+        subCollection->add(volumeHandles_.at(indices.at(i)));
+    }
+    return subCollection;
+}
+
 
 size_t VolumeCollection::size() const {
     return volumeHandles_.size();
@@ -150,46 +180,47 @@ bool VolumeCollection::empty() const {
     return (size() == 0);
 }
 
-void VolumeCollection::notifyVolumeAdded(const VolumeHandle* handle) {
-
+void VolumeCollection::notifyVolumeAdded(const VolumeHandleBase* handle) {
     const vector<VolumeCollectionObserver*> observers = getObservers();
     for (size_t i=0; i<observers.size(); ++i)
         observers[i]->volumeAdded(this, handle);
 
 }
 
-void VolumeCollection::notifyVolumeRemoved(const VolumeHandle* handle) {
-
+void VolumeCollection::notifyVolumeRemoved(const VolumeHandleBase* handle) {
     const vector<VolumeCollectionObserver*> observers = getObservers();
-    for (size_t i=0; i<observers.size(); ++i)
+    for (size_t i=0; i<observers.size(); ++i) 
         observers[i]->volumeRemoved(this, handle);
 }
 
-void VolumeCollection::notifyVolumeChanged(const VolumeHandle* handle) {
-
+void VolumeCollection::notifyVolumeChanged(const VolumeHandleBase* handle) {
     const vector<VolumeCollectionObserver*> observers = getObservers();
     for (size_t i=0; i<observers.size(); ++i)
         observers[i]->volumeChanged(this, handle);
 }
 
 void VolumeCollection::serialize(XmlSerializer& s) const {
-    s.serialize("VolumeHandles", volumeHandles_, "VolumeHandle");
+    std::vector<VolumeHandle*> vhs;
+    for (size_t i=0; i<volumeHandles_.size(); ++i) {
+        if (dynamic_cast<VolumeHandle*>(volumeHandles_[i]))
+            vhs.push_back(static_cast<VolumeHandle*>(volumeHandles_[i]));
+    }
+    s.serialize("VolumeHandles", vhs, "VolumeHandle");
 }
 
 void VolumeCollection::deserialize(XmlDeserializer& s) {
-
     std::vector<VolumeHandle*> handleList;
     s.deserialize("VolumeHandles", handleList, "VolumeHandle");
 
     // add volume handles of loaded volumes...
     std::vector<VolumeHandle*> deleteList;
     for (std::vector<VolumeHandle*>::iterator it = handleList.begin(); it != handleList.end(); ++it)
-        if ((*it) && (*it)->getVolume())
+        if ((*it) && static_cast<VolumeHandle*>((*it))->getNumRepresentations() > 0)
             add(*it);
         else
             deleteList.push_back(*it);
 
-    // remove volume handles that was not able to load its volume...
+    // remove volume handles that were not able to load their volume...
     for (std::vector<VolumeHandle*>::iterator it = deleteList.begin(); it != deleteList.end(); ++it) {
         //remove(*it);
         s.freePointer(*it);
@@ -198,14 +229,14 @@ void VolumeCollection::deserialize(XmlDeserializer& s) {
 }
 
 // implementation of VolumeHandleObserver interface
-void VolumeCollection::volumeChange(const VolumeHandle* handle) {
+void VolumeCollection::volumeChange(const VolumeHandleBase* handle) {
     if (contains(handle))
         notifyVolumeChanged(handle);
 
 }
 
 // implementation of VolumeHandleObserver interface
-void VolumeCollection::volumeHandleDelete(const VolumeHandle* handle) {
+void VolumeCollection::volumeHandleDelete(const VolumeHandleBase* handle) {
     if (contains(handle))
         remove(handle);
 }

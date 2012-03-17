@@ -1,5 +1,79 @@
 Voreen Changelog
-----------------
+---------------------
+
+2012-03-17: Voreen 3.0 (r41, internal r15335)
+------------------------------------------------------
+
+   o Saving and restoring of network states (i.e. sets of property values).
+   o Performance records of processors in a workspace.
+   o New Volume API
+   o Bricking of large volume data sets simplified using node loops for rendering/volume processing.
+   o Caching (Volume, Geometry, ...)
+   o Processor description now searchable in the processor list widget.
+   o Plotting module can now also generate SVG and Latex output.
+
+   * Framework/API changes:
+     o Modules are now organized within the subdirectory "modules", which
+       contains both sources and headers.
+     o ZIP, Image I/O, font rendering, and FFmpeg support is now provided by 
+       the modules "zip", "devil", "fontrendering", and "ffmpeg", respectively.
+     o Added OpenCL and OpenMP module.
+     o Qt modules
+     o Replaced BoxObject by more flexible and better tested Variant class
+     o RenderProcessor::generateHeader() may be called during processor
+       initialization.
+     o Processor::initialize/deinitialize() throw tgt::Exception instead of
+       VoreenException, ShaderManager throws exceptions on loading failures
+       => Shader error handling in Processor::initialize no longer necessary.
+     o Lightwidget is a regular vec4 property with different view.
+     o Added Time-to-finish methods usable for every processor.
+     o Removed applyTrafoMatrix parameter from matrix conversions.
+     o Entry-Exit-Point jittering texture is replaced by a permutation polynomial.
+
+   * Features:
+     o Optional dynamic linking for Windows.
+     o Visual Studio 2010 support
+     o Windows 64 bit support
+     o Startup widget.
+     o Workflow management.
+     o Improved module documentation with dedicated editor widget.
+     o Geometry can now be stored and loaded using the GeometrySave and GeometrySource processors.
+     o Tricubic filtering is supported by Volume class, VolumeOperatorResample,
+       and VolumeResample processor.
+     o Axis aligned clipping now possible for slice based renderers.
+     o Added conditions for Ports.
+     o NetworkEditor shows which processors have widgets.
+     o Added annotations to networks as a new layer.
+     o Light source position can now be attached to camera.
+
+   * Bug fixes:
+     o LightWidget is updated relative to camera position if the light source
+       position is not attached to it.
+     o Artifacts using slice-based renderers.
+     o CPURaycaster crash.
+     o IntensityMeasure not rendering text overlay.
+     o PropertyLinkDialog sometimes not appearing.
+     o Quadview mouse event propagation in maximized mode
+
+   * Minor changes: 
+     o Removed deprecated LightProperty and ColorProperty (use instead FloatVec4Property with 
+       view Property::LIGHT_POSITION or Property::COLOR, respectively).
+     o XmlSerializer retrieves SerializableFactories from modules.
+     o Added Visual Studio linker flag "/LARGEADDRESSAWARE" to config-default.txt,
+       enabling Win32 builds to use more than 2GB of RAM.
+     o Added hotkeys in NetworkEditor to switch between layers.
+     o Processor list widget supports sub-categories.
+     o Added WhatsThis information for widgets in VoreenVE
+     o Updated GLEW to 1.7.0
+     o Settings dialog
+     o Added text manipulating support and improved rendering
+     o Last used volume path for volume loading is persistent.
+     o New Snapshot dialog which stores the last used snapshot path
+     o Renamed VolumeSubSet processor to VolumeCrop
+     o Merged Dilation and Erosion processors to ImageMorphology processor
+     o VolumeResample displays expected data size of output volume
+     o VolumeCombine supports selection of filtering mode.
+     o VolumeMorphology uses progress bar
 
 2010-11-04: Voreen 2.6.1 (r39, internal r12656)
 -----------------------------------------------
@@ -15,12 +89,12 @@ Voreen Changelog
      o SingleVolumeRaycaster, MultiVolumeRaycaster, SliceViewer provide properties
        for specification of volume texture filtering modes.
      o SEGY volume reader (module 'segy'), written by Aqeel Al-Naser.  
-     
+
    * Bug fixes:
      o Crash of command line parser on incorrect number of arguments
      o Crash when opening context menu of processor info widget in VoreenVE     
      o Qt warning "redefined signal" in transfer function editor
-         
+
    * Minor changes: 
      o Qt 4.7 support
      o Added Vis10 tutorial slides, accessible from VoreenVE help menu
@@ -33,7 +107,7 @@ Voreen Changelog
      o Added command line option for VoreenVE session reset (window settings, paths)
      o Added sample workspace for "DynamicGLSLRaycaster"
 
-   
+
 2010-10-18: Voreen 2.6 (r38, internal r12585)
 ----------------------------------------------
 
@@ -43,7 +117,7 @@ Voreen Changelog
        now use "FragData0" instead of "gl_FragColor" for fragment shader output.
      o The shader member has been removed from the VolumeRaycaster base class.
        Shader loading and disposing is now completely up to the concrete subclasses.
-   
+
    * Features:
      o We have added a plotting toolbox including processors for line, bar, 
        surface and 2D/3D scatter plots as well as function fitting. 
@@ -57,7 +131,7 @@ Voreen Changelog
        that dynamically adds/removes ports and properties according to the uniforms
        declared in its fragment shader.
      o Camera vectors are accessible through the camera property widget.
-          
+
    * Bug fixes:
      o Generation of module registration file with spaces in path.
      o "QGLWidget::makecurrent(): GetDC() failed" errors with multiple canvases 
@@ -65,7 +139,7 @@ Voreen Changelog
      o Set environment variable "XLIB_SKIP_ARGB_VISUALS=1" on Linux to work around 
        Qt bug that breaks Voreen tool windows.
      o Instability of 2D transfer functions during TF modifications (flickering).
-      
+
    * Minor changes:
      o Default modules are included by "VRN_MODULES += default" instead of 
        "VRN_MODULES += most" in config.txt.
@@ -79,8 +153,8 @@ Voreen Changelog
      o Module description is shown in processor info box.
      o Segmentation masking has been removed from VolumeRaycaster base class.
      o Removed Python linking
-     
-   
+
+
 2010-09-16: Voreen 2.55 (r37, internal r12039)
 ----------------------------------------------
 
@@ -124,7 +198,7 @@ Voreen Changelog
        - GeometryRenderer supports texturing and lighting (merged with TexturedGeometryRenderer).
        - VolumeMirrorZ supports mirroring along each axis (renamed to VolumeMirror).
      o The Windows binary now ships with the HPMC module.
-     
+
    * Documentation:
      o Added animation manual, accessible via VoreenVE help menu.
 
@@ -153,7 +227,7 @@ Voreen Changelog
      o Volume clone operations also copy transformation matrix.
      o Refresh of multiple volumes in the volume container widget.
      o Serialization of tif volumes.
-          
+
 
 2010-07-14: Voreen 2.5 (r35, internal r11040)
 ---------------------------------------------
@@ -184,7 +258,7 @@ Voreen Changelog
      o Exploded views of volume data exploiting the loop functionality, see
        "explodedviews.vws".
      o Support for analyze and nifti file formats.
-  
+
    * Minor feature improvements:
      o RGBRaycaster using a hue-based transfer function
      o New volume processors
@@ -505,7 +579,7 @@ Voreen Changelog
 
 2009-02-13: Snapshot r13 (voreen-5688)
 --------------------------------------
-  
+
     * Redesigned GUI for VoreenVE, using multiple tool windows instead of dock
       widgets, work in progress
  
@@ -541,7 +615,7 @@ Voreen Changelog
       o benchmarking script fps.py can be started with parameter "--benchmark"
         in VoreenDev
       o new script for camera animation 
- 
+
     * Various bugfixes and cleanups:
       o allow spaces in path names for project directory
       o VoreenDev now uses the SingleVolumeRaycaster by default
@@ -561,6 +635,7 @@ Voreen Changelog
 
 2008-11-14: Snapshot r3 (voreen-5112)
 -------------------------------------
+
     * New SingleVolumeRaycaster, a modular default renderer:
       o compositing modes: DVR, MIP, isosurface, first-hit point, first-hit normal
       o shading: none, Phong (several variants), toon shading
@@ -609,4 +684,5 @@ Voreen Changelog
 
 2008-09-26: Snapshot r2 (voreen-4687)
 -------------------------------------
+
     * Initial public snapshot release

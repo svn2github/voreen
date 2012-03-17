@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,6 +31,7 @@
 #include "voreen/core/properties/shaderproperty.h"
 #include "voreen/core/properties/transfuncproperty.h"
 #include "voreen/core/properties/volumecollectionproperty.h"
+#include "voreen/core/animation/interpolation/camerainterpolationfunctions.h"
 #include "tgt/camera.h"
 
 using tgt::Camera;
@@ -804,15 +805,15 @@ const PropertyKeyValue<Camera>* CameraPropertyTimelineState::newKeyValue(float t
 
     std::map<float,PropertyKeyValue<Camera>*>::iterator it;
     it = values_.find(time);
-    tgt::vec3 ownPosition = value.getPosition();
+    //tgt::vec3 ownPosition = value.getPosition();
     // if new value is the first value:
     if (it == values_.begin()) {
         // only do something if there are multiple values
         it++;
         if (it != values_.end()) {
-            InterpolationFunction<Camera>* func = new InterpolationFunction<Camera>();
+            InterpolationFunction<Camera>* func = new CameraSphericalLinearInterpolationFunction();
             it->second->setForegoingInterpolationFunction(func);
-            tgt::vec3 followingPosition = (*it).second->getValue().getPosition();
+            //tgt::vec3 followingPosition = (*it).second->getValue().getPosition();
             it--;
             it->second->setFollowingInterpolationFunction(func);
             // (*it).second->getValue()->setDirection(followingPosition - ownPosition);
@@ -823,7 +824,7 @@ const PropertyKeyValue<Camera>* CameraPropertyTimelineState::newKeyValue(float t
         // if the new value is the last one
         if (it == values_.end()) {
             it--;
-            InterpolationFunction<Camera>* func = new InterpolationFunction<Camera>();
+            InterpolationFunction<Camera>* func = new CameraSphericalLinearInterpolationFunction();
             it->second->setForegoingInterpolationFunction(func);
             it--;
             it->second->setFollowingInterpolationFunction(func);
@@ -831,7 +832,7 @@ const PropertyKeyValue<Camera>* CameraPropertyTimelineState::newKeyValue(float t
             it++;
             if (values_.size() >= 3) {
                 // set direction of predecessor
-                tgt::vec3 followingPosition = it->second->getValue().getPosition();
+                //tgt::vec3 followingPosition = it->second->getValue().getPosition();
                 it--;
                 it--;
                 foregoingPosition = it->second->getValue().getPosition();
@@ -841,18 +842,18 @@ const PropertyKeyValue<Camera>* CameraPropertyTimelineState::newKeyValue(float t
         }
         else {
             // if the new value is in between
-            InterpolationFunction<Camera>* func1 = new InterpolationFunction<Camera>();
-            InterpolationFunction<Camera>* func2 = new InterpolationFunction<Camera>();
+            InterpolationFunction<Camera>* func1 = new CameraSphericalLinearInterpolationFunction();
+            InterpolationFunction<Camera>* func2 = new CameraSphericalLinearInterpolationFunction();
 
             it->second->setForegoingInterpolationFunction(func2);
-            tgt::vec3 followingPosition = it->second->getValue().getPosition();
+            //tgt::vec3 followingPosition = it->second->getValue().getPosition();
             it--;
             it->second->setFollowingInterpolationFunction(func2);
             it->second->setForegoingInterpolationFunction(func1);
             it--;
             delete it->second->getFollowingInterpolationFunction();
             it->second->setFollowingInterpolationFunction(func1);
-            tgt::vec3 foregoingPosition = it->second->getValue().getPosition();
+            //tgt::vec3 foregoingPosition = it->second->getValue().getPosition();
             it++;
         }
     }

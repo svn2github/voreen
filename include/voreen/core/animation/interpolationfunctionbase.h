@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,13 +32,14 @@
 #include <string>
 #include "tgt/tgt_gl.h"
 #include "tgt/vector.h"
+#include "voreen/core/voreencoredefine.h"
 
 namespace voreen {
 
 /**
  * This class is an non-templated interface for interpolation functions.
  */
-class InterpolationFunctionBase {
+class VRN_CORE_API  InterpolationFunctionBase {
 public:
     virtual ~InterpolationFunctionBase() {}
 

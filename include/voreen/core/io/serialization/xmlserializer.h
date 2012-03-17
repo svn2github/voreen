@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -49,12 +49,8 @@
 #include "voreen/core/io/serialization/xmlserializationconstants.h"
 #include "voreen/core/io/serialization/serializable.h"
 #include "voreen/core/io/serialization/serializablefactory.h"
-#include "voreen/core/plotting/plotcell.h"
 
 namespace voreen {
-
-// forward declaration
-struct PlotSelectionEntry;
 
 /**
  * @c XmlSerializer is responsible for serializing memory data to XML documents.
@@ -105,7 +101,7 @@ struct PlotSelectionEntry;
  * @see XmlSerializerBase
  * @see Serializable
  */
-class XmlSerializer : public XmlSerializerBase
+class VRN_CORE_API XmlSerializer : public XmlSerializerBase
 {
 public:
     /**
@@ -130,6 +126,17 @@ public:
      * Returns the absolute path to the XML file the document will be written to.
      */
     std::string getDocumentPath() const;
+
+    /**
+     * Serialize the given @c key/data pair if data != defaultValue.
+     */
+    template<typename T>
+    void optionalSerialize(const std::string& key, const T& data, const T& defaultValue) 
+        throw (SerializationException) 
+    {
+        if(data != defaultValue)
+            serialize(key, data);
+    } 
 
     /**
      * Serializes the given @c key/data pair.
@@ -188,7 +195,7 @@ public:
      * @throws XmlSerializationAttributeNamingException
      *     if primitive data is serialized as XML attributes and key is reserved or not unique
      */
-    void serialize(const std::string& key, const signed short& data)
+    void serialize(const std::string& key, const short& data)
         throw (SerializationException);
 
     /**
@@ -200,7 +207,7 @@ public:
      * @throws XmlSerializationAttributeNamingException
      *     if primitive data is serialized as XML attributes and key is reserved or not unique
      */
-    void serialize(const std::string& key, const unsigned short& data)
+    void serialize(const std::string& key, const int& data)
         throw (SerializationException);
 
     /**
@@ -212,7 +219,7 @@ public:
      * @throws XmlSerializationAttributeNamingException
      *     if primitive data is serialized as XML attributes and key is reserved or not unique
      */
-    void serialize(const std::string& key, const signed int& data)
+    void serialize(const std::string& key, const long& data)
         throw (SerializationException);
 
     /**
@@ -224,31 +231,7 @@ public:
      * @throws XmlSerializationAttributeNamingException
      *     if primitive data is serialized as XML attributes and key is reserved or not unique
      */
-    void serialize(const std::string& key, const unsigned int& data)
-        throw (SerializationException);
-
-    /**
-     * Serializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data the data
-     *
-     * @throws XmlSerializationAttributeNamingException
-     *     if primitive data is serialized as XML attributes and key is reserved or not unique
-     */
-    void serialize(const std::string& key, const signed long& data)
-        throw (SerializationException);
-
-    /**
-     * Serializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data the data
-     *
-     * @throws XmlSerializationAttributeNamingException
-     *     if primitive data is serialized as XML attributes and key is reserved or not unique
-     */
-    void serialize(const std::string& key, const unsigned long& data)
+    void serialize(const std::string& key, const size_t& data)
         throw (SerializationException);
 
     /**
@@ -450,24 +433,6 @@ public:
      * @param data the data
      */
     void serialize(const std::string& key, const tgt::Matrix4d& data)
-        throw (SerializationException);
-
-    /**
-     * Serializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data the data
-     */
-    void serialize(const std::string& key, const PlotCellValue& data)
-        throw (SerializationException);
-
-    /**
-     * Serializes the given @c key/data pair.
-     *
-     * @param key the XML node key
-     * @param data the data
-     */
-    void serialize(const std::string& key, const PlotSelectionEntry& data)
         throw (SerializationException);
 
     /**
@@ -1127,8 +1092,13 @@ template<>
 inline void XmlSerializer::serializeSimpleTypes(const std::string& key, const std::string& data)
     throw (SerializationException)
 {
+    // check, if we have to serialize the string as CDATA
+    bool requireCDATA = false;
+    requireCDATA |= data.find("\n") != std::string::npos;
+    requireCDATA |= data.find("\r") != std::string::npos;
+    
     // Serialize as XML attribute wanted and possible?
-    if (useAttributes_ && data.find("\n") == std::string::npos && data.find("\r") == std::string::npos) {
+    if (useAttributes_ && !requireCDATA) {
         checkAttributeKey(key);
         node_->ToElement()->SetAttribute(key, data);
         return;
@@ -1137,7 +1107,7 @@ inline void XmlSerializer::serializeSimpleTypes(const std::string& key, const st
     // Serialize as XML node...
     TiXmlElement* newNode = new TiXmlElement(key);
     node_->LinkEndChild(newNode);
-    if (data.find("\n") == std::string::npos && data.find("\r") == std::string::npos) {
+    if (!requireCDATA) {
         // ATTENTION: No special handling of the given string is needed that is why this block
         //            has to correspond with the not specialized serializeSimpleTypes method.
         newNode->SetAttribute(XmlSerializationConstants::VALUEATTRIBUTE, data);

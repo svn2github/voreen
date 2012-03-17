@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,70 +29,76 @@
 #ifndef VRN_VOLUMEVIEW_H
 #define VRN_VOLUMEVIEW_H
 
-#include "voreen/core/datastructures/volume/volume.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
 #include "voreen/core/datastructures/volume/volumecontainer.h"
+#include "voreen/qt/voreenqtdefine.h"
 
 #include <QPixmap>
 
 namespace voreen {
 
-class VolumeViewHelper{
+class VRN_QT_API VolumeViewHelper {
 public:
     /**
      * Returns a Preview with the height of the given int
      * @param the height of the preview
      */
-    static QPixmap generatePreview(Volume*, int);
+    static QPixmap generatePreview(const VolumeHandleBase*, int);
 
     /**
      * Returns a quadratic Preview with the height of the given int and white border
      * @param the height of the preview
      * @param the size of the border
      */
-    static QPixmap generateBorderedPreview(Volume*, int /*height*/, int /* border*/);
+    static QPixmap generateBorderedPreview(const VolumeHandleBase*, int /*height*/, int /* border*/);
 
     /**
      * Returns a formatted std::string wich contains Volume Information
      */
-    static std::string volumeInfoString(VolumeHandle*);
+    static std::string volumeInfoString(const VolumeHandleBase*);
 
     /**
      * Returns the Volumetype
      */
-    static std::string getVolumeType(Volume*);
+    static std::string getVolumeType(const Volume*);
 
     /**
      * Returns the Volumename (incl. path)
      */
-    static std::string getVolumeName(VolumeHandle*);
+    static std::string getVolumeName(const VolumeHandleBase*);
 
     /**
      * Returns the Volumename (excl. path)
      */
-    static std::string getStrippedVolumeName(VolumeHandle*);
+    static std::string getStrippedVolumeName(const VolumeHandleBase*);
 
     /**
      * Returns the Volumepath
      */
-    static std::string getVolumePath(VolumeHandle*);
+    static std::string getVolumePath(const VolumeHandleBase*);
+
+    /**
+     * Returns the Timestep
+     */
+    static std::string getVolumeTimestep(const VolumeHandleBase*);
 
     /**
      * Returns the dimension
      */
-    static std::string getVolumeDimension(Volume*);
+    static std::string getVolumeDimension(const VolumeHandleBase*);
 
     /**
      * Returns the spacing
      */
-    static std::string getVolumeSpacing(Volume*);
+    static std::string getVolumeSpacing(const VolumeHandleBase*);
 
     /**
      * Returns a string desribing the amount of memory
      * that is actually occupied by the volume.
      */
-    static std::string getVolumeMemorySize(Volume*);
+    static std::string getVolumeMemorySize(const Volume*);
 
-    static long getVolumeMemorySizeByte(Volume*);
+    static size_t getVolumeMemorySizeByte(const Volume*);
 
 };
 

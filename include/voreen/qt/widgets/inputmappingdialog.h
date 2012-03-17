@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_INPUTMAPPINGDIALOG_H
 
 #include "voreen/core/network/processornetworkobserver.h"
+#include "voreen/qt/voreenqtdefine.h"
 
 #include <QWidget>
 #include <QScrollArea>
@@ -48,7 +49,7 @@ class EventPropertyWidget;
 class ProcessorNetwork;
 class Processor;
 
-class InputMappingDialog : public QWidget, public ProcessorNetworkObserver {
+class VRN_QT_API InputMappingDialog : public QWidget, public ProcessorNetworkObserver {
 Q_OBJECT
 public:
     InputMappingDialog(QWidget* parent = 0, ProcessorNetwork* network = 0);

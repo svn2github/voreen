@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,43 +34,47 @@
 #include <QtGui>
 #include <QSplashScreen>
 
+#include <vector>
+
 namespace tgt {
     class QtCanvas;
 }
 
+class QBoxLayout;
+
 namespace voreen {
 
-class ConsolePlugin;
-class NetworkEvaluator;
-class PropertyListWidget;
-class NetworkEditor;
-class ProcessorNetwork;
-class ProcessorListWidget;
-class VolumeContainer;
-class VolumeContainerWidget;
 class VoreenToolWindow;
-class VoreenToolDockWindow;
-class InputMappingDialog;
-class RenderTargetViewer;
-class AnimationEditor;
-#ifdef VRN_MODULE_PYTHON
-class PythonEditor;
-#endif
+class VoreenVEPlugin;
 
+class AnimationEditor;
+class ConsolePlugin;
+class InputMappingDialog;
+class PerformanceRecordWidget;
+class ProcessorListWidget;
+class PropertyListWidget;
+class PropertyStateWidget;
+class RenderTargetViewer;
+class SettingsDialog;
+class SnapshotWidget;
+class StartupScreen;
+class VolumeContainerWidget;
 
 //---------------------------------------------------------------------------
 
-class VoreenSplashScreen : public QSplashScreen {
+class VoreenSplashScreen : public QWidget {
+Q_OBJECT
 public:
     VoreenSplashScreen();
-    ~VoreenSplashScreen();
 
-    void drawContents(QPainter* painter);
     void showMessage(const QString& message);
+    QPoint getPixmapPosition() const;
 
 protected:
-    QPixmap* pixmap_;
-    QString message_;
+    QBoxLayout* layout_;
+    QLabel* pixmap_;
+    QLabel* version_;
+    QLabel* message_;
 };
 
 //---------------------------------------------------------------------------
@@ -98,11 +102,11 @@ public:
         MODE_DEVELOPMENT
     };
 
-    VoreenMainWindow(const std::string& workspace = "", const std::string& dataset = "", bool resetSettings = false);
+    VoreenMainWindow(const std::string& workspace = "", bool resetSettings = false);
     ~VoreenMainWindow();
 
-    void init(VoreenSplashScreen* splash = 0);
-    void deinit();
+    void initialize(VoreenSplashScreen* splash = 0, bool showStartup = false);
+    void deinitialize();
 
 signals:
     void closeMainWindow();
@@ -124,22 +128,19 @@ public slots:
     void openWorkspace(const QString& filename);
     bool saveWorkspace(const QString& filename = "");
     bool saveWorkspaceAs();
+    bool saveCopyAs();
 
     // dataset
     void openDataset();
-    void openRawDataset();
     void openRecentFile();
-
-    void buttonAddDICOMClicked();
 
     // action menu
     void adaptWidgetsToNetwork();
     void rebuildShaders();
     void runScript(const QString& filename);
 
-    // option menu
-    void setLoadLastWorkspace();
-    void setReuseTargets();
+    // options menu
+    void optionsSettings();
 
     // help menu
     void helpFirstSteps();
@@ -151,14 +152,10 @@ public slots:
     // further slots
     void guiModeChanged();
 
-    // deletes the session QSettings
-    void resetSettings();
-
 protected:
     void changeEvent(QEvent* event);
 
 protected slots:
-    void snapshotActionTriggered(bool checked);
 
     /// Adjust the canvas widgets to the currently active gui mode.
     void adjustCanvasWidgets(GuiMode guiMode);
@@ -169,37 +166,42 @@ protected slots:
     /// Updates the window after network modifications
     void updateWindowTitle();
 
+    void showStartupScreen();
+
 private:
     //
     // GUI setup
     //
-
     void createMenus();
     void createToolBars();
-
-    /**
-     * Adds an entry to the "Tools" menu and toolbar for a non-dockable tool window.
-     *
-     * @param name object name used for serialization of position and size
-     * @return the newly created window
-     */
-    VoreenToolWindow* addToolWindow(QAction* action, QWidget* widget, const QString& name = "", bool basic = true);
+    
+    /// Create all tool windows. Has to be called after tgt::initGL() and initCanvas().
+    void createToolWindows();
+    
+    /// Wraps each VoreenVEPlugin with a tool window and adds it to the main window.
+    void addVEPlugins(); 
 
     /**
      * Adds an entry to the "Tools" menu and toolbar for a dockable tool window.
      *
      * @param name object name used for serialization of position and size
+     * @param dockArea the initial dock area the window should be added to.
+     *  Use Qt::NoDockWidgetArea to let the tool window initially float.
+     * @param allowedAreas The dock areas the window can be dragged into by the user.
+     *  Use Qt::NoDockWidgetArea for a non-dockable tool window.
      * @return the newly created window
      */
-    VoreenToolWindow* addToolDockWindow(QAction* action, QWidget* widget, const QString& name = "",
-                                        Qt::DockWidgetArea dockarea = Qt::LeftDockWidgetArea,
+    VoreenToolWindow* addToolWindow(QAction* action, QWidget* widget, const QString& name = "",
+                                        Qt::DockWidgetArea dockArea = Qt::LeftDockWidgetArea,
                                         Qt::DockWidgetAreas allowedAreas = Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea ,
                                         bool basic = true);
 
     /**
-     * Create all tool windows. Has to be called after tgt::initGL() and initCanvas().
+     * Returns the tool window that encloses the passed widget.
      */
-    void createToolWindows();
+    VoreenToolWindow* getToolWindow(QWidget* childWidget) const;
+
+    StartupScreen* createStartupScreen(VoreenSplashScreen* splash = 0);
 
     //
     // settings
@@ -216,7 +218,6 @@ private:
     //
     // further methods
     //
-    void loadDataset(const std::string& filename);
     bool askSave();
     void showNetworkErrors();
     void showWorkspaceErrors();
@@ -230,43 +231,15 @@ private:
 
     void setGuiMode(GuiMode guiMode);
 
-    GuiMode guiMode_;
-    AnimationEditor* animationEditor_;
-
-    tgt::QtCanvas* sharedContext_;
-    VolumeContainerWidget* volumeContainerWidget_;
-    NetworkEditor* networkEditorWidget_;
-    InputMappingDialog* inputMappingDialog_;
-    RenderTargetViewer* renderTargetViewer_;
-#ifdef VRN_MODULE_PYTHON
-    PythonEditor* pythonEditor_;
-#endif
-
     VoreenVisualization* vis_;
+    tgt::QtCanvas* sharedContext_;
 
-    QToolBar* fileToolBar_;
-    QToolBar* viewToolBar_;
-    QToolBar* toolsToolBar_;
-    QToolBar* actionToolBar_;
-    QList<VoreenToolWindow*> toolWindows_;
-
-    VoreenToolWindow* propertyListTool_;
-    PropertyListWidget* propertyListWidget_;
-    ProcessorListWidget* processorListWidget_;
-    VoreenToolWindow* processorListTool_;
-    VoreenToolWindow* volumeContainerTool_;
-    VoreenToolWindow* consoleTool_;
-
-    QSettings settings_;
-    QByteArray applicationModeState_;
-    QByteArray developmentModeState_;
-    QByteArray networkEditorWindowState_;
-
-    QMdiArea* mdiArea_;
-    VoreenMdiSubWindow* networkEditorWindow_;
-    VoreenMdiSubWindow* shortcutPrefWindow_;
-
-    // Main menu
+    
+    //
+    // Menus and tool bars
+    //
+    
+    // menus
     QMenuBar* menu_;
     QMenu* fileMenu_;
     QMenu* viewMenu_;
@@ -275,41 +248,83 @@ private:
     QMenu* optionsMenu_;
     QMenu* helpMenu_;
 
+    // tool bars
+    QToolBar* fileToolBar_;
+    QToolBar* viewToolBar_;
+    QToolBar* toolsToolBar_;
+    QToolBar* actionToolBar_;
+
+    // actions
     QAction* workspaceNewAction_;
     QAction* workspaceOpenAction_;
     QAction* workspaceSaveAction_;
     QAction* workspaceSaveAsAction_;
+    QAction* workspaceSaveCopyAsAction_;
 
     QAction* aboutAction_;
     QAction* helpFirstStepsAct_;
     QAction* helpTutorialSlidesAct_;
     QAction* helpAnimationAct_;
     QAction* openDatasetAction_;
-    QAction* openRawDatasetAction_;
     QAction* importNetworkAction_;
     QAction* exportNetworkAction_;
     QAction* showShortcutPreferencesAction_;
-    QAction* openDicomFilesAct_;
     QAction* quitAction_;
 
     QAction* workspaceExtractAction_;
 
     QAction* rebuildShadersAction_;
-    QAction* loadLastWorkspaceAct_;
-    QAction* pythonAction_;
+    QAction* enterWhatsThisAction_;
 
     QAction* modeApplicationAction_;
     QAction* modeDevelopmentAction_;
 
-    QAction* processorListAction_;
     QAction* snapshotAction_;
 
     QList<QAction*> recentFileActs_;
 
-    ConsolePlugin* consolePlugin_;
+    QAction* showStartupScreen_;
+    QAction* settingsAction_;
 
-    bool resetSettings_;
-    bool loadLastWorkspace_;
+
+    //
+    // Tools and plugins
+    //
+    QList<VoreenToolWindow*> toolWindows_; //< each tool is wrapped by a tool window
+    std::vector<VoreenVEPlugin*> plugins_;
+
+    // network editor
+    QMdiArea* mdiArea_;
+    VoreenMdiSubWindow* networkEditorWindow_;
+    NetworkEditor* networkEditorWidget_;
+
+    // tools
+    ProcessorListWidget* processorListWidget_;
+    PropertyListWidget* propertyListWidget_;
+    VolumeContainerWidget* volumeContainerWidget_;
+
+    ConsolePlugin* consolePlugin_;
+    InputMappingDialog* inputMappingDialog_;
+    AnimationEditor* animationEditor_;
+    RenderTargetViewer* renderTargetViewer_;
+    PropertyStateWidget* propertyStateWidget_;
+    PerformanceRecordWidget* performanceRecordWidget_;
+    SnapshotWidget* snapshotWidget_;
+    
+    // additional widgets
+    SettingsDialog* settingsEditor_;
+
+
+    //
+    // Application state
+    //
+    GuiMode guiMode_;
+
+    QSettings settings_;
+    QByteArray applicationModeState_;
+    QByteArray developmentModeState_;
+    QByteArray networkEditorWindowState_;
+
     QString lastWorkspace_;
 
     QString networkPath_;
@@ -317,16 +332,18 @@ private:
 
     QString currentNetwork_;
     QString currentWorkspace_;
-    QString defaultDataset_;
-
+    
     QString originalWindowTitle_;
     tgt::ivec2 canvasPos_;
     tgt::ivec2 canvasSize_;
 
     bool ignoreWindowTitleModified_; ///< will not add * to the window title when this is set
 
-    // startUp
     bool startupWorkspace_;
+
+    QErrorMessage* errorMessageDialog_;
+
+    static const std::string loggerCat_;
 };
 
 } // namespace

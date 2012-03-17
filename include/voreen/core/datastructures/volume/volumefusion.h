@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -63,6 +63,11 @@ public:
 
     /// The \p data parameter must be a T**.
     virtual VolumeFusion<T, N>* clone(void* data) const throw (std::bad_alloc);
+
+    virtual VolumeFusion<T, N>* createNew(const tgt::svec3& dimensions, bool allocMem = false) const throw (std::bad_alloc);
+
+    virtual VolumeFusion<T, N>* getSubVolume(tgt::svec3 dimensions, tgt::svec3 offset = tgt::svec3(0,0,0)) const throw (std::bad_alloc);
+    virtual void setSubVolume(const Volume* vol, tgt::svec3 offset = tgt::svec3(0,0,0));
 
     //
     // getters and setters.
@@ -228,6 +233,45 @@ VolumeFusion<T, N>* VolumeFusion<T, N>::clone(void* data) const throw (std::bad_
     }
 
     return new VolumeFusion<T, N>(volumes);
+}
+
+template<class T, size_t N>
+VolumeFusion<T, N>* VolumeFusion<T, N>::createNew(const tgt::svec3& dimensions, bool allocMem) const
+throw (std::bad_alloc)
+{
+    VolumeAtomic<T>* volumes[N];
+
+    // create new volumes
+    for (size_t i = 0; i < N; ++i) {
+        volumes[i] = volumes_[i]->createNew(dimensions, allocMem);
+    }
+
+    return new VolumeFusion<T, N>(volumes);
+}
+
+template<class T, size_t N>
+VolumeFusion<T, N>* VolumeFusion<T, N>::getSubVolume(tgt::svec3 dimensions, tgt::svec3 offset) const throw (std::bad_alloc) {
+    VolumeAtomic<T>* volumes[N];
+
+    try {
+        for (size_t i = 0; i < N; ++i) {
+                volumes[i] = volumes_[i]->getSubVolume(dimensions, offset, volumes_[i]->getBorder());
+        }
+    }
+    catch (std::bad_alloc) {
+        throw; // throw it to the caller
+    }
+
+    return new VolumeFusion<T, N>(volumes);
+}
+
+template<class T, size_t N>
+void VolumeFusion<T, N>::setSubVolume(const Volume* vol, tgt::svec3 offset) {
+    const VolumeFusion<T, N>* vols = static_cast<const VolumeFusion<T, N>*>(vol);
+
+    for (size_t i = 0; i < N; ++i) {
+        volumes_[i]->setSubVolume(vols->getVolumeAtomic(i), offset);
+    }
 }
 
 //

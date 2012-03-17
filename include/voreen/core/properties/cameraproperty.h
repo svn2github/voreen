@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,10 +35,14 @@
 
 namespace voreen {
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API TemplateProperty<tgt::Camera>;
+#endif
+
 /**
  * Property encapsulating a tgt::Camera object.
  */
-class CameraProperty : public TemplateProperty<tgt::Camera> {
+class VRN_CORE_API CameraProperty : public TemplateProperty<tgt::Camera> {
 
 public:
 
@@ -49,13 +53,16 @@ public:
      *        is adjusted automatically to viewport changes. This is especially necessary to
      *        reflect the viewport's aspect ratio.
      */
-    CameraProperty(const std::string& id, const std::string& guiText, tgt::Camera const value,
+    CameraProperty(const std::string& id, const std::string& guiText, tgt::Camera const value = tgt::Camera(),
                bool adjustProjectionToViewport = true,
                Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    CameraProperty();
     virtual ~CameraProperty();
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "CameraProperty"; }
+    virtual std::string getTypeDescription() const { return "Camera"; }
 
     /**
      * Assigns the passed camera object to the property.
@@ -64,6 +71,7 @@ public:
     void setPosition(const tgt::vec3& pos);
     void setFocus(const tgt::vec3& focus);
     void setUpVector(const tgt::vec3& up);
+    void setFrustum(const tgt::Frustum& frust);
 
     /**
      * When set to true, the camera's projection matrix is adjusted automatically
@@ -88,8 +96,6 @@ public:
      */
     void viewportChanged(const tgt::ivec2& viewport);
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
-
     /**
      * @see Property::serialize
      */
@@ -99,6 +105,10 @@ public:
      * @see Property::deserialize
      */
     virtual void deserialize(XmlDeserializer& s);
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 
     virtual void look();
 private:

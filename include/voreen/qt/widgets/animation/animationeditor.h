@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,6 +32,7 @@
 #include <QWidget>
 #include <QString>
 
+#include "voreen/qt/voreenqtdefine.h"
 #include "voreen/core/animation/animation.h"
 #include "voreen/core/network/networkevaluator.h"
 #include "voreen/core/network/workspace.h"
@@ -49,8 +50,7 @@ namespace voreen {
 * This is the place of animation control and it is the
 * global interface node to the animation core
 */
-class AnimationEditor : public QWidget
-{
+class VRN_QT_API AnimationEditor : public QWidget {
 Q_OBJECT
 
 public:

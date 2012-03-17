@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -51,7 +51,7 @@ namespace voreen {
  *
  * @see VolumeRaycaster
  */
-class VolumeRenderer : public RenderProcessor {
+class VRN_CORE_API VolumeRenderer : public RenderProcessor {
 public:
     VolumeRenderer();
 
@@ -60,31 +60,21 @@ protected:
      * This struct contains information about a volume. It is exclusively used
      * as parameter type for the bindVolumes() function.
      */
-    struct VolumeStruct {
+    struct VRN_CORE_API VolumeStruct {
         VolumeStruct();
-        VolumeStruct(const VolumeGL* volume, tgt::TextureUnit* texUnit,
-                     const std::string& samplerIdentifier, const std::string& volumeParametersIdentifier,
-                     bool applyDatasetTrafoMatrix = true, GLenum wrapMode = GL_CLAMP_TO_EDGE,
-                     tgt::vec4 borderColor = tgt::vec4(0.f), GLint filterMode = GL_LINEAR);
+        VolumeStruct(const VolumeHandleBase* volume, const tgt::TextureUnit* texUnit,
+            const std::string& volumeStructIdentifier,
+            GLenum wrapMode = GL_CLAMP_TO_EDGE, tgt::vec4 borderColor = tgt::vec4(0.f),
+            GLint filterMode = GL_LINEAR);
 
-        const VolumeGL* volume_;                        ///< the volume whose texture is to be bound
-        tgt::TextureUnit* texUnit_;                     ///< the texture unit to bind to
+        const VolumeHandleBase* volume_;                ///< the volume whose texture is to be bound
+        const tgt::TextureUnit* texUnit_;               ///< the texture unit to bind to
         GLenum wrapMode_;                               ///< the texture wrapping mode to set
         tgt::vec4 borderColor_;                         ///< the texture's border color
         GLint filterMode_;                              ///< the filtering mode to use for this texture
-        std::string samplerIdentifier_;                 ///< the sampler by which the
-                                                        ///  volume is accessed in the shader
-        std::string volumeParametersIdentifier_;        ///< the identifier of the volume parameter struct
+        std::string volumeStructIdentifier_;            ///< the identifier of the volume parameter struct
                                                         ///  for this volume in the shader
-        bool applyDatasetTrafoMatrix_;                  ///< apply the volume's trafo matrix in the shader?
     };
-
-    /**
-     * Defines the 3D texture type used for volumes.
-     *
-     * @see RenderProcessor::generateHeader
-     */
-    virtual std::string generateHeader(VolumeHandle* volumehandle = 0);
 
     /**
      * Sets the parameters of the light source.

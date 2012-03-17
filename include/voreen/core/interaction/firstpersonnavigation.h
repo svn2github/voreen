@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,24 +30,28 @@
 #define VRN_FIRSTPERSONNAVIGATION_H
 
 #include "tgt/event/eventlistener.h"
+#include "tgt/event/keyevent.h"
+#include "tgt/event/mouseevent.h"
+#include "tgt/vector.h"
 
-namespace tgt{
+#include "voreen/core/voreencoredefine.h"
+
+namespace tgt {
     class Camera;
     class EventHandler;
-    class KeyEvent;
     class MouseEvent;
     class Stopwatch;
     class Timer;
 }
 
-namespace voreen{
+namespace voreen {
 
 class CameraProperty;
 
 /**
  * A class that makes it possible to navigate freely through datasets like in first-person games.
  */
-class FirstPersonNavigation : public tgt::EventListener {
+class VRN_CORE_API FirstPersonNavigation : public tgt::EventListener {
 public:
      /**
      * The Constructor.

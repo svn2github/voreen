@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -174,6 +174,8 @@ void VoreenToolWindowTitle::mouseDoubleClickEvent(QMouseEvent *event) {
 
 VoreenToolWindow::VoreenToolWindow(QAction* action, QWidget* parent, QWidget* child, const QString& name, bool dockable)
     : QDockWidget(name, parent)
+    , action_(action)
+    , child_(child)
 {
     if (action) {
         QString text = action->text();
@@ -207,11 +209,19 @@ VoreenToolWindow::VoreenToolWindow(QAction* action, QWidget* parent, QWidget* ch
 
     // Connect action and widget visibility:
     // It is important to use triggered() instead of toggled() here, or else the widget will be
-    // hidden when switching to a differen virtual desktop and back.
+    // hidden when switching to a different virtual desktop and back.
     if(action) {
         connect(action, SIGNAL(triggered(bool)), this, SLOT(setVisible(bool)));
         connect(toggleViewAction(), SIGNAL(toggled(bool)), action, SLOT(setChecked(bool)));
     }
+}
+
+QAction* VoreenToolWindow::action() const {
+    return action_;
+}
+
+QWidget* VoreenToolWindow::child() const {
+    return child_;
 }
 
 } // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,12 +25,12 @@
 #ifndef TGT_NAVIGATION_H
 #define TGT_NAVIGATION_H
 
-#include "tgt/config.h"
 #include "tgt/tgt_gl.h"
 
-#include "tgt/vector.h"
 #include "tgt/camera.h"
 #include "tgt/glcanvas.h"
+#include "tgt/types.h"
+#include "tgt/vector.h"
 #include "tgt/event/mouseevent.h"
 #include "tgt/event/eventlistener.h"
 
@@ -46,7 +46,7 @@
 
 namespace tgt {
 
-class Navigation : virtual public EventListener {
+class TGT_API Navigation : virtual public EventListener {
 
 protected:
 

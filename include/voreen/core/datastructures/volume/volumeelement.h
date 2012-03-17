@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,9 +31,13 @@
 
 #include <limits>
 
+#include "voreen/core/datastructures/tensor.h"
+#include "voreen/core/voreencoredefine.h"
+
 // Note: please ensure that no OpenGL dependencies are added into this file
 
 namespace voreen {
+
 
 namespace {
 /**
@@ -55,8 +59,8 @@ bool isTypeSigned() {
 }
 
 template<class T>
-bool isTypeBounded() {
-    return std::numeric_limits<T>::is_bounded;
+bool isTypeInteger() {
+    return std::numeric_limits<T>::is_integer;
 }
 
 template<>
@@ -77,6 +81,82 @@ double getTypeUpperLimit() {
 template<>
 double getTypeLowerLimit() {
     return 0.0;
+}
+
+uint8_t swapEndian(uint8_t value) {
+    return value;
+}
+int8_t swapEndian(int8_t value) {
+    return value;
+} 
+
+uint16_t swapEndian(uint16_t value) {
+    return (value>>8) | (value<<8);
+} 
+int16_t swapEndian(int16_t value) {
+    return (value>>8) | (value<<8);
+} 
+
+uint32_t swapEndian(uint32_t value) {
+    return (value>>24) |
+        ((value<<8) & 0x00FF0000) |
+        ((value>>8) & 0x0000FF00) |
+        (value<<24);
+} 
+
+int32_t swapEndian(int32_t value) {
+    return (value>>24) |
+        ((value<<8) & 0x00FF0000) |
+        ((value>>8) & 0x0000FF00) |
+        (value<<24);
+} 
+
+uint64_t swapEndian(uint64_t value) {
+    return (value>>56) | 
+        ((value<<40) & 0x00FF000000000000) |
+        ((value<<24) & 0x0000FF0000000000) |
+        ((value<<8)  & 0x000000FF00000000) |
+        ((value>>8)  & 0x00000000FF000000) |
+        ((value>>24) & 0x0000000000FF0000) |
+        ((value>>40) & 0x000000000000FF00) |
+        (value<<56);
+} 
+
+int64_t swapEndian(int64_t value) {
+    return (value>>56) | 
+        ((value<<40) & 0x00FF000000000000) |
+        ((value<<24) & 0x0000FF0000000000) |
+        ((value<<8)  & 0x000000FF00000000) |
+        ((value>>8)  & 0x00000000FF000000) |
+        ((value>>24) & 0x0000000000FF0000) |
+        ((value>>40) & 0x000000000000FF00) |
+        (value<<56);
+}
+
+float swapEndian(float value) {
+    float result;
+    char* src = (char*)&value;
+    char* dst = (char*)&result;
+    dst[0] = src[3];
+    dst[1] = src[2];
+    dst[2] = src[1];
+    dst[3] = src[0];
+    return result;
+}
+
+double swapEndian(double value) {
+    double result;
+    char* src = (char*)&value;
+    char* dst = (char*)&result;
+    dst[0] = src[7];
+    dst[1] = src[6];
+    dst[2] = src[5];
+    dst[3] = src[4];
+    dst[4] = src[3];
+    dst[5] = src[2];
+    dst[6] = src[1];
+    dst[7] = src[0];
+    return result;
 }
 
 }
@@ -102,7 +182,7 @@ public:
      * which is true for integer types and false for
      * floating point types.
      */
-    inline bool static isBounded();
+    inline bool static isInteger();
 
     /**
      * Returns the maximal possible value of T
@@ -141,6 +221,8 @@ public:
 
     inline static int getNumChannels();
 
+    inline static T swapEndianness(T v);
+
     /**
     * Calculates the squared difference between val1 and val2.
     */
@@ -160,7 +242,7 @@ public:
 
     inline static bool isSigned();
 
-    inline bool static isBounded();
+    inline bool static isInteger();
 
     inline static tgt::Vector2<T> rangeMax();
     inline static tgt::Vector2<T> rangeMin();
@@ -176,6 +258,8 @@ public:
     inline static float getMinElement(const tgt::Vector2<T>& value);
 
     inline static int getNumChannels();
+
+    inline static tgt::Vector2<T> swapEndianness(tgt::Vector2<T> v);
 
     /**
     * Calculates the squared difference between val1 and val2. Since val1 and val2 are 2-dimensional
@@ -197,7 +281,7 @@ public:
 
     inline static bool isSigned();
 
-    inline bool static isBounded();
+    inline bool static isInteger();
 
     inline static tgt::Vector3<T> rangeMax();
     inline static tgt::Vector3<T> rangeMin();
@@ -213,6 +297,8 @@ public:
     inline static float getMinElement(const tgt::Vector3<T>& value);
 
     inline static int getNumChannels();
+
+    inline static tgt::Vector3<T> swapEndianness(tgt::Vector3<T> v);
 
     /**
     * Calculates the squared difference between val1 and val2. Since val1 and val2 are 3-dimensional
@@ -235,7 +321,7 @@ public:
 
     inline static bool isSigned();
 
-    inline bool static isBounded();
+    inline bool static isInteger();
 
     inline static tgt::Vector4<T> rangeMax();
     inline static tgt::Vector4<T> rangeMin();
@@ -252,6 +338,8 @@ public:
 
     inline static int getNumChannels();
 
+    inline static tgt::Vector4<T> swapEndianness(tgt::Vector4<T> v);
+
     /**
     * Calculates the squared difference between val1 and val2. Since val1 and val2 are 4-dimensional
     * vectors, each squared difference is multiplied by 1/4.
@@ -261,6 +349,124 @@ public:
     typedef tgt::Vector4<double> DoubleType;
     typedef T BaseType;
 };
+
+template<class T>
+class VolumeElement<tgt::Matrix3<T> > {
+public:
+    inline static tgt::Matrix3<T> getZero();
+
+    inline static T getChannel(const tgt::Matrix3<T>& t, size_t channel);
+    inline static void setChannel(T value, tgt::Matrix3<T>& t, size_t channel);
+
+    inline static bool isSigned();
+
+    inline bool static isInteger();
+
+    inline static tgt::Matrix3<T> rangeMax();
+    inline static tgt::Matrix3<T> rangeMin();
+
+    /**
+    * Returns the maximum value an element can have. In contrast to max() no
+    * vector is returned but the maximum value an element in the vector can have.
+    */
+    inline static float rangeMaxElement();
+    inline static float rangeMinElement();
+
+    inline static float getMaxElement(const tgt::Matrix3<T>& value);
+    inline static float getMinElement(const tgt::Matrix3<T>& value);
+
+    inline static int getNumChannels();
+
+    inline static tgt::Matrix3<T> swapEndianness(tgt::Matrix3<T> v);
+
+    /**
+    * Calculates the squared difference between val1 and val2. Since val1 and val2 are 3-dimensional
+    * vectors, each squared difference is multiplied by 1/3.
+    */
+    static double calcSquaredDifference(tgt::Matrix3<T> val1, tgt::Matrix3<T> val2);
+
+    typedef tgt::Matrix3<double> DoubleType;
+    typedef T BaseType;
+};
+
+template<class T>
+class VolumeElement<tgt::Matrix4<T> > {
+public:
+    inline static tgt::Matrix4<T> getZero();
+
+    inline static T getChannel(const tgt::Matrix4<T>& t, size_t channel);
+    inline static void setChannel(T value, tgt::Matrix4<T>& t, size_t channel);
+
+    inline static bool isSigned();
+
+    inline bool static isInteger();
+
+    inline static tgt::Matrix4<T> rangeMax();
+    inline static tgt::Matrix4<T> rangeMin();
+
+    /**
+    * Returns the maximum value an element can have. In contrast to max() no
+    * vector is returned but the maximum value an element in the vector can have.
+    */
+    inline static float rangeMaxElement();
+    inline static float rangeMinElement();
+
+    inline static float getMaxElement(const tgt::Matrix4<T>& value);
+    inline static float getMinElement(const tgt::Matrix4<T>& value);
+
+    inline static int getNumChannels();
+
+    inline static tgt::Matrix4<T> swapEndianness(tgt::Matrix4<T> v);
+
+    /**
+    * Calculates the squared difference between val1 and val2. Since val1 and val2 are 3-dimensional
+    * vectors, each squared difference is multiplied by 1/3.
+    */
+    static double calcSquaredDifference(tgt::Matrix4<T> val1, tgt::Matrix4<T> val2);
+
+    typedef tgt::Matrix4<double> DoubleType;
+    typedef T BaseType;
+};
+
+template<class T>
+class VolumeElement<Tensor2<T> > {
+public:
+    inline static Tensor2<T> getZero();
+
+    inline static T getChannel(const Tensor2<T>& t, size_t channel);
+    inline static void setChannel(T value, Tensor2<T>& t, size_t channel);
+
+    inline static bool isSigned();
+
+    inline bool static isInteger();
+
+    inline static Tensor2<T> rangeMax();
+    inline static Tensor2<T> rangeMin();
+
+    /**
+    * Returns the maximum value an element can have. In contrast to max() no
+    * vector is returned but the maximum value an element in the vector can have.
+    */
+    inline static float rangeMaxElement();
+    inline static float rangeMinElement();
+
+    inline static float getMaxElement(const Tensor2<T>& value);
+    inline static float getMinElement(const Tensor2<T>& value);
+
+    inline static int getNumChannels();
+
+    inline static Tensor2<T> swapEndianness(Tensor2<T> v);
+
+    /**
+    * Calculates the squared difference between val1 and val2. Since val1 and val2 are 3-dimensional
+    * vectors, each squared difference is multiplied by 1/3.
+    */
+    static double calcSquaredDifference(Tensor2<T> val1, Tensor2<T> val2);
+
+    typedef Tensor2<double> DoubleType;
+    typedef T BaseType;
+};
+
 
 
 // ==============
@@ -298,8 +504,8 @@ inline bool VolumeElement<T>::isSigned() {
 }
 
 template<class T>
-inline bool VolumeElement<T>::isBounded() {
-    return isTypeBounded<T>();
+inline bool VolumeElement<T>::isInteger() {
+    return isTypeInteger<T>();
 }
 
 template<class T>
@@ -339,6 +545,11 @@ inline float VolumeElement<T>::rangeMinElement() {
 template<class T>
 inline int VolumeElement<T>::getNumChannels() {
     return 1;
+}
+
+template<class T>
+inline T VolumeElement<T>::swapEndianness(T v) {
+    return swapEndian(v);
 }
 
 /**
@@ -382,8 +593,8 @@ inline bool VolumeElement<tgt::Vector2<T> >::isSigned() {
 }
 
 template<class T>
-inline bool VolumeElement<tgt::Vector2<T> >::isBounded() {
-    return isTypeBounded<T>();
+inline bool VolumeElement<tgt::Vector2<T> >::isInteger() {
+    return isTypeInteger<T>();
 }
 
 template<class T>
@@ -423,6 +634,13 @@ float voreen::VolumeElement<tgt::Vector2<T> >::getMinElement(const tgt::Vector2<
 template<class T>
 inline int VolumeElement<tgt::Vector2<T> >::getNumChannels() {
     return 2;
+}
+
+template<class T>
+inline tgt::Vector2<T> VolumeElement<tgt::Vector2<T> >::swapEndianness(tgt::Vector2<T> v) {
+    v[0] = VolumeElement<T>::swapEndianness(v[0]);
+    v[1] = VolumeElement<T>::swapEndianness(v[1]);
+    return v; 
 }
 
 /**
@@ -473,8 +691,8 @@ inline bool VolumeElement<tgt::Vector3<T> >::isSigned() {
 }
 
 template<class T>
-inline bool VolumeElement<tgt::Vector3<T> >::isBounded() {
-    return isTypeBounded<T>();
+inline bool VolumeElement<tgt::Vector3<T> >::isInteger() {
+    return isTypeInteger<T>();
 }
 
 template<class T>
@@ -514,6 +732,14 @@ float voreen::VolumeElement<tgt::Vector3<T> >::getMinElement(const tgt::Vector3<
 template<class T>
 inline int VolumeElement<tgt::Vector3<T> >::getNumChannels() {
     return 3;
+}
+
+template<class T>
+inline tgt::Vector3<T> VolumeElement<tgt::Vector3<T> >::swapEndianness(tgt::Vector3<T> v) {
+    v[0] = VolumeElement<T>::swapEndianness(v[0]);
+    v[1] = VolumeElement<T>::swapEndianness(v[1]);
+    v[2] = VolumeElement<T>::swapEndianness(v[2]);
+    return v; 
 }
 
 /**
@@ -566,8 +792,8 @@ inline bool VolumeElement<tgt::Vector4<T> >::isSigned() {
 }
 
 template<class T>
-inline bool VolumeElement<tgt::Vector4<T> >::isBounded() {
-    return isTypeBounded<T>();
+inline bool VolumeElement<tgt::Vector4<T> >::isInteger() {
+    return isTypeInteger<T>();
 }
 
 template<class T>
@@ -609,6 +835,15 @@ inline int VolumeElement<tgt::Vector4<T> >::getNumChannels() {
     return 4;
 }
 
+template<class T>
+inline tgt::Vector4<T> VolumeElement<tgt::Vector4<T> >::swapEndianness(tgt::Vector4<T> v) {
+    v[0] = VolumeElement<T>::swapEndianness(v[0]);
+    v[1] = VolumeElement<T>::swapEndianness(v[1]);
+    v[2] = VolumeElement<T>::swapEndianness(v[2]);
+    v[3] = VolumeElement<T>::swapEndianness(v[3]);
+    return v; 
+}
+
 /**
 * Calculates the squared difference between val1 and val2. Since val1 and val2 are 4-dimensional
 * vectors, each squared difference is multiplied by 1/4.
@@ -633,6 +868,378 @@ double VolumeElement<tgt::Vector4<T> >::calcSquaredDifference(tgt::Vector4<T> va
     return result;
 }
 
+// --- Matrix3 ----
+
+template<class T>
+inline tgt::Matrix3<T> VolumeElement<tgt::Matrix3<T> >::getZero() {
+    return tgt::Matrix3<T>(T(0));
+}
+
+template<class T>
+inline T VolumeElement<tgt::Matrix3<T> >::getChannel(const tgt::Matrix3<T>& t, size_t channel) {
+    tgtAssert(channel < 9, "channel must be less than 9");
+    if (channel < 9)
+        return t.elem[channel];
+    else
+        return 0;
+}
+
+template<class T>
+inline void VolumeElement<tgt::Matrix3<T> >::setChannel(T value, tgt::Matrix3<T>& t, size_t channel) {
+    tgtAssert(channel < 9, "channel must be less than 9");
+    t.elem[channel] = value;
+}
+
+template<class T>
+inline bool VolumeElement<tgt::Matrix3<T> >::isSigned() {
+    return isTypeSigned<T>();
+}
+
+template<class T>
+inline bool VolumeElement<tgt::Matrix3<T> >::isInteger() {
+    return isTypeInteger<T>();
+}
+
+template<class T>
+inline tgt::Matrix3<T> VolumeElement<tgt::Matrix3<T> >::rangeMax() {
+    return tgt::Matrix3<T>(getTypeUpperLimit<T>());
+}
+
+template<class T>
+inline tgt::Matrix3<T> VolumeElement<tgt::Matrix3<T> >::rangeMin() {
+    return tgt::Matrix3<T>(getTypeLowerLimit<T>());
+}
+
+/**
+* Returns the maximum value an element can have. In contrast to max() no
+* vector is returned but the maximum value an element in the vector can have.
+*/
+template<class T>
+inline float VolumeElement<tgt::Matrix3<T> >::rangeMaxElement() {
+    return static_cast<float>(getTypeUpperLimit<T>());
+}
+
+template<class T>
+inline float VolumeElement<tgt::Matrix3<T> >::rangeMinElement() {
+    return static_cast<float>(getTypeLowerLimit<T>());
+}
+
+template<class T>
+float voreen::VolumeElement<tgt::Matrix3<T> >::getMaxElement(const tgt::Matrix3<T>& value) {
+    return static_cast<float>(value[0]);//TODO: correct?
+}
+
+template<class T>
+float voreen::VolumeElement<tgt::Matrix3<T> >::getMinElement(const tgt::Matrix3<T>& value) {
+    return static_cast<float>(value[0]);//TODO: correct?
+}
+
+template<class T>
+inline int VolumeElement<tgt::Matrix3<T> >::getNumChannels() {
+    return 9;
+}
+
+template<class T>
+inline tgt::Matrix3<T> VolumeElement<tgt::Matrix3<T> >::swapEndianness(tgt::Matrix3<T> v) {
+    for(int i=0; i<VolumeElement<tgt::Matrix3<T> >::getNumChannels(); i++)
+        v[i] = VolumeElement<T>::swapEndianness(v[i]);
+    return v; 
+}
+
+/**
+* Calculates the squared difference between val1 and val2. Since val1 and val2 are 3-dimensional
+* vectors, each squared difference is multiplied by 1/3.
+*/
+template<class T>
+double VolumeElement<tgt::Matrix3<T> >::calcSquaredDifference(tgt::Matrix3<T> val1, tgt::Matrix3<T> val2) {
+    double result;
+    //FIXME
+    //tgt::Vector3d difference;
+
+    //difference.x = (double)val1.x - (double)val2.x;
+    //difference.y = (double)val1.y - (double)val2.y;
+    //difference.z = (double)val1.z - (double)val2.z;
+
+    //difference.x = difference.x * difference.x;
+    //difference.y = difference.y * difference.y;
+    //difference.z = difference.z * difference.z;
+
+    //result = difference.x + difference.y + difference.z;
+
+    return result;
+}
+
+// --- Matrix4 ----
+
+template<class T>
+inline tgt::Matrix4<T> VolumeElement<tgt::Matrix4<T> >::getZero() {
+    return tgt::Matrix4<T>(T(0));
+}
+
+template<class T>
+inline T VolumeElement<tgt::Matrix4<T> >::getChannel(const tgt::Matrix4<T>& t, size_t channel) {
+    tgtAssert(channel < 16, "channel must be less than 16");
+    if (channel < 16)
+        return t.elem[channel];
+    else
+        return 0;
+}
+
+template<class T>
+inline void VolumeElement<tgt::Matrix4<T> >::setChannel(T value, tgt::Matrix4<T>& t, size_t channel) {
+    tgtAssert(channel < 9, "channel must be less than 16");
+    t.elem[channel] = value;
+}
+
+template<class T>
+inline bool VolumeElement<tgt::Matrix4<T> >::isSigned() {
+    return isTypeSigned<T>();
+}
+
+template<class T>
+inline bool VolumeElement<tgt::Matrix4<T> >::isInteger() {
+    return isTypeInteger<T>();
+}
+
+template<class T>
+inline tgt::Matrix4<T> VolumeElement<tgt::Matrix4<T> >::rangeMax() {
+    return tgt::Matrix4<T>(getTypeUpperLimit<T>());
+}
+
+template<class T>
+inline tgt::Matrix4<T> VolumeElement<tgt::Matrix4<T> >::rangeMin() {
+    return tgt::Matrix4<T>(getTypeLowerLimit<T>());
+}
+
+/**
+* Returns the maximum value an element can have. In contrast to max() no
+* vector is returned but the maximum value an element in the vector can have.
+*/
+template<class T>
+inline float VolumeElement<tgt::Matrix4<T> >::rangeMaxElement() {
+    return static_cast<float>(getTypeUpperLimit<T>());
+}
+
+template<class T>
+inline float VolumeElement<tgt::Matrix4<T> >::rangeMinElement() {
+    return static_cast<float>(getTypeLowerLimit<T>());
+}
+
+template<class T>
+float voreen::VolumeElement<tgt::Matrix4<T> >::getMaxElement(const tgt::Matrix4<T>& value) {
+    return static_cast<float>(value[0]);//TODO: correct?
+}
+
+template<class T>
+float voreen::VolumeElement<tgt::Matrix4<T> >::getMinElement(const tgt::Matrix4<T>& value) {
+    return static_cast<float>(value[0]);//TODO: correct?
+}
+
+template<class T>
+inline int VolumeElement<tgt::Matrix4<T> >::getNumChannels() {
+    return 16;
+}
+
+template<class T>
+inline tgt::Matrix4<T> VolumeElement<tgt::Matrix4<T> >::swapEndianness(tgt::Matrix4<T> v) {
+    for(int i=0; i<VolumeElement<tgt::Matrix4<T> >::getNumChannels(); i++)
+        v[i] = VolumeElement<T>::swapEndianness(v[i]);
+    return v; 
+}
+
+/**
+* Calculates the squared difference between val1 and val2. Since val1 and val2 are 3-dimensional
+* vectors, each squared difference is multiplied by 1/3.
+*/
+template<class T>
+double VolumeElement<tgt::Matrix4<T> >::calcSquaredDifference(tgt::Matrix4<T> val1, tgt::Matrix4<T> val2) {
+    //FIXME
+    double result;
+    //tgt::Vector3d difference;
+
+    //difference.x = (double)val1.x - (double)val2.x;
+    //difference.y = (double)val1.y - (double)val2.y;
+    //difference.z = (double)val1.z - (double)val2.z;
+
+    //difference.x = difference.x * difference.x;
+    //difference.y = difference.y * difference.y;
+    //difference.z = difference.z * difference.z;
+
+    //result = difference.x + difference.y + difference.z;
+
+    return result;
+}
+
+
+// --- Tensor2 ----
+
+template<class T>
+inline Tensor2<T> VolumeElement<Tensor2<T> >::getZero() {
+    return Tensor2<T>(T(0));
+}
+
+template<class T>
+inline T VolumeElement<Tensor2<T> >::getChannel(const Tensor2<T>& t, size_t channel) {
+    tgtAssert(channel < 6, "channel must be less than 6");
+    if (channel < 6)
+        return t.elem[channel];
+    else
+        return 0;
+}
+
+template<class T>
+inline void VolumeElement<Tensor2<T> >::setChannel(T value, Tensor2<T>& t, size_t channel) {
+    tgtAssert(channel < 6, "channel must be less than 6");
+    t.elem[channel] = value;
+}
+
+template<class T>
+inline bool VolumeElement<Tensor2<T> >::isSigned() {
+    return isTypeSigned<T>();
+}
+
+template<class T>
+inline bool VolumeElement<Tensor2<T> >::isInteger() {
+    return isTypeInteger<T>();
+}
+
+template<class T>
+inline Tensor2<T> VolumeElement<Tensor2<T> >::rangeMax() {
+    return Tensor2<T>(getTypeUpperLimit<T>());
+}
+
+template<class T>
+inline Tensor2<T> VolumeElement<Tensor2<T> >::rangeMin() {
+    return Tensor2<T>(getTypeLowerLimit<T>());
+}
+
+/**
+* Returns the maximum value an element can have. In contrast to max() no
+* vector is returned but the maximum value an element in the vector can have.
+*/
+template<class T>
+inline float VolumeElement<Tensor2<T> >::rangeMaxElement() {
+    return static_cast<float>(getTypeUpperLimit<T>());
+}
+
+template<class T>
+inline float VolumeElement<Tensor2<T> >::rangeMinElement() {
+    return static_cast<float>(getTypeLowerLimit<T>());
+}
+
+template<class T>
+float voreen::VolumeElement<Tensor2<T> >::getMaxElement(const Tensor2<T>& value) {
+    return static_cast<float>(value[0]);//TODO: correct?
+}
+
+template<class T>
+float voreen::VolumeElement<Tensor2<T> >::getMinElement(const Tensor2<T>& value) {
+    return static_cast<float>(value[0]);//TODO: correct?
+}
+
+template<class T>
+inline int VolumeElement<Tensor2<T> >::getNumChannels() {
+    return 6;
+}
+
+template<class T>
+inline Tensor2<T> VolumeElement<Tensor2<T> >::swapEndianness(Tensor2<T> v) {
+    for(int i=0; i<VolumeElement<Tensor2<T> >::getNumChannels(); i++)
+        v[i] = VolumeElement<T>::swapEndianness(v[i]);
+    return v; 
+}
+
+/**
+* Calculates the squared difference between val1 and val2. Since val1 and val2 are 6-dimensional
+* vectors, each squared difference is multiplied by 1/6.
+*/
+template<class T>
+double VolumeElement<Tensor2<T> >::calcSquaredDifference(Tensor2<T> val1, Tensor2<T> val2) {
+    double result;
+    Tensor2<double> difference;
+
+    difference.Dxx = static_cast<double>(val1.Dxx) - static_cast<double>(val2.Dxx);
+    difference.Dxy = static_cast<double>(val1.Dxy) - static_cast<double>(val2.Dxy);
+    difference.Dxz = static_cast<double>(val1.Dxz) - static_cast<double>(val2.Dxz);
+    difference.Dyy = static_cast<double>(val1.Dyy) - static_cast<double>(val2.Dyy);
+    difference.Dyz = static_cast<double>(val1.Dyz) - static_cast<double>(val2.Dyz);
+    difference.Dzz = static_cast<double>(val1.Dzz) - static_cast<double>(val2.Dzz);
+
+    difference.Dxx = difference.Dxx*difference.Dxx;
+    difference.Dxy = difference.Dxy*difference.Dxy;
+    difference.Dxz = difference.Dxz*difference.Dxz;
+    difference.Dyy = difference.Dyy*difference.Dyy;
+    difference.Dyz = difference.Dyz*difference.Dyz;
+    difference.Dzz = difference.Dzz*difference.Dzz;
+
+    result = difference.Dxx + difference.Dxy + difference.Dxz + difference.Dyy + difference.Dyz + difference.Dzz;
+
+    return result;
+}
+
+template<class T>
+float getTypeAsFloat(T /*value*/) {
+    tgtAssert(false, "Missing template specialization! Should not get here!");
+    //If you got this assertion add a template specialization below.
+    return 0.0f;
+}
+
+template<>
+VRN_CORE_API float getTypeAsFloat(float value); 
+template<>
+VRN_CORE_API float getTypeAsFloat(double value); 
+
+template<>
+VRN_CORE_API float getTypeAsFloat(uint8_t value); 
+template<>
+VRN_CORE_API float getTypeAsFloat(int8_t value); 
+
+template<>
+VRN_CORE_API float getTypeAsFloat(uint16_t value); 
+template<>
+VRN_CORE_API float getTypeAsFloat(int16_t value); 
+
+template<>
+VRN_CORE_API float getTypeAsFloat(uint32_t value); 
+template<>
+VRN_CORE_API float getTypeAsFloat(int32_t value); 
+
+template<>
+VRN_CORE_API float getTypeAsFloat(uint64_t value); 
+template<>
+VRN_CORE_API float getTypeAsFloat(int64_t value); 
+
+template<class T>
+T getFloatAsType(float /*value*/) {
+    tgtAssert(false, "Missing template specialization! Should not get here!");
+    //If you got this assertion add a template specialization below.
+    return T(0);
+}
+
+template<>
+VRN_CORE_API float getFloatAsType(float value);
+template<>
+VRN_CORE_API double getFloatAsType(float value);
+
+template<>
+VRN_CORE_API uint8_t getFloatAsType(float value);
+template<>
+VRN_CORE_API int8_t getFloatAsType(float value);
+
+template<>
+VRN_CORE_API uint16_t getFloatAsType(float value);
+template<>
+VRN_CORE_API int16_t getFloatAsType(float value);
+
+template<>
+VRN_CORE_API uint32_t getFloatAsType(float value);
+template<>
+VRN_CORE_API int32_t getFloatAsType(float value);
+
+template<>
+VRN_CORE_API uint64_t getFloatAsType(float value);
+template<>
+VRN_CORE_API int64_t getFloatAsType(float value);
 
 } // namespace voreen
 

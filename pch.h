@@ -47,6 +47,7 @@
 #include "tgt/assert.h"
 
 #include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/io/serialization/serialization.h"
 #include "voreen/core/datastructures/volume/volumehandle.h"
 
@@ -57,6 +58,7 @@
 #include "voreen/core/properties/boolproperty.h"
 #include "voreen/core/properties/vectorproperty.h"
 #include "voreen/core/properties/matrixproperty.h"
+#include "voreen/core/properties/voxeltypeproperty.h"
 #include "voreen/core/properties/optionproperty.h"
 #include "voreen/core/properties/eventproperty.h"
 
@@ -64,5 +66,6 @@
 #include "voreen/core/ports/volumeport.h"
 #include "voreen/core/ports/genericport.h"
 #include "voreen/core/ports/textport.h"
+#include "voreen/core/ports/geometryport.h"
 
 #endif

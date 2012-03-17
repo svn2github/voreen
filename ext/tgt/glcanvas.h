@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,9 +25,9 @@
 #ifndef TGT_GLCANVAS_H
 #define TGT_GLCANVAS_H
 
-#include "tgt/config.h"
 #include "tgt/tgt_gl.h"
 
+#include "tgt/types.h"
 #include "tgt/vector.h"
 #include "tgt/event/event.h"
 #include "tgt/event/timeevent.h"
@@ -47,7 +47,7 @@ class Painter;
  * This makes sure that all kinds of APIs can be used with tgt without specializing
  * a lot of code.
  */
-class GLCanvas {
+class TGT_API GLCanvas {
 public:
     enum {
         DEFAULT_WINDOW_WIDTH  = 512,

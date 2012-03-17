@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -40,14 +40,17 @@
 
 namespace voreen {
 
-class PropertyVector : public Property, PropertyOwner{
+class VRN_CORE_API PropertyVector : public Property, PropertyOwner {
 public:
 
     PropertyVector(const std::string& id, const std::string& guiText, std::vector<Property*> properties);
-
+    PropertyVector();
     virtual ~PropertyVector();
+    
+    virtual Property* create() const;
 
-    virtual std::string getTypeString() const;
+    virtual std::string getClassName() const       { return "PropertyVector"; }
+    virtual std::string getTypeDescription() const { return "PropertyVector"; }
 
     virtual std::string getName() const;
 
@@ -83,8 +86,6 @@ public:
      */
     virtual void deserialize(XmlDeserializer& s);
 
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
-
     virtual void setOwner(PropertyOwner* owner);
 
 protected:
@@ -94,14 +95,14 @@ protected:
      *
      * @see Property::initialize
      */
-    void initialize() throw (VoreenException);
+    void initialize() throw (tgt::Exception);
 
     /**
      * Deinitializes the component properties.
      *
      * @see Property::deinitialize
      */
-    void deinitialize() throw (VoreenException);
+    void deinitialize() throw (tgt::Exception);
 
     std::vector<Property*> properties_;
 

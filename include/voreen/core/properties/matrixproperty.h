@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,47 +36,74 @@
 
 namespace voreen {
 
-class FloatMat2Property : public NumericProperty<tgt::mat2> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::mat2>;
+#endif
+
+class VRN_CORE_API FloatMat2Property : public NumericProperty<tgt::mat2> {
 public:
     FloatMat2Property(const std::string& id, const std::string& guiText, const tgt::mat2& value,
         const tgt::mat2& minimum = tgt::mat2(-10.0f), const tgt::mat2& maximum = tgt::mat2(10.0f),
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    FloatMat2Property();
     virtual ~FloatMat2Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "FloatMat2Property"; }
+    virtual std::string getTypeDescription() const { return "FloatMatrix2x2"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class FloatMat3Property : public NumericProperty<tgt::mat3> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::mat3>;
+#endif
+
+class VRN_CORE_API FloatMat3Property : public NumericProperty<tgt::mat3> {
 public:
     FloatMat3Property(const std::string& id, const std::string& guiText, const tgt::mat3& value,
         const tgt::mat3& minimum = tgt::mat3(-10.0f), const tgt::mat3& maximum = tgt::mat3(10.0f),
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    FloatMat3Property();
     virtual ~FloatMat3Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "FloatMat3Property"; }
+    virtual std::string getTypeDescription() const { return "FloatMatrix3x3"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class FloatMat4Property : public NumericProperty<tgt::mat4> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::mat4>;
+#endif
+
+class VRN_CORE_API FloatMat4Property : public NumericProperty<tgt::mat4> {
 public:
     FloatMat4Property(const std::string& id, const std::string& guiText, const tgt::mat4& value,
         const tgt::mat4& minimum = tgt::mat4(-10.0f), const tgt::mat4& maximum = tgt::mat4(10.0f),
         Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    FloatMat4Property();
     virtual ~FloatMat4Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "FloatMat4Property"; }
+    virtual std::string getTypeDescription() const { return "FloatMatrix4x4"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 } // namespace voreen

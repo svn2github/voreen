@@ -25,7 +25,6 @@
 #ifndef TGT_QTTIMER_H_
 #define TGT_QTTIMER_H_
 
-#include "tgt/config.h"
 #include "tgt/event/eventhandler.h"
 #include "tgt/timer.h"
 #include <QObject>

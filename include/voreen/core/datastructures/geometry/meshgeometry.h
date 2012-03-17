@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -63,7 +63,7 @@ namespace voreen {
  * @see VertexGeometry
  * @see MeshListGeometry
  */
-class MeshGeometry : public Geometry {
+class VRN_CORE_API MeshGeometry : public Geometry {
 public:
     /**
      * Type of the face geometry list.
@@ -94,17 +94,54 @@ public:
      * @param texUrb the texture coordinates of the upper right back vertex
      * @param colorLlf the vertex color of the lower left front vertex
      * @param colorUrb the vertex color of the upper right back vertex
+     * @param alpha the alpha value used in the color
      *
      * @returns the cube mesh
      */
     static MeshGeometry createCube(
-        tgt::vec3 coordLlf = tgt::vec3(0, 0, 0),
-        tgt::vec3 coordUrb = tgt::vec3(1, 1, 1),
-        tgt::vec3 texLlf = tgt::vec3(0, 0, 0),
-        tgt::vec3 texUrb = tgt::vec3(1, 1, 1),
-        tgt::vec3 colorLlf = tgt::vec3(0, 0, 0),
-        tgt::vec3 colorUrb = tgt::vec3(0, 0, 0));
+        tgt::vec3 coordLlf = tgt::vec3(0.f, 0.f, 0.f),
+        tgt::vec3 coordUrb = tgt::vec3(1.f, 1.f, 1.f),
+        tgt::vec3 texLlf = tgt::vec3(0.f, 0.f, 0.f),
+        tgt::vec3 texUrb = tgt::vec3(1.f, 1.f, 1.f),
+        tgt::vec3 colorLlf = tgt::vec3(0.f, 0.f, 0.f),
+        tgt::vec3 colorUrb = tgt::vec3(0.f, 0.f, 0.f),
+        float alpha = 1.f
+        );
 
+    /**
+     * Creates a cube mesh with given dimension and properties.
+     *
+     * @param coordLlf the vertex coordinates of the lower left front vertex
+     * @param coordUrb the vertex coordinates of the upper right back vertex
+     * @param texLlf the texture coordinates of the lower left front vertex
+     * @param texUrb the texture coordinates of the upper right back vertex
+     * @param colorLlf the vertex color of the lower left front vertex
+     * @param colorUrb the vertex color of the upper right back vertex
+     * @param normalTop the normal direction of the top face
+     * @param normalFront the normal direction of the front face
+     * @param normalLeft the normal direction of the left face
+     * @param normalBack the normal direction of the back face
+     * @param normalRight the normal direction of the right face
+     * @param normalBottom the normal direction of the bottom face
+     * @param alpha the alpha value used in the color
+     *
+     * @returns the cube mesh
+     */
+    static MeshGeometry createCube(
+        tgt::vec3 coordLlf,
+        tgt::vec3 coordUrb,
+        tgt::vec3 texLlf,
+        tgt::vec3 texUrb,
+        tgt::vec3 colorLlf,
+        tgt::vec3 colorUrb,
+        tgt::vec3 normalTop,
+        tgt::vec3 normalFront,
+        tgt::vec3 normalLeft,
+        tgt::vec3 normalBack,
+        tgt::vec3 normalRight,
+        tgt::vec3 normalBottom,
+        float alpha = 1.f
+        );
     /**
      * Returns the number of face geometries contained by this mesh geometry.
      *
@@ -205,7 +242,7 @@ public:
     /**
      * @see Geometry::render
      */
-    virtual void render();
+    virtual void render() const;
 
     /**
      * Transforms the mesh geometry using the given transformation matrix.
@@ -241,13 +278,26 @@ public:
      */
     MeshGeometry clip(const tgt::vec4& clipplane, double epsilon = 1e-6);
 
+    virtual void serialize(XmlSerializer& s) const;
+
+    virtual void deserialize(XmlDeserializer& s);
+
 private:
+    static void createCubeFaces(FaceGeometry& topFace, FaceGeometry& frontFace, FaceGeometry& leftFace,
+                                FaceGeometry& backFace,FaceGeometry& rightFace, FaceGeometry& bottomFace,
+                                tgt::vec3 coordLlf = tgt::vec3(0.f, 0.f, 0.f),
+                                tgt::vec3 coordUrb = tgt::vec3(1.f, 1.f, 1.f),
+                                tgt::vec3 texLlf = tgt::vec3(0.f, 0.f, 0.f),
+                                tgt::vec3 texUrb = tgt::vec3(1.f, 1.f, 1.f),
+                                tgt::vec3 colorLlf = tgt::vec3(0.f, 0.f, 0.f),
+                                tgt::vec3 colorUrb = tgt::vec3(0.f, 0.f, 0.f),
+                                float alpha = 1.f);
     /**
      * Face geometry list.
      */
     FaceListType faces_;
 };
 
-}    // namespace
+} // namespace
 
 #endif  //VRN_MESHGEOMETRY_H

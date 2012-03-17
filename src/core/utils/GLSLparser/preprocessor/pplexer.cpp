@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -504,7 +504,7 @@ Token* PreprocessorLexer::createTextToken(const std::streampos& start,
     std::streamsize count = (end - std::streampos(1) - start);
     char* buffer = 0;
     if (count > 0) {
-        buffer = new char[count + 1];
+        buffer = new char[static_cast<size_t>(count) + 1];
         stream_->seekg(start, std::ios_base::beg);
         stream_->get(buffer, count + 1, char(255)); // char(255) prevents get() to stop at newlines.
         stream_->seekg(end, std::ios_base::beg);
@@ -524,7 +524,7 @@ Token* PreprocessorLexer::createTextToken(const std::streampos& start,
 
         Token* token = 0;
         if (! newlinesOnly)
-            token = new TextToken(PreprocessorTerminals::ID_TEXT, std::string(buffer, count));
+            token = new TextToken(PreprocessorTerminals::ID_TEXT, std::string(buffer, static_cast<size_t>(count)));
 
         delete [] buffer;
         return token;

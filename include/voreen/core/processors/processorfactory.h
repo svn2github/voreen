@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -40,43 +40,36 @@ namespace voreen {
 
 class Processor;
 
-class ProcessorFactory : public SerializableFactory {
+class VRN_CORE_API ProcessorFactory : public SerializableFactory {
 public:
-    typedef std::pair<std::string, std::string> StringPair;
-    typedef std::vector<StringPair> KnownClassesVector;
-
     ~ProcessorFactory();
-
-    Processor* create(const std::string& name);
-    const ProcessorFactory::KnownClassesVector& getKnownClasses() const { return knownClasses_; }
-
     static ProcessorFactory* getInstance();
 
-    /// Returns true, if a processor instance with the passed class name has been registered
+    /**
+     * Creates an instance of the passed Processor class.
+     */
+    Processor* create(const std::string& className);
+
+    /**
+     * Returns a vector containing instances of the registered Processors.
+     */
+    const std::vector<Processor*>& getRegisteredProcessors() const;
+
+    /**
+     * Returns the mapping from Processor class name to the corresponding Processor instance.
+     */
+    const std::map<std::string, Processor*>& getClassMap() const; 
+    
+    /**
+     * Returns true, if a processor instance with the passed class name has been registered.
+     */
     bool isProcessorKnown(const std::string& className) const;
 
-    /// Returns processor information
-    std::string getProcessorInfo(const std::string& name) const;
-
-    /// Returns processor category
-    std::string getProcessorCategory(const std::string& name) const;
-
-    /// Returns processor modulename
-    std::string getProcessorModuleName(const std::string& name) const;
-
-    /// Returns processor codestate
-    Processor::CodeState getProcessorCodeState(const std::string& name) const;
-
     /**
-     * Destroys the instance of this Singleton.
+     * Returns an instance of the passed Processor class. 
+     * If the class name is not known, null is returned.
      */
-    static void destroy();
-
-    /**
-     * intializes the ClassList by registering processors
-     * adding new processors will happen here.
-     */
-    void initializeClassList();
+    const Processor* getProcessor(const std::string& className) const;
 
     /**
      * @see SerializableFactory::getTypeString
@@ -90,12 +83,27 @@ public:
 
 private:
     ProcessorFactory();
-    void registerClass(Processor* const newClass, bool isCore = false);
-
     static ProcessorFactory* instance_;
 
-    std::map<std::string, Processor*> classList_;
-    ProcessorFactory::KnownClassesVector knownClasses_;
+    /**
+     * Retrieves the registered processors from the VoreenApplication 
+     * and initializes the processor list and class map.
+     * Internally called on first access of the factory instance.
+     */
+    void initialize() const;
+
+    /**
+     * Adds the passed processor to the processor vector and the classmap.
+     */
+    void registerClass(Processor* const newClass) const;
+
+    /// Contains the registered processors.
+    mutable std::vector<Processor*> processors_;
+
+    /// Maps from Processor class name to the corresponding Processor instance.
+    mutable std::map<std::string, Processor*> classMap_;
+
+    mutable bool initialized_;
 
     /// category used for logging
     static const std::string loggerCat_;

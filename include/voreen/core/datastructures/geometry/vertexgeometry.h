@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,7 +44,7 @@ namespace voreen {
  *
  * @see FaceGeometry
  */
-class VertexGeometry : public Geometry {
+class VRN_CORE_API VertexGeometry : public Geometry {
 public:
     /**
      * Instantiates a vertex geometry with the given vertex coordinates, texture coordinates
@@ -55,9 +55,21 @@ public:
      * @param color the vertex color
      */
     VertexGeometry(
-        const tgt::vec3& coords = tgt::vec3(0, 0, 0),
-        const tgt::vec3& texcoords = tgt::vec3(0, 0, 0),
-        const tgt::vec4& color = tgt::vec4(0, 0, 0, 0));
+        const tgt::vec3& coords = tgt::vec3(0.f),
+        const tgt::vec3& texcoords = tgt::vec3(0.f),
+        const tgt::vec4& color = tgt::vec4(0.f));
+
+    /**
+     * Instantiates a vertex geometry with the given vertex coordinates, texture coordinates
+     * and vertex color.
+     *
+     * @param coords the vertex coordinates
+     * @param texcoords the texture coordinates
+     * @param color the vertex color
+     * @param normal the normal direction
+     */
+    VertexGeometry(
+        const tgt::vec3& coords, const tgt::vec3& texcoords, const tgt::vec4& color, const tgt::vec3& normal);
 
     /**
      * Returns the vertex coordinates of the vertex geometry.
@@ -109,6 +121,32 @@ public:
     void setColor(const tgt::vec3& color);
 
     /**
+     * Returns the normal direction of the vertex geometry.
+     *
+     * @returns the normal direction
+     */
+    tgt::vec3 getNormal() const;
+
+    /**
+     * Sets the normal direction of the vertex geometry.
+     *
+     * @param normal the normal direction
+     */
+    void setNormal(const tgt::vec3& normal);
+
+    /**
+     * Removes the normal and let OpenGL calculate it instead.
+     */
+    void removeNormal();
+
+    /**
+     * Returns true if a a normal for this vertex is defined.
+     *
+     * @returns if the normal for this vertex is defined.
+     */
+    bool isNormalDefined() const;
+
+    /**
      * Returns the euclidean length of the vertex coordinates vector.
      *
      * @returns the euclidean vertex coordinates vector length
@@ -140,7 +178,7 @@ public:
     /**
      * @see Geometry::render
      */
-    virtual void render();
+    virtual void render() const;
 
     /**
      * Combines this and the given vertex geometry.
@@ -240,6 +278,10 @@ public:
      */
     bool operator!=(const VertexGeometry& vertex) const;
 
+    virtual void serialize(XmlSerializer& s) const;
+
+    virtual void deserialize(XmlDeserializer& s);
+
 private:
     /**
      * Vertex coordinates of this vertex geometry.
@@ -255,6 +297,16 @@ private:
      * Vertex color of this vertex geometry.
      */
     tgt::vec4 color_;
+
+    /**
+     * Declares if the normal has been set from the outside or if the OpenGL normal calculation should be used instead.
+     */
+    bool normalIsSet_;
+
+    /**
+     * Normal directory of this vertex geometry.
+     */
+    tgt::vec3 normal_;
 };
 
 }    // namespace

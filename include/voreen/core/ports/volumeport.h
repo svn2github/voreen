@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,32 +34,20 @@
 
 namespace voreen {
 
-class VolumePort : public GenericPort<VolumeHandle>, public VolumeHandleObserver {
-    public:
-    explicit VolumePort(PortDirection direction, const std::string& name,
-                        bool allowMultipleConnections = false,
-                        Processor::InvalidationLevel invalidationLevel = Processor::INVALID_PROGRAM)
-        : GenericPort<VolumeHandle>(direction, name, allowMultipleConnections, invalidationLevel),
-          VolumeHandleObserver()
-    {}
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API GenericPort<VolumeHandleBase>;
+#endif
+
+class VRN_CORE_API VolumePort : public GenericPort<VolumeHandleBase>, public VolumeHandleObserver {
+public:
+    VolumePort(PortDirection direction, const std::string& name,
+               bool allowMultipleConnections = false,
+               Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT);
 
     /**
      * Assigns the passed volume handle to the port.
      */
-    void setData(VolumeHandle* handle);
-
-    /**
-     * Assigns the passed volume handle to the port and
-     * deletes the currently assigned one, if deletePrevious
-     * is specified.
-     */
-    void setData(VolumeHandle* handle, bool deletePrevious);
-
-    /**
-     * Deletes the assigned volume handle and
-     * assigns the null pointer to itself.
-     */
-    void deleteVolume();
+    void setData(const VolumeHandleBase* handle, bool takeOwnership = true);
 
     /**
      * Returns true, if the port contains a VolumeHandle object
@@ -70,13 +58,42 @@ class VolumePort : public GenericPort<VolumeHandle>, public VolumeHandleObserver
     /**
      * Implementation of VolumeHandleObserver interface.
      */
-    virtual void volumeHandleDelete(const VolumeHandle* source);
+    virtual void volumeHandleDelete(const VolumeHandleBase* source);
 
     /**
      * Implementation of VolumeHandleObserver interface.
      */
-    virtual void volumeChange(const VolumeHandle* source);
+    virtual void volumeChange(const VolumeHandleBase* source);
 
+    /// This port type supports caching.
+    virtual bool supportsCaching() const;
+
+    /**
+     * Returns an MD5 hash of the stored volume,
+     * or and empty string, if no volume is assigned.
+     */
+    virtual std::string getHash() const;
+
+    /**
+     * Saves the assigned volume to the given path.
+     * If a filename without extension is passed,
+     * ".dat" is appended to it.
+     *
+     * @throws VoreenException If saving failed or
+     *      no volume is assigned.
+     */
+    virtual void saveData(const std::string& path) const
+        throw (VoreenException);
+
+    /**
+     * Loads a volume from the given path and assigns it
+     * to the port. If a filename without extension is passed,
+     * ".dat" is appended to it.
+     *
+     * @throws VoreenException if loading failed.
+     */
+    virtual void loadData(const std::string& path)
+        throw (VoreenException);
 };
 
 } // namespace

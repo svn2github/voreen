@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,6 +27,7 @@
  **********************************************************************/
 
 #include "voreen/core/io/serialization/meta/windowstatemetadata.h"
+#include "voreen/core/utils/stringconversion.h"
 
 namespace voreen {
 
@@ -37,6 +38,22 @@ WindowStateMetaData::WindowStateMetaData(const bool& visible, const int& x, cons
     , width_(width)
     , height_(height)
 {
+}
+
+std::string WindowStateMetaData::toString() const {
+    std::stringstream s;
+    if (visible_)
+        s << "visible = true; ";
+    else
+        s << "visible = false; ";
+
+    s << "x = " << itos(x_) << ", ";
+    s << "y = " << itos(y_) << "; ";
+
+    s << "width = " << itos(width_) << ", ";
+    s << "height = " << itos(height_) << ";";
+
+    return s.str();
 }
 
 void WindowStateMetaData::serialize(XmlSerializer& s) const {
@@ -79,20 +96,6 @@ void WindowStateMetaData::deserialize(XmlDeserializer& s) {
     }
 }
 
-const std::string WindowStateMetaData::getTypeString(const std::type_info& type) const {
-    if (type == typeid(WindowStateMetaData))
-        return "WindowStateMetaData";
-    else
-        return "";
-}
-
-Serializable* WindowStateMetaData::createType(const std::string& typeString) {
-    if (typeString == "WindowStateMetaData")
-        return new WindowStateMetaData();
-    else
-        return 0;
-}
-
 void WindowStateMetaData::setVisible(const bool& value) {
     visible_ = value;
 }
@@ -131,6 +134,14 @@ void WindowStateMetaData::setHeight(const int& value) {
 
 int WindowStateMetaData::getHeight() const {
     return height_;
+}
+
+MetaDataBase* WindowStateMetaData::clone() const {
+    return new WindowStateMetaData(visible_, x_, y_, width_, height_);
+}
+
+Serializable* WindowStateMetaData::create() const {
+    return new WindowStateMetaData();
 }
 
 } // namespace

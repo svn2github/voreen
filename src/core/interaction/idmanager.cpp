@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,9 +34,12 @@
 
 namespace voreen {
 
+using tgt::col4;
+using tgt::ivec2;
+
 IDManager::IDManager() :
       rt_(0)
-       , currentID_(0,0,1)
+       , currentID_(0,0,0,255)
 {
 }
 
@@ -44,18 +47,24 @@ void IDManager::initializeTarget() {
     if (!rt_)
         return;
 
-    rt_->initialize(GL_RGB);
+    rt_->initialize(GL_RGBA);
 }
 
-tgt::col3 IDManager::registerObject(void* obj) {
+col4 IDManager::registerObject(const void* obj) {
     increaseID();
     colorToID_[currentID_] = obj;
     IDToColor_[obj] = currentID_;
     return currentID_;
 }
 
-void IDManager::deregisterObject(void* obj) {
-    tgt::col3 col = getColorFromObject(obj);
+void IDManager::deregisterObject(const void* obj) {
+    col4 col = getColorFromObject(obj);
+    colorToID_.erase(col);
+    IDToColor_.erase(obj);
+}
+
+void IDManager::deregisterObject(const tgt::col4& col) {
+    const void* obj = getObjectFromColor(col);
     colorToID_.erase(col);
     IDToColor_.erase(obj);
 }
@@ -63,26 +72,55 @@ void IDManager::deregisterObject(void* obj) {
 void IDManager::clearRegisteredObjects() {
     colorToID_.clear();
     IDToColor_.clear();
-    currentID_ = tgt::col3(0,0,1);
+    currentID_ = col4(0,0,0,255);
 }
 
-tgt::col3 IDManager::getColorFromObject(void* obj) {
+col4 IDManager::getColorFromId(int id) {
+    if(id < 0)
+        return col4(0,0,0,0);
+
+    if(id > 16777216) {
+        LERRORC("voreen.IDManager", "id to big!");
+        return col4(0,0,0,0);
+    }
+
+    col4 c;
+    c.b = id & 255;
+    c.g = (id >> 8) & 255;
+    c.r = (id >> 16) & 255;
+    c.a = 255;
+    return c;
+}
+
+col4 IDManager::getColorFromObject(const void* obj) {
     if (obj == 0)
-        return tgt::col3(0,0,0);
+        return col4(0,0,0,0);
 
     if (isRegistered(obj))
         return IDToColor_[obj];
     else
-        return tgt::col3(0,0,0);
+        return col4(0,0,0,0);
 }
 
-void IDManager::setGLColor(void* obj) {
-    tgt::col3 col = getColorFromObject(obj);
+void IDManager::setGLColor(const void* obj) {
+    col4 col = getColorFromObject(obj);
     glColor3ub(col.x, col.y, col.z);
 }
 
-void* IDManager::getObjectFromColor(tgt::col3 col) {
-    if (col == tgt::col3(0,0,0))
+void IDManager::setGLColor(int id) {
+    col4 col = getColorFromId(id);
+    glColor4ubv(col.elem);
+}
+
+int IDManager::getIdFromColor(tgt::col4 col) {
+    if (col.a == 0)
+        return -1;
+    else
+        return (col.r * 256 * 256) + (col.g * 256) + col.b;
+}
+
+const void* IDManager::getObjectFromColor(tgt::col4 col) {
+    if (col.a == 0)
         return 0;
 
     if (isRegistered(col))
@@ -91,20 +129,24 @@ void* IDManager::getObjectFromColor(tgt::col3 col) {
         return 0;
 }
 
-void* IDManager::getObjectAtPos(tgt::ivec2 pos) {
+int IDManager::getIdAtPos(tgt::ivec2 pos) {
+    return getIdFromColor(getColorAtPos(pos));
+}
+
+const void* IDManager::getObjectAtPos(tgt::ivec2 pos) {
     return getObjectFromColor(getColorAtPos(pos));
 }
 
-tgt::col3 IDManager::getColorAtPos(tgt::ivec2 pos) {
+col4 IDManager::getColorAtPos(tgt::ivec2 pos) {
     rt_->activateTarget();
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    tgt::col3 pixels;
-    glReadPixels(pos.x, pos.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, &pixels);
+    col4 pixels;
+    glReadPixels(pos.x, pos.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixels);
     rt_->deactivateTarget();
     return pixels;
 }
 
-bool IDManager::isHit(tgt::ivec2 pos, void* obj) {
+bool IDManager::isHit(ivec2 pos, const void* obj) {
     return (getObjectAtPos(pos) == obj);
 }
 
@@ -156,14 +198,14 @@ void IDManager::increaseID() {
         currentID_.b++;
 }
 
-bool IDManager::isRegistered(void* obj) {
+bool IDManager::isRegistered(const void* obj) {
     if(IDToColor_.find(obj) != IDToColor_.end())
         return true;
     else
         return false;
 }
 
-bool IDManager::isRegistered(tgt::col3 col) {
+bool IDManager::isRegistered(tgt::col4 col) {
     if (colorToID_.find(col) != colorToID_.end())
         return true;
     else

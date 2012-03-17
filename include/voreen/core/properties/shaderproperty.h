@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,7 +34,7 @@
 
 namespace voreen {
 
-class ShaderSource : public Serializable {
+class VRN_CORE_API ShaderSource : public Serializable {
 public:
     std::string geometryFilename_;
     std::string vertexFilename_;
@@ -90,19 +90,26 @@ public:
      virtual void deserialize(XmlDeserializer& s);
 };
 
-class ShaderProperty : public TemplateProperty<ShaderSource> {
+//#ifdef DLL_TEMPLATE_INST
+//template class VRN_CORE_API TemplateProperty<ShaderSource>;
+//#endif
+
+class VRN_CORE_API ShaderProperty : public TemplateProperty<ShaderSource> {
 public:
     ShaderProperty(const std::string& id, const std::string& guiText,
                    const std::string& fragmentFileName, const std::string& geometryFileName = "",
                    const std::string& vertexFileName = "",
                    Processor::InvalidationLevel invalidationLevel=Processor::INVALID_PROGRAM);
-
+    ShaderProperty();
     ~ShaderProperty();
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    void initialize() throw (VoreenException);
-    void deinitialize() throw (VoreenException);
+    virtual std::string getClassName() const       { return "ShaderProperty"; }
+    virtual std::string getTypeDescription() const { return "Shader"; }
+
+    void initialize() throw (tgt::Exception);
+    void deinitialize() throw (tgt::Exception);
 
     /**
      * @see Property::serialize
@@ -114,7 +121,9 @@ public:
      */
     virtual void deserialize(XmlDeserializer& s);
 
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 
     void setHeader(std::string header);
     std::string getHeader() const;

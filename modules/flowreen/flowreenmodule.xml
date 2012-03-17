@@ -1,0 +1,22 @@
+<ModuleDescription>Flow visualization and input/output functionality for flow data.</ModuleDescription>
+<Processor name="FlowMagnitudes3D">
+    <Description>Calculates the magnitudes of the incomming Flow Volume and outputs them into a new Volume which can be used as a normal 3D texture.</Description>
+</Processor>
+<Processor name="FlowOrthogonalSliceRenderer">
+    <Description>Renders slices orthogonal to each other and aligned to the x-, y- or/and z-axis.</Description>
+</Processor>
+<Processor name="FlowSliceRenderer2D">
+    <Description>Renders screen aligned 2D flow images from slices in 3D vector fields.</Description>
+</Processor>
+<Processor name="FlowSliceRenderer3D">
+    <Description>Renders 2D flow images from slices in 3D vector fields into the volume.</Description>
+</Processor>
+<Processor name="PathlineRenderer3D">
+    <Description>Processor for rendering pathlines from time-dependent flow data using geometrical primitives like points, lines, tubes and arrows. the PathlineRenderer3D can be used to visualize vector field data. It expects one flow volume and one scalar context volume. The flow volume is depicted by geometric primitives (e.g., arrows or lines). The processor provides different seeding strategies. Such that the geometric primitives can be arranged based on the grid or depend on the context volume. Thus, a slice-based seeding becomes possible.</Description>
+</Processor>
+<Processor name="StreamlineRenderer3D">
+    <Description>Renders streamline objects from 3D vector fields for visualizing flow</Description>
+</Processor>
+<Processor name="StreamlineTexture3D">
+    <Description>Calculates a texture containing streamlines of the incomming Flow Volume and outputs it into a new Volume which can be used as a normal 3D texture.</Description>
+</Processor>

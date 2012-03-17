@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -71,8 +71,8 @@ public:
 
     bool addNewNodeChainItem(const std::string& nodeChainItemIdentifier, bool isSelected,
                              const tgt::vec3& position, const tgt::vec3& focus, const tgt::vec3& up);
-    bool addNewInterpolationBoxItem(const std::string interpolationBoxIdentifier,
-                                    const std::string foregoingNodeChainItemIdentifier);
+    bool addNewInterpolationBoxItem(const std::string& interpolationBoxIdentifier,
+                                    const std::string& foregoingNodeChainItemIdentifier);
 
     bool trackingShotWasLocked(bool locked);
 

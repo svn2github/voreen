@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,8 +27,8 @@
  **********************************************************************/
 
 #include "voreen/core/io/serialization/xmldeserializer.h"
-#include "voreen/core/plotting/plotbase.h"
-#include "voreen/core/plotting/plotselection.h"
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
 
 namespace voreen {
 
@@ -38,6 +38,15 @@ XmlDeserializer::XmlDeserializer(std::string documentPath)
     : XmlSerializerBase()
     , documentPath_(documentPath)
 {
+    // retrieve serialization factories from modules
+    if (VoreenApplication::app()) {
+        const std::vector<VoreenModule*> modules = VoreenApplication::app()->getModules();
+        for (size_t i=0; i<modules.size(); i++)
+            registerFactories(modules.at(i)->getSerializerFactories());
+    }
+    else {
+        LWARNING("Unable to retrieve factories from modules: VoreenApplication not instantiated");
+    }
 }
 
 XmlDeserializer::~XmlDeserializer() {
@@ -90,37 +99,25 @@ void XmlDeserializer::deserialize(const std::string& key, unsigned char& data)
     deserializeSimpleTypes(key, data);
 }
 
-void XmlDeserializer::deserialize(const std::string& key, signed short& data)
+void XmlDeserializer::deserialize(const std::string& key, short& data)
     throw (SerializationException)
 {
     deserializeSimpleTypes(key, data);
 }
 
-void XmlDeserializer::deserialize(const std::string& key, unsigned short& data)
+void XmlDeserializer::deserialize(const std::string& key, int& data)
     throw (SerializationException)
 {
     deserializeSimpleTypes(key, data);
 }
 
-void XmlDeserializer::deserialize(const std::string& key, signed int& data)
+void XmlDeserializer::deserialize(const std::string& key, long& data)
     throw (SerializationException)
 {
     deserializeSimpleTypes(key, data);
 }
 
-void XmlDeserializer::deserialize(const std::string& key, unsigned int& data)
-    throw (SerializationException)
-{
-    deserializeSimpleTypes(key, data);
-}
-
-void XmlDeserializer::deserialize(const std::string& key, signed long& data)
-    throw (SerializationException)
-{
-    deserializeSimpleTypes(key, data);
-}
-
-void XmlDeserializer::deserialize(const std::string& key, unsigned long& data)
+void XmlDeserializer::deserialize(const std::string& key, size_t& data)
     throw (SerializationException)
 {
     deserializeSimpleTypes(key, data);
@@ -275,47 +272,6 @@ void XmlDeserializer::deserialize(const std::string& key, tgt::Matrix4d& data)
     deserializeTgtVector(key+".row2", row2);
     deserializeTgtVector(key+".row3", row3);
     data = tgt::Matrix4d(row0, row1, row2, row3);
-}
-
-void XmlDeserializer::deserialize(const std::string& key, PlotCellValue& data)
-    throw (SerializationException)
-{
-    TemporaryNodeChanger nodeChanger(*this, getNextXmlElement(key));
-
-    // first aquire flags
-    bool isHighlighted, isTag, isValue;
-    plot_t value;
-    std::string tag;
-    deserializeSimpleTypes("isValue", isValue);
-    deserializeSimpleTypes("isTag", isTag);
-    deserializeSimpleTypes("isHighlighted", isHighlighted);
-
-    // now call the according constructors
-    if (isValue) {
-        deserializeSimpleTypes("value", value);
-        data = PlotCellValue(value);
-    }
-    else if (isTag) {
-        deserializeSimpleTypes("tag", tag);
-        data = PlotCellValue(tag);
-    }
-    else { // neither value nor tag
-        data = PlotCellValue();
-    }
-
-    // finally set highlighted flag
-    data.setHighlighted(isHighlighted);
-}
-
-void XmlDeserializer::deserialize(const std::string& key, PlotSelectionEntry& data)
-    throw (SerializationException)
-{
-    TemporaryNodeChanger nodeChanger(*this, getNextXmlElement(key));
-
-    deserialize("selection", data.selection_);
-    deserializeSimpleTypes("highlight", data.highlight_);
-    deserializeSimpleTypes("renderLabel", data.renderLabel_);
-    deserializeSimpleTypes("zoomTo", data.zoomTo_);
 }
 
 void XmlDeserializer::deserialize(const std::string& key, Serializable& data)

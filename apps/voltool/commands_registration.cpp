@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,12 +30,14 @@
 #include "voreen/core/io/volumeserializer.h"
 #include "voreen/core/io/volumeserializerpopulator.h"
 #include "voreen/core/datastructures/volume/volumecollection.h"
-#include "tgt/math.h"
+#include "tgt/tgt_math.h"
 
 #include <vector>
 
+#ifdef VRN_MODULE_JAMA
 // for least-squares-fitting
-#include "jama/include/jama_qr.h"
+#include "jama/jama_qr.h"
+#endif
 
 namespace voreen {
 
@@ -51,11 +53,8 @@ CommandRegistration::CommandRegistration(const std::string& name, const std::str
     Command(name, shortName, info, parameterList, argumentNum)
 {}
 
-vec3 CommandRegistration::transformFromVoxelToWorldCoords(vec3 point, Volume* vol) {
-    point += vec3(0.5f, 0.5f, 0.5f);
-    vec3 transformed = -(vol->getCubeSize()/2.f) + (point / static_cast<vec3>(vol->getDimensions())) * (vol->getCubeSize());
-
-    return transformed;
+vec3 CommandRegistration::transformFromVoxelToWorldCoords(vec3 point, const VolumeHandleBase* vol) {
+    return vol->getVoxelToPhysicalMatrix() * point;
 }
 
 //------------------------------------------------------------------------
@@ -104,8 +103,8 @@ bool CommandRegistrationUniformScaling::execute(const std::vector<std::string>& 
     // load volumes
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-    Volume* destVol = serializer->load(destVolFilename)->first()->getVolume();
-    Volume* srcVol = serializer->load(srcVolFilename)->first()->getVolume();
+    const VolumeHandleBase* destVol = serializer->read(destVolFilename)->first();
+    VolumeHandleBase* srcVol = serializer->read(srcVolFilename)->first();
 
     // transform reference points from voxel coordinates to world coordinates
     p0dest = transformFromVoxelToWorldCoords(p0dest, destVol);
@@ -190,8 +189,9 @@ bool CommandRegistrationUniformScaling::execute(const std::vector<std::string>& 
     }
 
     if (input == "y") {
-        srcVol->setTransformation(M);
-        serializer->save(srcVolFilename, srcVol);
+        VolumeHandle* vh = static_cast<VolumeHandle*>(srcVol);
+        vh->setPhysicalToWorldMatrix(M);
+        serializer->write(srcVolFilename, vh);
     }
 
     return true;
@@ -227,6 +227,7 @@ bool CommandRegistrationAffine::checkParameters(const std::vector<std::string>& 
     return result;
 }
 
+#ifdef VRN_MODULE_JAMA
 bool CommandRegistrationAffine::execute(const std::vector<std::string>& parameters) {
     // This doesn't work with the new commandline parser concept, because it requires doesn't support
     // a fixed number of parameters (ab)
@@ -249,8 +250,8 @@ bool CommandRegistrationAffine::execute(const std::vector<std::string>& paramete
     // load volumes
     VolumeSerializerPopulator volLoadPop;
     const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-    Volume* destVol = serializer->load(destVolFilename)->first()->getVolume();
-    Volume* srcVol = serializer->load(srcVolFilename)->first()->getVolume();
+    const VolumeHandleBase* destVol = serializer->read(destVolFilename)->first();
+    VolumeHandle* srcVol = dynamic_cast<VolumeHandle*>(serializer->read(srcVolFilename)->first());
 
     // transform reference points from voxel coordinates to world coordinates
     for (int i=0; i<numReferencePoints; ++i) {
@@ -337,12 +338,18 @@ bool CommandRegistrationAffine::execute(const std::vector<std::string>& paramete
     }
 
     if (input == "y") {
-        srcVol->setTransformation(M);
-        serializer->save(srcVolFilename, srcVol);
+        srcVol->setPhysicalToWorldMatrix(M);
+        serializer->write(srcVolFilename, srcVol);
     }
 
     return true;
 
 }
+#else
+bool CommandRegistrationAffine::execute(const std::vector<std::string>& /*parameters*/) {
+    std::cout << "ERROR: CommandRegistrationAffine requires the JAMA module";
+    return false;
+}
+#endif
 
 } // namespace voreen

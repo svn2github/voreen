@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,29 +33,29 @@
 #include <typeinfo>
 #include <vector>
 
-#include "voreen/core/ports/allports.h"
+#include "voreen/core/ports/port.h"
 
 namespace voreen {
 
 class PortTypeCheck {
     public:
         virtual ~PortTypeCheck() {}
-        virtual bool isA(Port* p) const = 0;
-        virtual bool hasA(Processor* p) const = 0;
-        virtual int getNumIterations(Port* p) const = 0;
+        virtual bool isA(const Port* p) const = 0;
+        virtual bool hasA(const Processor* p) const = 0;
+        virtual int getNumIterations(const Port* p) const = 0;
 };
 
 // ----------------------------------------------------------------------------
 
 class PortTypeCheckReject : public PortTypeCheck {
     public:
-        virtual bool isA(Port* /*p*/) const {
+        virtual bool isA(const Port* /*p*/) const {
             return false;
         }
-        virtual bool hasA(Processor* /*p*/) const {
+        virtual bool hasA(const Processor* /*p*/) const {
             return false;
         }
-        int getNumIterations(Port* /*p*/) const {
+        int getNumIterations(const Port* /*p*/) const {
             return -1;
         }
 };
@@ -71,13 +71,13 @@ class LoopPortTypeCheck : public PortTypeCheck {
         LoopPortTypeCheck(bool inverse) :
             inverse_(inverse)
         {}
-        virtual bool isA(Port* p) const {
+        virtual bool isA(const Port* p) const {
             if (inverse_)
                 return !(p->isLoopPort());
             else
                 return p->isLoopPort();
         }
-        virtual bool hasA(Processor* p) const {
+        virtual bool hasA(const Processor* p) const {
             bool hasPort = false;
             for (size_t i=0; i<p->getPorts().size(); ++i) {
                 if (inverse_) {
@@ -91,7 +91,7 @@ class LoopPortTypeCheck : public PortTypeCheck {
             }
             return hasPort;
         }
-        int getNumIterations(Port* p) const {
+        int getNumIterations(const Port* p) const {
             return std::max(p->getNumLoopIterations(), 1);
         }
 
@@ -112,15 +112,15 @@ class GenericPortTypeCheck : public PortTypeCheck {
             inverse_(inverse)
         {}
 
-        virtual bool isA(Port* p) const {
-            if (dynamic_cast<T*>(p))
+        virtual bool isA(const Port* p) const {
+            if (dynamic_cast<const T*>(p))
                 return !inverse_;
             else
                 return inverse_;
             //return dynamic_cast<T*>(p);
         }
 
-        bool hasA(Processor* p) const {
+        bool hasA(const Processor* p) const {
             std::vector<Port*> ports = p->getPorts();
             for (size_t i = 0; i < ports.size(); ++i) {
                 if (isA(ports[i]))
@@ -128,7 +128,7 @@ class GenericPortTypeCheck : public PortTypeCheck {
             }
             return false;
         }
-        int getNumIterations(Port* p) const {
+        int getNumIterations(const Port* p) const {
             return std::max(p->getNumLoopIterations(), 1);
         }
 
@@ -911,7 +911,7 @@ private:
      * Counter for the nodes. This counter is used to assign IDs to new nodes
      * according to their order of insertion.
      */
-    int nodeCounter_;
+    size_t nodeCounter_;
 
     /**
      * Transposed graph. Is used for certain operations like

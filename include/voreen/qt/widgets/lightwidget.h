@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,37 +30,43 @@
 #define VRN_LIGHTWIDGET_H
 
 #include <QWidget>
-#include <QPushButton>
-#include <math.h>
 #include <tgt/vector.h>
-#include "voreen/qt/widgets/property/floatvec4propertywidget.h"
 
+#include "tgt/vector.h"
+
+class DoubleSliderSpinBoxWidget;
+class QGridLayout;
+class QPushButton;
 
 namespace voreen {
-    class LightWidget : public QWidget {
+
+class LightWidget : public QWidget {
 Q_OBJECT
 public:
     LightWidget(QWidget* parent = 0);
     QPointF direction();
 
+    bool getHemisphereStatus() const;
+
 public slots:
-    void setLightPosition(tgt::vec4);
+    void setLightPosition(const tgt::vec4&);
+    tgt::vec4 getLightPosition() const;
 
 protected:
-    virtual void mousePressEvent(QMouseEvent*);
-    virtual void mouseMoveEvent(QMouseEvent*);
-    virtual void paintEvent(QPaintEvent*);
+    void mousePressEvent(QMouseEvent*);
+    void mouseMoveEvent(QMouseEvent*);
+    void paintEvent(QPaintEvent*);
 
 private:
     int radius_;
     bool hemisphere_;
-    QPointF mousePosition_;
     QPointF lightPosition_;
     float distance_;
 
-    bool m_mousePressed;
-    float x_;
-    float y_;
+    tgt::vec2 offset_;
+
+    QPushButton* hemisphereButton_;
+    DoubleSliderSpinBoxWidget* distanceSlider_;
 
 private slots:
     void setHemisphere(bool); //true is an open sphere, false is a closed sphere
@@ -69,6 +75,7 @@ private slots:
 signals:
     void lightWidgetChanged(tgt::vec4);
 };
+
 } // namespace voreen
 
 #endif // VRN_LIGHTWIDGET_H

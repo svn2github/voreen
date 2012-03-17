@@ -1,11 +1,8 @@
 TARGET = simple-glut
-TEMPLATE	= app
-LANGUAGE	= C++
-
+TEMPLATE = app
+LANGUAGE = C++
 CONFIG += console
-
 CONFIG -= qt
-
 
 # Include local configuration
 include(../../config.txt)
@@ -20,8 +17,17 @@ win32 {
   INCLUDEPATH += \
     $${VRN_HOME}/ext/glut/ \
     $${VRN_HOME}
-  QMAKE_LIBDIR += $${VRN_HOME}/ext/glut
-  LIBS += -lglut32
+  
+  DEFINES += GLUT_NO_LIB_PRAGMA
+  
+  win32-msvc | win32-g++ {
+    LIBS += $${VRN_HOME}/ext/glut/lib/win32/glut32.lib
+    QMAKE_POST_LINK += $$quote(cmd /c copy /y \"$${VRN_HOME}\\ext\\glut\\lib\\win32\\glut32.dll\" \"$${DESTDIR}\" > NUL $$escape_expand(\\n))
+  }
+  win64-msvc {
+    LIBS += $${VRN_HOME}/ext/glut/lib/win64/glut64.lib
+    QMAKE_POST_LINK += $$quote(cmd /c copy /y \"$${VRN_HOME}\\ext\\glut\\lib\\win64\\glut64.dll\" \"$${DESTDIR}\" > NUL $$escape_expand(\\n))
+  }
 }
 
 unix {

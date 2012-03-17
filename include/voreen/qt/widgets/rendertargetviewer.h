@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,6 +41,7 @@
 
 #include "voreen/core/network/processornetwork.h"
 #include "voreen/core/network/networkevaluator.h"
+#include "voreen/qt/voreenqtdefine.h"
 
 namespace voreen {
 
@@ -49,8 +50,8 @@ class RenderTarget;
 /**
  * Show currently used RenderTargets for debugging purposes.
  */
-class RenderTargetViewer : public QGLWidget, public NetworkEvaluator::ProcessWrapper {
-  Q_OBJECT
+class VRN_QT_API RenderTargetViewer : public QGLWidget, public NetworkEvaluator::ProcessWrapper {
+Q_OBJECT
 public:
     enum ShowType {
         R                   = 0x0001,
@@ -159,11 +160,11 @@ protected:
     int mouseX_;
     int mouseY_;
 
-    size_t dimX_;
-    size_t dimY_;
+    int dimX_;
+    int dimY_;
 
-    size_t scaledWidth_;
-    size_t scaledHeight_;
+    int scaledWidth_;
+    int scaledHeight_;
 
     int currentWidth_;
     int currentHeight_;
@@ -173,7 +174,8 @@ protected:
     bool initialized_;
 
     GLfloat currentDepthBuffer_;
-    tgt::ivec4 currentTexel_;
+    tgt::vec4 currentTexel_;
+    float currentValueScale_;
 
     float zoomScale_;
     float zoomTranslateX_;
@@ -200,7 +202,7 @@ protected:
 
     QList<Processor*> selectedProcessors_;
 
-#ifdef VRN_WITH_FONTRENDERING
+#ifdef VRN_MODULE_FONTRENDERING
     tgt::Font* font_;
 #else
     QFont font_;

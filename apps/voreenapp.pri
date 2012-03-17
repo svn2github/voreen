@@ -1,10 +1,31 @@
-####################################################
+#######################################################
 # Generic project file for all Voreen applications
-####################################################
+# Make sure to include 'commonconf.pri' before this one 
+# in the project file!
+#######################################################
 
-# common Qt resource files
-qt : RESOURCES = "$${VRN_HOME}/resource/vrn_share/vrn_app.qrc"
+# environment checks
+win32 {
+  isEmpty(WIN32_CONFIG_NAME) : isEmpty(WIN64_CONFIG_NAME) : error("voreenapp.pri: neither WIN32_CONFIG_NAME nor WIN64_CONFIG_NAME is set. Did you forget to include commonconf.pri in your project file?")
+}
+  
+# set output directory to default value, if not specified
+isEmpty(VRN_APP_DIRECTORY) {
+  VRN_APP_DIRECTORY = "$${VRN_HOME}/bin" 
+}
 
+macx: DESTDIR = "$${VRN_APP_DIRECTORY}"
+unix: DESTDIR = "$${VRN_APP_DIRECTORY}"
+win32: {
+  CONFIG(debug, debug|release) {
+    DESTDIR = "$${VRN_APP_DIRECTORY}/Debug"
+  }
+  else {
+    DESTDIR = "$${VRN_APP_DIRECTORY}/Release"
+  }
+}
+
+# pre-compiled headers
 contains(DEFINES, VRN_PRECOMPILE_HEADER) { 
   qt {
     PRECOMPILED_HEADER = ../pch_qtapp.h
@@ -17,106 +38,72 @@ else {
   CONFIG -= precompile_header
 }
 
+
 ####################################################
 # Platform-dependant configuration
 ####################################################
 
 win32 {
-  CONFIG(debug, debug|release) {
-    MSC_CONFIG = Debug
-  } else {
-    MSC_CONFIG = Release
-  }
-
-  visual_studio {
-    # Contains "Release" or "Debug" as selected in the IDE
-    MSC_CONFIG = $(ConfigurationName)
-  }
-
   QMAKE_LIBDIR += "$${VRN_HOME}/ext/glew/lib"
+  
+  LIBS += -lnetapi32 -lopengl32 -lglu32
+  
+  win32-msvc { # win 32 bit configuration 
+    qt: LIBS += "$${VRN_HOME}/bin/$${WIN32_CONFIG_NAME}/voreen_qt.lib" -lqtmain
+    LIBS += "$${VRN_HOME}/bin/$${WIN32_CONFIG_NAME}/voreen_core.lib"
+    LIBS += "$${VRN_HOME}/bin/$${WIN32_CONFIG_NAME}/tgt.lib"
+    
+    LIBS += "$${VRN_HOME}/ext/glew/lib/win32/vs$${VS_VERSION_NUMBER}/$${WIN32_CONFIG_NAME}/glew32s.lib"
+    
+    # no libc for vc++ since we build a multithreaded executable
+    LIBS += /NODEFAULTLIB:libc.lib
 
-  win32-msvc {
     # these libs are not automatically added when building with nmake
     nmake: LIBS *= advapi32.lib shell32.lib
+    
+    # Windows Management Instrumentation (WMI) for hardware detection
+    contains(DEFINES, TGT_WITH_WMI) : LIBS += -lWbemUuid
+  }
+  
+  win64-msvc { # win 64 bit configuration
+    qt: LIBS += "$${VRN_HOME}/bin/$${WIN64_CONFIG_NAME}/voreen_qt.lib" -lqtmain
+    LIBS += "$${VRN_HOME}/bin/$${WIN64_CONFIG_NAME}/voreen_core.lib"
+    LIBS += "$${VRN_HOME}/bin/$${WIN64_CONFIG_NAME}/tgt.lib"
+    
+    LIBS += "$${VRN_HOME}/ext/glew/lib/win64/vs$${VS_VERSION_NUMBER}/$${WIN64_CONFIG_NAME}/glew64s.lib"
+    
+    # no libc for vc++ since we build a multithreaded executable
+    LIBS += /NODEFAULTLIB:libc.lib
 
-    qt: LIBS += "$${VRN_HOME}/$${MSC_CONFIG}/voreen_qt.lib" -lqtmain
-
-    LIBS += "$${VRN_HOME}/$${MSC_CONFIG}/voreen_core.lib"
+    # these libs are not automatically added when building with nmake
+    nmake: LIBS *= advapi32.lib shell32.lib
+    
+    # Windows Management Instrumentation (WMI) for hardware detection
+    contains(DEFINES, TGT_WITH_WMI) : LIBS += -lWbemUuid
   }
 
   win32-g++ {
-    qt: LIBS += "$${VRN_HOME}/$${MSC_CONFIG}/libvoreen_qt.a"
-    LIBS += "$${VRN_HOME}/$${MSC_CONFIG}/libvoreen_core.a" \
+    qt: LIBS += "$${VRN_HOME}/bin/$${WIN32_CONFIG_NAME}/libvoreen_qt.a"
+    LIBS += "$${VRN_HOME}/bin/$${WIN32_CONFIG_NAME}/libvoreen_core.a"
+    LIBS += "$${VRN_HOME}/bin/$${WIN32_CONFIG_NAME}/libtgt.a"
+    
+    LIBS += "$${VRN_HOME}/ext/glew/lib/mingw/glew32s.lib"
   }
-
-  LIBS += "$${VRN_HOME}/ext/glew/lib/$${MSC_CONFIG}/glew32s.lib"
-
-  # no libc for vc++ since we build a multithreaded executable
-  win32-msvc {
-    LIBS += /NODEFAULTLIB:libc.lib
-  }
-
-  contains(DEFINES, VRN_WITH_DEVIL) {
-    LIBS += "$${DEVIL_DIR}/lib/DevIL.lib"
-  }
-
-  contains(DEFINES, VRN_WITH_ZLIB) {
-    LIBS += "$${ZLIB_DIR}/lib/zdll.lib"
-  }	
-
-  contains(DEFINES, VRN_WITH_FONTRENDERING) {
-    win32-msvc: LIBS += "$${FREETYPE_DIR}/lib/freetype.lib"
-    win32-g++:  LIBS += "$${FREETYPE_DIR}/lib/mingw/freetype.lib"
-    win32-msvc: LIBS += "$${FTGL_DIR}/lib/ftgl.lib"
-    win32-g++:  LIBS += "$${FTGL_DIR}/lib/mingw/ftgl.lib"
-    INCLUDEPATH += "$${FTGL_DIR}/include"
-  }
-
-  contains(DEFINES, VRN_WITH_FFMPEG) {
-    LIBS += "$${FFMPEG_DIR}/win32/avcodec.lib"
-    LIBS += "$${FFMPEG_DIR}/win32/avdevice.lib"
-    LIBS += "$${FFMPEG_DIR}/win32/avformat.lib"
-    LIBS += "$${FFMPEG_DIR}/win32/avutil.lib"
-    LIBS += "$${FFMPEG_DIR}/win32/swscale.lib"
-  }
-  
-  LIBS += -lnetapi32 -lopengl32 -lglu32
+   
 
   # For reading file version, file date and making registry calls
   # via Windows API
   LIBS += -lVersion
-
-  # Windows Management Instrumentation (WMI) for hardware detection
-  contains(DEFINES, TGT_WITH_WMI) {
-    LIBS += -lWbemUuid
-  }
-
 }
 
 unix {
   DEFINES += LINUX
 
-  !macx: LIBS += -lGL -lGLU
-  LIBS += -lGLEW
   qt : LIBS += -lvoreen_qt
   LIBS += -lvoreen_core
-
-  contains(DEFINES, VRN_WITH_DEVIL) {
-    LIBS += -lIL
-  }
-
-  contains(DEFINES, VRN_WITH_ZLIB) {
-    LIBS += -lz
-  }
-
-  contains(DEFINES, VRN_WITH_FONTRENDERING) {
-    LIBS += -lfreetype -lftgl
-  }
-
-  contains(DEFINES, VRN_WITH_FFMPEG) {
-    # It is important that this comes after linking the voreen_* libs.
-    LIBS += -lbz2 -lavformat -lavcodec -lavutil -lswscale
-  }
+  LIBS += -ltgt
+  !macx: LIBS += -lGL -lGLU
+  LIBS += -lGLEW
 
   contains(DEFINES, VRN_WITH_LZO) {
     LIBS += -llzo2
@@ -131,16 +118,24 @@ unix {
 macx {
   LIBS += -framework OpenGL
   LIBS += -framework ApplicationServices
+  LIBS += -framework CoreFoundation
 }
 
-
+########################################################################
 # Include modules which are selected in local configuration. The entry
 # 'foo' in VRN_MODULES must correspond to a subdir 'modules/foo' and a
 # file 'foo_app.pri' there.
-for(i, VRN_MODULES) : exists($${VRN_HOME}/src/modules/$${i}/$${i}_app.pri) {
-  include($${VRN_HOME}/src/modules/$${i}/$${i}_app.pri)
+########################################################################
+for(i, VRN_MODULES) : exists($${VRN_MODULE_DIR}/$${i}/$${i}_app.pri) {
+  include($${VRN_MODULE_DIR}/$${i}/$${i}_app.pri)
 }
 
-### Local Variables:
-### mode:conf-unix
-### End:
+# Copy Win32 DLLs to application directory (Visual Studio post build action)
+win32-msvc || win64-msvc {
+  EXTDIR = $${VRN_HOME}/ext
+  VRN_DEST_DIR = $${PWD}/$${VRN_APP_DIRECTORY}/$${WIN32_CONFIG_NAME}
+
+  for(dll, VRN_MODULE_DLLS) : {
+    QMAKE_POST_LINK += $$quote(cmd /c copy /y \"$${dll}\" \"$${DESTDIR}\" > NUL $$escape_expand(\\n))
+  }
+}

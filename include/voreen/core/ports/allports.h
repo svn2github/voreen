@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,10 +32,10 @@
 #include "voreen/core/ports/coprocessorport.h"
 #include "voreen/core/ports/genericcoprocessorport.h"
 #include "voreen/core/ports/genericport.h"
+#include "voreen/core/ports/geometryport.h"
 #include "voreen/core/ports/port.h"
 #include "voreen/core/ports/renderport.h"
 #include "voreen/core/ports/volumeport.h"
-#include "voreen/core/ports/plotport.h"
 #include "voreen/core/ports/textport.h"
 
 #endif // VRN_ALLPORTS_H

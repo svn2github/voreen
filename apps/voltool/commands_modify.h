@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -72,7 +72,7 @@ public:
     * Gets information like spacing etc from a volume. This function is used to fill
     * the brickingInformation struct with the necessary information to brick the volume.
     */
-    void getVolumeInformation(BrickingInformation& brickingInformation, Volume* volume);
+    void getVolumeInformation(BrickingInformation& brickingInformation, const Volume* volume);
 };
 
 

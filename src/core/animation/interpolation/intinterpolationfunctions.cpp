@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,6 +28,7 @@
 
 #include "voreen/core/animation/interpolation/basicintinterpolation.h"
 #include "voreen/core/animation/interpolation/intinterpolationfunctions.h"
+#include "voreen/core/animation/propertykeyvalue.h"
 
 namespace voreen {
 
@@ -143,10 +144,9 @@ int IntCatmullRomInterpolationFunction::interpolate(std::vector<PropertyKeyValue
 
     it++;
     it++;
-    int p3;
     int m2;
     if (it!= controlpoints.end()) {
-        p3 = (*it)->getValue();
+        int p3 = (*it)->getValue();
         m2 = static_cast<int>(0.5f*(p3 - p1));
     } else
         m2 = p2 - p1;

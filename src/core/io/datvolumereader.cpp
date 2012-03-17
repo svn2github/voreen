@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,6 +36,7 @@
 
 #include "voreen/core/io/textfilereader.h"
 #include "voreen/core/io/rawvolumereader.h"
+#include "voreen/core/utils/stringconversion.h"
 #include "voreen/core/datastructures/volume/volumeatomic.h"
 
 using tgt::vec3;
@@ -45,7 +46,7 @@ using tgt::lessThanEqual;
 
 namespace voreen {
 
-const std::string DatVolumeReader::loggerCat_ = "voreen.io.VolumeReader.dat";
+const std::string DatVolumeReader::loggerCat_ = "voreen.DatVolumeReader";
 
 DatVolumeReader::DatVolumeReader(ProgressBar* progress)
     : VolumeReader(progress)
@@ -70,18 +71,56 @@ std::string DatVolumeReader::getRelatedRawFileName(const std::string& fileName) 
     return objectFilename;
 }
 
+VolumeHandleBase* DatVolumeReader::read(const VolumeOrigin& origin)
+    throw (tgt::FileException, std::bad_alloc)
+{
+    VolumeHandleBase* result = 0;
+
+    int timeframe = -1;
+    std::string tmp = origin.getSearchParameter("timeframe");
+    if (! tmp.empty())
+        timeframe = stoi(tmp);
+
+    VolumeCollection* collection = read(origin.getPath(), timeframe);
+
+    if (collection && collection->size() == 1) {
+        result = collection->first();
+    }
+    else if (collection && collection->size() > 1) {
+        delete collection;
+        throw tgt::FileException("Only one volume expected", origin.getPath());
+    }
+
+    delete collection;
+
+    return result;
+}
+
 VolumeCollection* DatVolumeReader::read(const std::string &url)
     throw (tgt::FileException, std::bad_alloc)
 {
-    return readSlices(url, 0, 0);
+    VolumeOrigin origin(url);
+    int timeframe = -1;
+    std::string tmp = origin.getSearchParameter("timeframe");
+    if (! tmp.empty())
+        timeframe = stoi(tmp);
+
+    return readSlices(url, 0, 0, timeframe);
 }
 
-VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, size_t firstSlice,size_t lastSlice)
+VolumeCollection* DatVolumeReader::read(const std::string &url, int timeframe)
+    throw (tgt::FileException, std::bad_alloc)
+{
+    return readSlices(url, 0, 0, timeframe);
+}
+
+VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, size_t firstSlice, size_t lastSlice, int timeframe)
     throw (tgt::FileException, std::bad_alloc)
 {
     RawVolumeReader::ReadHints h;
     std::string objectFilename;
     vec3 sliceThickness = vec3(1.f, 1.f, 1.f);
+    int numFrames = 1;
     std::string taggedFilename;
     int nbrTags;
     std::string objectType;
@@ -109,6 +148,9 @@ VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, siz
             args >> h.dimensions_.y;
             args >> h.dimensions_.z;
             LDEBUG(type << " " << h.dimensions_);
+        } else if (type == "NumFrames:") {
+            args >> numFrames;
+            LDEBUG(type << " " << numFrames);
         } else if (type == "SliceThickness:") {
             args >> sliceThickness.x >> sliceThickness.y >> sliceThickness.z;
             LDEBUG(type << " " << sliceThickness);
@@ -166,6 +208,13 @@ VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, siz
             LDEBUG(type << " " << modalityStr);
             h.modality_ = Modality(modalityStr);
         }
+        else if (type == "Checksum:") {
+            std::string checksumStr;
+            args >> checksumStr;
+            LDEBUG(type << " " << checksumStr);
+            if(checksumStr.length() == 32)
+                h.hash_ = checksumStr;
+        }
         else if (type == "TimeStep:") {
             args >> h.timeStep_;
             LDEBUG(type << " " << h.timeStep_);
@@ -204,7 +253,6 @@ VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, siz
 
     if (!error) {
         RawVolumeReader rawReader(getProgressBar());
-        rawReader.setReadHints(h);
 
         // do we have a relative path?
         if ((objectFilename.substr(0, 1) != "/")  && (objectFilename.substr(0, 1) != "\\") &&
@@ -215,21 +263,51 @@ VolumeCollection* DatVolumeReader::readMetaFile(const std::string &fileName, siz
             objectFilename = fileName.substr(0, p + 1) + objectFilename;
         }
 
-        VolumeCollection* volumeCollection = rawReader.readSlices(objectFilename, firstSlice, lastSlice);
-        if (!volumeCollection->empty())
-            volumeCollection->first()->setOrigin(VolumeOrigin(fileName));
-        return volumeCollection;
+        int start = 0;
+        int end = numFrames;
+        if (timeframe != -1) {
+            if (timeframe >= numFrames)
+                throw tgt::FileException("Specified time frame not in volume", fileName);
+
+            start = timeframe;
+            end = timeframe+1;
+        }
+
+        VolumeCollection* toReturn = new VolumeCollection();
+        for (int frame = start; frame < end; ++frame) {
+            h.timeframe_ = frame;
+            rawReader.setReadHints(h);
+
+            VolumeCollection* volumeCollection = rawReader.readSlices(objectFilename, firstSlice, lastSlice);
+            if (!volumeCollection->empty()) {
+                VolumeOrigin origin(fileName);
+                origin.addSearchParameter("timeframe", itos(frame));
+
+                VolumeHandle* vh = static_cast<VolumeHandle*>(volumeCollection->first());
+                vh->setOrigin(origin);
+                vh->setTimestep(static_cast<float>(frame));
+
+                oldVolumePosition(vh);
+
+                if(!h.hash_.empty())
+                    vh->setHash(h.hash_);
+
+                toReturn->add(volumeCollection->first());
+            }
+            delete volumeCollection;
+        }
+        return toReturn;
     }
     else {
         throw tgt::CorruptedFileException("error while reading data", fileName);
     }
 }
 
-VolumeCollection* DatVolumeReader::readSlices(const std::string &url, size_t firstSlice, size_t lastSlice)
+VolumeCollection* DatVolumeReader::readSlices(const std::string &url, size_t firstSlice, size_t lastSlice, int timeframe)
     throw (tgt::FileException, std::bad_alloc)
 {
     VolumeOrigin origin(url);
-    return readMetaFile(origin.getPath(), firstSlice, lastSlice);
+    return readMetaFile(origin.getPath(), firstSlice, lastSlice, timeframe);
 }
 
 VolumeCollection* DatVolumeReader::readBrick(const std::string& url, tgt::ivec3 brickStartPos, int brickSize)
@@ -249,6 +327,7 @@ VolumeCollection* DatVolumeReader::readVolumeFileBrick(const std::string &fileNa
                            16,                 // bits per voxel
                            "I",                // intensity image
                            "USHORT",           // one unsigned short per voxel
+                           1,                  // number of time frames
                            6);                 // header skip
 
     VolumeCollection* volumeCollection = rawReader.readBrick(fileName,brickStartPos, brickSize);

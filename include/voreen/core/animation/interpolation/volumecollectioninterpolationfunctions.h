@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,10 +34,14 @@
 
 namespace voreen {
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API InterpolationFunction<VolumeCollection*>;
+#endif
+
 /**
  * This class offers an interpolation function for volumecollections. Interpolation: focus on startvalue.
  */
-class VolumeCollectionStartInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
+class VRN_CORE_API VolumeCollectionStartInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
 public:
     VolumeCollectionStartInterpolationFunction();
     InterpolationFunction<VolumeCollection*>* clone() const;
@@ -50,7 +54,7 @@ public:
 /**
  * This class offers an interpolation function for volumecollections. Interpolation: focus on endvalue.
  */
-class VolumeCollectionEndInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
+class VRN_CORE_API VolumeCollectionEndInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
 public:
     VolumeCollectionEndInterpolationFunction();
     InterpolationFunction<VolumeCollection*>* clone() const;
@@ -63,7 +67,7 @@ public:
 /**
  * This class offers an interpolation function for volumecollections. Interpolation: bisection.
  */
-class VolumeCollectionStartEndInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
+class VRN_CORE_API VolumeCollectionStartEndInterpolationFunction : public InterpolationFunction<VolumeCollection*> {
 public:
     VolumeCollectionStartEndInterpolationFunction();
     InterpolationFunction<VolumeCollection*>* clone() const;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -53,8 +53,9 @@ namespace voreen {
 PortArrowGraphicsItem::PortArrowGraphicsItem(PortGraphicsItem* sourceItem)
     : ArrowGraphicsItem(sourceItem, 0)
     , oldDestinationItem_(0)
+    , movedAwayInEvent_(false)
 {
-    if (!dynamic_cast<CoProcessorPort*>(sourceItem->getPort()))
+    if (!dynamic_cast<CoProcessorPort*>(sourceItem->getPort()) && !sourceItem->getPort()->isLoopPort())
         destinationHeadDirection_ = ArrowHeadDirectionNS;
 
     if (sourceItem->getPort()->isLoopPort())
@@ -86,16 +87,15 @@ QPainterPath PortArrowGraphicsItem::shape() const {
         Port* sourcePort = getSourceItem()->getPort();
 
         if (sourcePort->isLoopPort()) {
-            path.lineTo(s + QPointF(0.0, 5.0));
+            defl *= 0.9;
             path.cubicTo(s + QPointF(defl, defl + 5.0),
-                         d + QPointF(defl, -defl + 5.0),
-                         d - QPointF(0, arrowHeadSize_ + 5.0));
-            path.lineTo(d);
-            path.lineTo(d - QPointF(0, arrowHeadSize_ + 5.0));
-            path.cubicTo(d + QPointF(defl, -defl + 5.0),
+                         d + QPointF(defl, -defl /*+ 5.0*/),
+                         d /*- QPointF(0, arrowHeadSize_ + 5.0)*/);
+            //path.lineTo(d);
+            //path.lineTo(d /*- QPointF(0, arrowHeadSize_ + 5.0)*/);
+            path.cubicTo(d + QPointF(defl, -defl /*+ 5.0*/),
                          s + QPointF(defl, defl + 5.0),
-                         s + QPointF(0.0, 5.0));
-            path.lineTo(s);
+                         s);
         }
         else {
             path.cubicTo(s + QPointF(0, defl/2.0),

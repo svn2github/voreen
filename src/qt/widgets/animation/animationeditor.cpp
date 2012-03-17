@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -57,6 +57,20 @@
 
 #include <QImageReader>
 
+namespace {
+    QString whatsThisInfo = "<h3>Animation Editor</h3><p>This widget allows to program, play and record animations of the current \
+                            workspace. Animateable properties can be added with the <img src=\":/icons/expand-plus.png\" width=\"20\"> \
+                            button next to the processor's name. The properties will have a timeline which can be modified using \
+                            the context menu, selection and the controls to the right of it.</p>\
+                            <p><img src=\":/icons/clear.png\" width=\"25\"> Deletes the current animation and creates an empty one.</p>\
+                            <p><img src=\":/voreenve/icons/configure.png\" width=\"25\"> Gives access to timing settings such as \
+                            duration.</p>\
+                            <p><img src=\":/icons/video_export.png\" width=\"25\"> Allows to export an animation. The export will be \
+                            either a frame sequence or (if available) exported as a video using ffmpeg.</p>\
+                            <p><img src=\":/icons/player_record.png\" width=\"25\"> This button will make a snapshot of all properties \
+                            of the network and store their values and store this snapshot as key frame.</p>";
+}
+
 namespace voreen {
 
 float AnimationEditor::duration_ = 600;
@@ -71,6 +85,8 @@ AnimationEditor::AnimationEditor(NetworkEvaluator* eval, Workspace* workspace, Q
     , interactionMode_(false)
     , workspace_(workspace)
 {
+    setWhatsThis(whatsThisInfo);
+
     if (workspace->getAnimation()) {
         animation_ = workspace->getAnimation();
         duration_ = (int)animation_->getDuration()*30.0f;
@@ -100,7 +116,7 @@ AnimationEditor::AnimationEditor(NetworkEvaluator* eval, Workspace* workspace, Q
     QToolButton* settingsButton = new QToolButton(this);
     QToolButton* videoExportButton = new QToolButton(this);
     newButton->setIcon(QIcon(":/icons/clear.png"));
-    settingsButton->setIcon(QIcon(":/voreenve/icons/show-properties.png"));
+    settingsButton->setIcon(QIcon(":/voreenve/icons/configure.png"));
     videoExportButton->setIcon(QIcon(":/icons/video_export.png"));
 
     QToolButton* undoButton = new QToolButton(this);

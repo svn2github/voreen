@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -39,7 +39,7 @@ namespace voreen {
 /**
  * Abstract base class for all primitives that are used in 2D transfer functions.
  */
-class TransFuncPrimitive : public AbstractSerializable {
+class VRN_CORE_API TransFuncPrimitive : public AbstractSerializable {
 public:
     /**
      * Standard constructor
@@ -196,7 +196,7 @@ protected:
 /**
  * A quad primitive. It consists of 4 vertices that can be moved independently.
  */
-class TransFuncQuad : public TransFuncPrimitive {
+class VRN_CORE_API TransFuncQuad : public TransFuncPrimitive {
 public:
     /**
      * Constructor
@@ -302,7 +302,7 @@ protected:
  * The first spline starts at point 0, goes through 1 and ends in 3.
  * The second spline starts at point 0, goes through 2 and ends in 3.
  */
-class TransFuncBanana : public TransFuncPrimitive {
+class VRN_CORE_API TransFuncBanana : public TransFuncPrimitive {
 public:
     /**
      * Constructor

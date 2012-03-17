@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,7 +37,7 @@
 namespace voreen {
 
 //forward declaration
-class VolumeHandle;
+class VolumeHandleBase;
 
 /**
  * Abstract base class for all transfer function widgets. It provides methods to open a Filedialog
@@ -128,7 +128,7 @@ public slots:
 protected:
     TransFuncProperty* property_; ///< the transfer function property that belongs to this plugin
 
-    VolumeHandle* volumeHandle_; ///< the volume handle that is associated with the transfer function this widget belongs to
+    const VolumeHandleBase* volumeHandle_; ///< the volume handle that is associated with the transfer function this widget belongs to
 
     QString title_; ///< name of the editor that is displayed in the gui
 };

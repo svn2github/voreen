@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -27,7 +27,6 @@
 
 #include <vector>
 
-#include "tgt/config.h"
 #include "tgt/tgt_gl.h"
 #include "tgt/vector.h"
 
@@ -229,7 +228,7 @@ struct InterleavedV2F : public std::vector<VertexV2F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_VERTEX_ARRAY);
     }
 };
@@ -250,7 +249,7 @@ struct InterleavedV3F : public std::vector<VertexV3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_VERTEX_ARRAY);
     }
 };
@@ -271,7 +270,7 @@ struct InterleavedC4UB_V2F : public std::vector<VertexC4UB_V2F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
@@ -294,7 +293,7 @@ struct InterleavedC4UB_V3F : public std::vector<VertexC4UB_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
@@ -316,7 +315,7 @@ struct InterleavedC3F_V3F : public std::vector<VertexC3F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
@@ -338,7 +337,7 @@ struct InterleavedN3F_V3F : public std::vector<VertexN3F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_NORMAL_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
@@ -360,7 +359,7 @@ struct InterleavedC4F_N3F_V3F : public std::vector<VertexC4F_N3F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -383,7 +382,7 @@ struct InterleavedT2F_V3F : public std::vector<VertexT2F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
@@ -405,7 +404,7 @@ struct InterleavedT4F_V4F : public std::vector<VertexT4F_V4F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
@@ -427,7 +426,7 @@ struct InterleavedT2F_C4UB_V3F : public std::vector<VertexT2F_C4UB_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -450,7 +449,7 @@ struct InterleavedT2F_C3F_V3F : public std::vector<VertexT2F_C3F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -474,7 +473,7 @@ struct InterleavedT2F_N3F_V3F : public std::vector<VertexT2F_N3F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -498,7 +497,7 @@ struct InterleavedT2F_C4F_N3F_V3F : public std::vector<VertexT2F_C4F_N3F_V3F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_COLOR);
         glDisableClientState(GL_NORMAL_ARRAY);
@@ -523,7 +522,7 @@ struct InterleavedT4F_C4F_N3F_V4F : public std::vector<VertexT4F_C4F_N3F_V4F> {
 
     void render() {
         glInterleavedArrays(FORMAT, 0, &operator[](0));
-        glDrawArrays(primitiveMode_, 0, size());
+        glDrawArrays(primitiveMode_, 0, static_cast<GLsizei>(size()));
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_COLOR);
         glDisableClientState(GL_NORMAL_ARRAY);

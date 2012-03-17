@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -38,6 +38,7 @@
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/ports/renderport.h"
 #include "voreen/core/ports/genericport.h"
+#include "voreen/core/ports/geometryport.h"
 
 
 namespace voreen {
@@ -45,7 +46,7 @@ namespace voreen {
 /**
  * The base class for all processor classes that render to RenderPorts.
  */
-class RenderProcessor : public Processor {
+class VRN_CORE_API RenderProcessor : public Processor {
 public:
 
     RenderProcessor();
@@ -94,12 +95,12 @@ protected:
     /**
      * Initializes all private RenderPorts.
      */
-    virtual void initialize() throw (VoreenException);
+    virtual void initialize() throw (tgt::Exception);
 
     /**
      * Deinitializes all private RenderPorts.
      */
-    virtual void deinitialize() throw (VoreenException);
+    virtual void deinitialize() throw (tgt::Exception);
 
     /**
      * Calls adjustRenderOutportDimensions().
@@ -129,7 +130,7 @@ protected:
      * \note If you overwrite this function in a subclass, you have to the call the superclass' function first and
      * append your additions to its result!
      */
-    virtual std::string generateHeader();
+    virtual std::string generateHeader(const tgt::GpuCapabilities::GlVersion* version = 0);
 
     /**
      * Sets some uniforms potentially needed by every shader.

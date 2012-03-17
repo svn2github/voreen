@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -43,7 +43,7 @@ class VolumeContainer;
 class Animation;
 class ScriptManagerLinking;
 
-class Workspace : public Serializable {
+class VRN_CORE_API Workspace : public Serializable {
 public:
 
     /**
@@ -119,6 +119,10 @@ public:
     Animation* getAnimation() const;
     void setAnimation(Animation* anim);
 
+    const std::string& getDescription() const;
+    bool hasDescription() const;
+    void setDescription(const std::string& description);
+
     /// @see Serializable::serialize
     virtual void serialize(XmlSerializer& s) const;
 
@@ -132,6 +136,7 @@ private:
     Animation* animation_;
     std::string filename_;
     bool readOnly_;
+    std::string description_;
 
     tgt::GLCanvas* sharedContext_;
 

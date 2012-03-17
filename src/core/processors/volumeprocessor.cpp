@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,16 +36,68 @@ VolumeProcessor::VolumeProcessor()
 
 VolumeProcessor::~VolumeProcessor() {}
 
-tgt::mat4 VolumeProcessor::computeConversionMatrix(const Volume* originVolume, const Volume* destinationVolume) const {
-    tgt::mat4 result;
+tgt::mat4 VolumeProcessor::computeConversionMatrix(const VolumeHandleBase* originVolume, const VolumeHandleBase* destinationVolume) const {
+    if (originVolume == destinationVolume)
+        return tgt::mat4::identity;
+    else {
+        //tgt::mat4 voxelToWorldOrigin = originVolume->getVoxelToWorldMatrix();
+        //tgt::mat4 worldToVoxelDestination = destinationVolume->getWorldToVoxelMatrix();
+        tgt::mat4 voxelToWorldOrigin = originVolume->getPhysicalToWorldMatrix();
+        tgt::mat4 worldToVoxelDestination = destinationVolume->getWorldToPhysicalMatrix();
 
-    tgt::mat4 voxelToWorldOrigin = originVolume->getVoxelToWorldMatrix();
-    tgt::mat4 voxelToWorldDestination = destinationVolume->getVoxelToWorldMatrix();
+        return worldToVoxelDestination * voxelToWorldOrigin;
+    }
+}
 
-    voxelToWorldOrigin.invert(result);
-    result *= voxelToWorldDestination;
+//------------------------------------------------------------------------
 
-    return result;
+CachingVolumeProcessor::CachingVolumeProcessor()
+    : VolumeProcessor()
+    , useCaching_("useCaching", "Use Cache", true, VALID)
+    , clearCache_("clearCache", "Clear Cache", VALID)
+    , cache_(this)
+{
+    addProperty(useCaching_);
+
+    clearCache_.onChange(CallMemberAction<CachingVolumeProcessor>(this, &CachingVolumeProcessor::clearCache));
+    addProperty(clearCache_);
+
+    useCaching_.setGroupID("caching");
+    clearCache_.setGroupID("caching");
+}
+
+CachingVolumeProcessor::~CachingVolumeProcessor() {}
+
+void CachingVolumeProcessor::beforeProcess() {
+    VolumeProcessor::beforeProcess();
+
+    if (useCaching_.get()) {
+        if(cache_.restore()) {
+            setValid();
+        }
+    }
+}
+
+void CachingVolumeProcessor::afterProcess() {
+    VolumeProcessor::afterProcess();
+
+    if(useCaching_.get()) {
+        cache_.store();
+    }
+}
+
+void CachingVolumeProcessor::initialize() throw (tgt::Exception) {
+    VolumeProcessor::initialize();
+
+    cache_.addAllInports();
+    cache_.addAllOutports();
+    cache_.addAllProperties();
+
+    cache_.initialize();
+}
+
+void CachingVolumeProcessor::clearCache() {
+    cache_.clearCache();
 }
 
 }   // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,7 @@
 #include "processorgraphicsitem.h"
 
 #include "voreen/core/processors/processor.h"
-#include "voreen/modules/base/processors/utility/scale.h"
+#include "modules/base/processors/utility/scale.h"
 #include "voreen/core/properties/property.h"
 #include "voreen/core/processors/processorfactory.h"
 #include "voreen/core/processors/processorwidget.h"
@@ -74,11 +74,10 @@ ProcessorGraphicsItem::ProcessorGraphicsItem(Processor* processor, NetworkEditor
 
     initializePorts();
 
-    QPointF center(boundingRect().x() + boundingRect().width() / 2.0, boundingRect().y() + boundingRect().height() * 0.775);
-    qreal width = boundingRect().width() * 0.8;
-    qreal height = 8;
-
-    if (processor_->usesExpensiveComputation()) {
+    if (processor_->getExpensiveComputationStatus() & Processor::COMPUTATION_STATUS_PROGRESSBAR) {
+        QPointF center(boundingRect().x() + boundingRect().width() / 2.0, boundingRect().y() + boundingRect().height() * 0.775);
+        qreal width = boundingRect().width() * 0.8;
+        qreal height = 8;
         progressBar_ = new ProgressBarGraphicsItem(this, center, width, height);
         processor_->setProgressBar(progressBar_);
     }
@@ -230,39 +229,6 @@ void ProcessorGraphicsItem::portsAndPropertiesChanged(const Processor*) {
                 disconnect(externalPort, ownPort);
         }
     }
-
-#ifdef TZRT
-
-    const std::vector<Processor*> processors = networkEditor_->getProcessorNetwork()->getProcessors();
-    for (unsigned int i=0; i<processors.size(); i++) {
-        std::cout << "processor: " << processors[i]->getName() << " has " << processors[i]->getProperties().size() << " props" << std::endl;
-        const std::vector<Property*> properties = processors[i]->getProperties();
-        for (unsigned int j=0; j<properties.size(); j++) {
-            std::cout << "property: " << properties[j]->getID() << std::endl;
-            std::vector<PropertyLink*> curLinks = properties[j]->getLinks();
-            for (unsigned int k=0; k<curLinks.size(); k++) {
-                //std:: cout << "dstowner: " << curLinks[k]->getDestinationProperty()->getOwner()->getName() << std::endl;
-                //std:: cout << "srcowner: " << curLinks[k]->getSourceProperty()->getOwner()->getName() << std::endl;
-                /*
-                if (!curLinks[k]->getDestinationProperty()->getOwner() ||
-                    !curLinks[k]->getSourceProperty()->getOwner()) {
-                    */
-                std::cout << "removing link "+curLinks[k]->getSourceProperty()->getID() + "->" +curLinks[k]->getDestinationProperty()->getID() << std::endl;
-                //links.push_back(new PropertyLink(curLinks[k]->getSourceProperty(), curLinks[k]->getDestinationProperty(), curLinks[k]->getLinkEvaluator()));
-                       /*
-                       networkEditor_->removePropertyLink(curLinks[k]);
-
-networkEditor_->getProcessorNetwork()->notifyPropertyLinkRemoved(curLinks[k]);
-                       //delete curLinks[k];
-                       */
-
-                networkEditor_->getProcessorNetwork()->removePropertyLink(curLinks[k]);
-               //}
-           }
-       }
-   }
-
-#endif
 
     deleteChildItems();
     initializePorts();

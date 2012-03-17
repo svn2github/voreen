@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #include "voreen/core/animation/interpolation/vec3interpolationfunctions.h"
 #include "voreen/core/animation/interpolation/floatinterpolationfunctions.h"
 #include "tgt/quaternion.h"
+#include "voreen/core/animation/propertykeyvalue.h"
 
 namespace voreen {
 

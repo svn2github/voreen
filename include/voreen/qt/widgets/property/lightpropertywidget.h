@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,34 +29,36 @@
 #ifndef VRN_LIGHTPROPTERYWIDGET_H
 #define VRN_LIGHTPROPERTYWIDGET_H
 
-#include <QWidget>
-#include <math.h>
+#include "voreen/qt/widgets/property/qpropertywidget.h"
+#include "voreen/core/properties/vectorproperty.h"
+#include "tgt/camera.h"
 
-#include <tgt/vector.h>
-#include <tgt/camera.h>
-
-#include "voreen/qt/widgets/property/floatvec4propertywidget.h"
-#include "voreen/qt/widgets/lightwidget.h"
-
-class FloatVec4Property;
+class QCheckBox;
+class QWidget;
 
 namespace voreen {
-    class LightPropertyWidget : public QPropertyWidget {
+
+class FloatVec4Property;
+class FloatVec4PropertyWidget;
+class LightWidget;
+
+class LightPropertyWidget : public QPropertyWidget {
 Q_OBJECT
 public:
-    LightPropertyWidget(FloatVec4Property*, QWidget* parent = 0);
+    LightPropertyWidget(FloatVec4Property* prop, QWidget* parent = 0);
 
 protected:
-    tgt::mat4 viewMatrix_;
     FloatVec4Property* property_;
-    tgt::Vector4f vector_;
-    tgt::Camera camera_;
-    int hemisphere_;
     LightWidget* light_;
+    QCheckBox* followCam_;
+    bool noUpdateFromProp_;
+
     tgt::Camera getCamera();
     void cameraUpdate();    // on property change of the cameraproperty this is invoked by calling
                             // a member action
     void updateFromProperty();
+    //MetaDataBase* getWidgetMetaData() const;
+    virtual void updateMetaData() const;
 
 protected slots:
     void changeWidgetLight(tgt::vec4);

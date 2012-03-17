@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -49,12 +49,12 @@ HistogramPainter::HistogramPainter(QWidget* parent, tgt::vec2 xRange, tgt::vec2 
 }
 
 HistogramPainter::~HistogramPainter() {
-    delete histogram_;
+    //delete histogram_;
     delete cache_;
 }
 
 void HistogramPainter::setHistogram(HistogramIntensity* histogram) {
-    delete histogram_;
+    //delete histogram_;
     histogram_ = histogram;
     delete cache_;
     cache_ = 0;

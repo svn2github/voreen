@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,54 +35,53 @@
 
 #include "tgt/exception.h"
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/datastructures/volume/volumehandle.h"
 #include "voreen/core/datastructures/volume/volumecollection.h"
 
 namespace voreen {
 
 // forward declarations
-class FormatClashException;
 class Volume;
 class VolumeReader;
 class VolumeWriter;
 class VolumeSerializer;
-
-/**
- * Thrown when a VolumeReader or VolumeWriter was tried to register for an
- * extension/extensions that has/have a handler/handlers.
- */
-class FormatClashException : std::exception {
-public:
-
-    typedef std::vector<std::string> Extensions;
-
-    /// @param extensions The extensions which have already been registered.
-    FormatClashException(const Extensions& extensions);
-    virtual ~FormatClashException() throw() {}
-
-    /// Returns the extensions which have already been registered.
-    const Extensions& getExtensions() const throw();
-
-    virtual const char* what() const throw();
-
-protected:
-
-    Extensions extensions_; ///< The extensions which have already been registered.
-    std::string message_;
-};
-
-//------------------------------------------------------------------------------
+class ProgressBar;
 
 /**
  * You can register several VolumeReader and VolumeWriter instances in this class.
- * A call to \a load or \a save will then automatically select the proper VolumeReader /
+ * A call to \a read or \a write will then automatically select the proper VolumeReader /
  * VolumeWriter and delegate the loading / saving to it.
  */
-class VolumeSerializer {
+class VRN_CORE_API VolumeSerializer {
 public:
 
     VolumeSerializer();
     ~VolumeSerializer();
+
+    /**
+     * Finds suitable VolumeReaders for the specified URL.
+     * If an empty string is passed, all registered readers are returned.
+     *
+     * @param url URL of the file to load. May be a plain filename.
+     * @return VolumeReaders that are able to read from the URL.
+     *
+     * @throw UnsupportedFormatException if no suitable reader has been found.
+     */
+    std::vector<VolumeReader*> getReaders(const std::string& url = "") const
+        throw (tgt::UnsupportedFormatException);
+
+    /**
+     * Finds suitable VolumeWriters for the specified URL.
+     * If an empty string is passed, all registered writers are returned.
+     *
+     * @param url URL of the file to write. May be a plain filename.
+     * @return VolumeWriters that are able to read from the filename.
+     *
+     * @throw UnsupportedFormatException if no suitable writer has been found.
+     */
+    std::vector<VolumeWriter*> getWriters(const std::string& url = "") const
+        throw (tgt::UnsupportedFormatException);
 
     /**
      * Loads one or multiple volumes from the specified URL.
@@ -94,7 +93,7 @@ public:
      * @return VolumeCollection containing all volumes read from the url.
      *      the caller is responsible for freeing the memory.
      */
-    VolumeCollection* load(const std::string& url) const
+    VolumeCollection* read(const std::string& url) const
         throw (tgt::FileException, std::bad_alloc);
 
     /**
@@ -103,7 +102,7 @@ public:
      *
      * @return new VolumeCollection, the caller is responsible for freeing the memory.
      */
-    VolumeCollection* loadSlices(const std::string& url, size_t firstSlice, size_t lastSlice) const
+    VolumeCollection* readSlices(const std::string& url, size_t firstSlice, size_t lastSlice) const
         throw (tgt::FileException, std::bad_alloc);
 
     /**
@@ -112,7 +111,7 @@ public:
      *
      * @return new VolumeCollection, the caller is responsible for freeing the memory.
      */
-    VolumeCollection* loadBrick(const std::string& url, tgt::ivec3 brickStartPos, int brickSize)  const
+    VolumeCollection* readBrick(const std::string& url, tgt::ivec3 brickStartPos, int brickSize)  const
         throw (tgt::FileException, std::bad_alloc);
 
     /**
@@ -124,7 +123,7 @@ public:
      * @return VolumeHandle encapsulating the loaded volume.
      *      The caller is responsible for freeing the memory.
      */
-    VolumeHandle* load(const VolumeOrigin& origin) const
+    VolumeHandleBase* read(const VolumeOrigin& origin) const
         throw (tgt::FileException, std::bad_alloc);
 
     /**
@@ -149,63 +148,55 @@ public:
     /**
      * Saves a Volume to the given file.
      *
-     * @param fileName The file name where the data should go.
+     * @param url The URL of the file where the data should be written to. May be a plain filename.
      * @param volume The Volume that should be saved.
      */
-    void save(const std::string& filename, VolumeHandle* volume) const throw (tgt::FileException);
-
-    /**
-     * Saves a Volume to the given file.
-     *
-     * @param fileName The file name where the data should go.
-     * @param volume The Volume that should be saved.
-     */
-    void save(const std::string& filename, Volume* volume) const throw (tgt::FileException);
+    void write(const std::string& url, const VolumeHandleBase* volume) 
+        const throw (tgt::FileException);
 
     /**
      * Use this method to register a VolumeReader.
-     *
-     * @param vr The VolumeReader to be registered.
      */
-    void registerReader(VolumeReader* vr)
-        throw (FormatClashException);
+    void registerReader(VolumeReader* vr);
 
     /**
      * Use this method to register a VolumeWriter.
-     *
-     * @param vw The VolumeWriter to be registered.
      */
-    void registerWriter(VolumeWriter* vw)
-        throw (FormatClashException);
+    void registerWriter(VolumeWriter* vw);
+
+    /**
+     * Assigns the passed progress bar to all registered readers and writers.
+     * May be null.
+     */
+    void setProgressBar(ProgressBar* progressBar);
 
 private:
+    /// all registered readers
+    std::vector<VolumeReader*> readers_;
+
+    /// all registered readers
+    std::vector<VolumeWriter*> writers_;
 
     /// maps from filename extensions to the appropriate reader
-    std::map<std::string, VolumeReader*> readersExtensionMap_;
+    std::map<std::string, std::vector<VolumeReader*> > readersExtensionMap_;
+
+    /// maps from filenames to the appropriate reader
+    std::map<std::string, std::vector<VolumeReader*> > readersFilenameMap_;
 
     /// maps from protocol strings (e.g. zip, dicom) to the appropriate reader
-    std::map<std::string, VolumeReader*> readersProtocolMap_;
+    std::map<std::string, std::vector<VolumeReader*> > readersProtocolMap_;
 
     /// maps from filename extensions to the appropriate writer
-    std::map<std::string, VolumeWriter*> writersMap_;
+    std::map<std::string, std::vector<VolumeWriter*> > writersExtensionMap_;
 
-    /**
-     * @brief Find a suitable VolumeReader for the specified URL.
-     *
-     * @return A VolumeReader that is able to read from the URL.
-     */
-    VolumeReader* getReader(const std::string& url) const
-        throw (tgt::UnsupportedFormatException);
+    /// maps from filenames to the appropriate writer
+    std::map<std::string, std::vector<VolumeWriter*> > writersFilenameMap_;
 
-    /**
-     * @brief Find a suitable VolumeWriter for the specified filename.
-     *
-     * @return A VolumeWriter that is able to write to this file.
-     */
-    VolumeWriter* getWriter(const std::string& filename) const
-        throw (tgt::UnsupportedFormatException);
+    /// maps from protocol strings (e.g. zip, dicom) to the appropriate writer
+    std::map<std::string, std::vector<VolumeWriter*> > writersProtocolMap_;
+
 };
 
 } // namespace voreen
 
-#endif // VRN_VOLUMESERIA
+#endif // VRN_VOLUMESERIALIZER_H_

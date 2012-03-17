@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,14 +37,15 @@ namespace voreen {
 /**
  * Writes the volume into a .dat and a .raw file.
  */
-class DatVolumeWriter : public VolumeWriter {
+class VRN_CORE_API DatVolumeWriter : public VolumeWriter {
 public:
     DatVolumeWriter();
-
     virtual VolumeWriter* create(ProgressBar* progress = 0) const;
 
-    std::string getDatFileString(VolumeHandle* const volumeHandle,
-        const std::string& rawFileName, char** volData, size_t& numBytes);
+    virtual std::string getClassName() const   { return "DatVolumeWriter"; }
+    virtual std::string getFormatDescription() const { return "Voreen dat/raw format"; }
+
+    std::string getDatFileString(const VolumeHandleBase* const volumeHandle, const std::string& rawFileName);
 
     /**
      * Writes the data of a volume into a dat- and a raw-file.
@@ -52,7 +53,7 @@ public:
      * @param fileName File name to be written
      * @param volume Volume dataset
      */
-    virtual void write(const std::string& filename, VolumeHandle* volumeHandle)
+    virtual void write(const std::string& filename, const VolumeHandleBase* volumeHandle)
         throw (tgt::IOException);
 
 private:

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_DATVOLUMEREADER_H
 
 #include "voreen/core/io/volumereader.h"
+#include "voreen/core/voreencoredefine.h"
 
 namespace voreen {
 
@@ -52,6 +53,7 @@ namespace voreen {
  *   voxel is stored in a 16 bit \c short.
  * - <tt>ZeroPoint</tt>: offset for the voxel data for supporting signed data
  * - <tt>MetaString</tt>: a string containing arbitrary meta-data
+ * - <tt>NumFrames</tt>: number of time frames, each time frame will be loaded into a separate volume (default: 1)
  *
  * Example file <tt>nucleon.dat</tt>:
  \verbatim
@@ -66,11 +68,13 @@ ObjectModel:    I
 GridType:       EQUIDISTANT
  \endverbatim
  */
-class DatVolumeReader : public VolumeReader {
+class VRN_CORE_API DatVolumeReader : public VolumeReader {
 public:
     DatVolumeReader(ProgressBar* progress = 0);
-
     virtual VolumeReader* create(ProgressBar* progress = 0) const;
+
+    virtual std::string getClassName() const   { return "DatVolumeReader"; }
+    virtual std::string getFormatDescription() const { return "Voreen dat/raw format"; }
 
     /**
      * Reads the file name called 'ObjectFileName' from the .dat file and
@@ -80,10 +84,40 @@ public:
      */
     static std::string getRelatedRawFileName(const std::string& fileName);
 
+    /**
+     * Loads a single volume from the passed origin.
+     *
+     * \see VolumeReader::read
+     **/
+    virtual VolumeHandleBase* read(const VolumeOrigin& origin)
+        throw (tgt::FileException, std::bad_alloc);
+
+    /**
+     * Loads one or multiple volumes from the specified URL.
+     *
+     * \see VolumeReader::read
+     **/
     virtual VolumeCollection* read(const std::string& url)
         throw (tgt::FileException, std::bad_alloc);
 
-    virtual VolumeCollection* readSlices(const std::string& url, size_t firstSlice=0, size_t lastSlice=0)
+    /**
+     * Loads one or multiple volumes from the specified URL.
+     *
+     * \param   url         url to load volume from
+     * \param   timeframe   time frame to select from volume, if -1 all time frames will be selected
+     **/
+    virtual VolumeCollection* read(const std::string& url, int timeframe)
+        throw (tgt::FileException, std::bad_alloc);
+
+    /**
+     * Loads the given slices of one or multiple volumes from the specified URL.
+     *
+     * \param   url         url to load volume from
+     * \param   firstSlice  first slice to load
+     * \param   lastSlice   last slice to load, if 0 all slices from volume will be loaded
+     * \param   timeframe   time frame to select from volume, if -1 all time frames will be selected
+     **/
+    virtual VolumeCollection* readSlices(const std::string& url, size_t firstSlice = 0, size_t lastSlice = 0, int timeframe = -1)
         throw (tgt::FileException, std::bad_alloc);
 
     virtual VolumeCollection* readBrick(const std::string& url, tgt::ivec3 brickStartPos, int brickSize)
@@ -98,7 +132,7 @@ private:
     VolumeCollection* readVolumeFileBrick(const std::string& fileName,const tgt::ivec3& dims, tgt::ivec3 brickStartPos,
         int brickSize) throw (tgt::FileException, std::bad_alloc);
 
-    VolumeCollection* readMetaFile(const std::string& fileName,size_t firstSlice, size_t lastSlice)
+    VolumeCollection* readMetaFile(const std::string& fileName,size_t firstSlice, size_t lastSlice, int timeframe = -1)
         throw (tgt::FileException, std::bad_alloc);
 
     VolumeCollection* readMetaFileBrick(const std::string& fileName, tgt::ivec3 brickStartPos, int brickSize)

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -26,8 +26,8 @@
 #define TGT_TEXTURE_H
 
 #include <string>
-#include "tgt/config.h"
 #include "tgt/tgt_gl.h"
+#include "tgt/types.h"
 #include "tgt/vector.h"
 
 namespace tgt {
@@ -35,7 +35,7 @@ namespace tgt {
 /**
  * OpenGL Texture
  */
-class Texture {
+class TGT_API Texture {
 public:
     friend class TextureManager;
     friend class TextureReader;
@@ -67,32 +67,28 @@ public:
      * dimensions and a new chunk of data will be allocated on the heap.
      */
     Texture(const tgt::ivec3& dimensions, GLint format = GL_RGBA,
-            GLenum dataType = GL_UNSIGNED_BYTE, Filter filter = LINEAR,
-            bool textureRectangle = false);
+            GLenum dataType = GL_UNSIGNED_BYTE, Filter filter = LINEAR);
 
     /**
      * Without data and with internalformat argument, type_ is calculated by
      * dimensions and a new chunk of data will be allocated on the heap.
      */
     Texture(const tgt::ivec3& dimensions, GLint format, GLint internalformat,
-            GLenum dataType  = GL_UNSIGNED_BYTE, Filter filter = LINEAR,
-            bool textureRectangle = false);
+            GLenum dataType  = GL_UNSIGNED_BYTE, Filter filter = LINEAR);
 
     /**
      * With data and without internalformat argument, type_ is calculated by
      * dimensions and no new chunk of data will be allocated on the heap.
      */
     Texture(GLubyte* data, const tgt::ivec3& dimensions, GLint format = GL_RGBA,
-            GLenum dataType = GL_UNSIGNED_BYTE, Filter filter = LINEAR,
-            bool textureRectangle = false);
+            GLenum dataType = GL_UNSIGNED_BYTE, Filter filter = LINEAR);
 
     /**
      * With data and internalformat argument, type_ is calculated by
      * dimensions and no new chunk of data will be allocated on the heap.
      */
     Texture(GLubyte* data, const tgt::ivec3& dimensions, GLint format, GLint internalformat,
-            GLenum dataType  = GL_UNSIGNED_BYTE, Filter filter = LINEAR,
-            bool textureRectangle = false);
+            GLenum dataType = GL_UNSIGNED_BYTE, Filter filter = LINEAR);
 
     /**
     * The destructor deletes the Texture in OpenGL.
@@ -127,7 +123,10 @@ public:
     /// calculates the bytes per pixel from the internal format
     static int calcBpp(GLint internalformat);
 
-	///calculates size on the GPU (using internalformat)
+    /// calculates the number of channels from the passed texture format
+    static int calcNumChannels(GLint format);
+
+    ///calculates size on the GPU (using internalformat)
 	int getSizeOnGPU() const;
 
     /**
@@ -202,6 +201,7 @@ public:
     Filter getFilter() const { return filter_; }
     GLenum getDataType() const { return dataType_; }
     size_t getArraySize() const { return arraySize_; }
+    size_t getNumChannels() const { return calcNumChannels(format_); }
 
     void setDimensions(tgt::ivec3 dimensions) { dimensions_ = dimensions; }
     void setBpp(GLubyte bpp) { bpp_ = bpp; }
@@ -289,6 +289,14 @@ public:
      * calling this method!
      */
     GLubyte* downloadTextureToBuffer() const;
+
+    /**
+     * Download texture from the GPU to a preallocated buffer. Binds the texture.
+     *
+     * type_, format_, dimensions, and dataType_ have to be set before
+     * calling this method!
+     */
+     void downloadTextureToBuffer(GLubyte* pixels, size_t numBytesAllocated) const;
 
     /**
      * Download texture from the GPU to a newly allocated buffer with
@@ -403,7 +411,7 @@ protected:
     std::string name_;      ///< optional, e.g. for storing texture file name
     
     // used internally in the constructors
-    void init(bool allocData, bool textureRectangle);
+    void init(bool allocData);
 };
 
 } // namespace tgt

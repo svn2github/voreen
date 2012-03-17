@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,6 +27,7 @@
  **********************************************************************/
 
 #include "voreen/core/io/serialization/meta/positionmetadata.h"
+#include "voreen/core/utils/stringconversion.h"
 
 namespace voreen {
 
@@ -47,20 +48,6 @@ void PositionMetaData::deserialize(XmlDeserializer& s) {
     s.deserialize("y", y_);
 }
 
-const std::string PositionMetaData::getTypeString(const std::type_info& type) const {
-    if (type == typeid(PositionMetaData))
-        return "PositionMetaData";
-    else
-        return "";
-}
-
-Serializable* PositionMetaData::createType(const std::string &typeString) {
-    if (typeString == "PositionMetaData")
-        return new PositionMetaData();
-    else
-        return 0;
-}
-
 void PositionMetaData::setX(const int& value) {
     x_ = value;
 }
@@ -75,6 +62,18 @@ void PositionMetaData::setY(const int& value) {
 
 int PositionMetaData::getY() const {
     return y_;
+}
+
+MetaDataBase* PositionMetaData::clone() const {
+    return new PositionMetaData(x_, y_);
+}
+
+Serializable* PositionMetaData::create() const {
+    return new PositionMetaData();
+}
+
+std::string PositionMetaData::toString() const {
+    return (itos(x_) + ", " + itos(y_));
 }
 
 } // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -40,7 +40,7 @@ namespace voreen {
  * Derived processors are expected to be connected to a GeometryProcessor
  * through a co-processor connection.
  */
-class GeometryRendererBase : public RenderProcessor {
+class VRN_CORE_API GeometryRendererBase : public RenderProcessor {
 
 public:
     GeometryRendererBase();

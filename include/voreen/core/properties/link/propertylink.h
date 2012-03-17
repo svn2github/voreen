@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -47,18 +47,20 @@ class LinkEvaluatorBase;
  *
  * @see LinkEvaluatorBase
  */
-class PropertyLink : public Serializable {
+class VRN_CORE_API PropertyLink : public Serializable {
 public:
     /**
      * Registers itself as an listener of the source property.
      * If no linkEvaluator is passed, an id-link is created.
      *
      * Source and destination properties must not be null.
+     * Takes ownership of the LinkEvaluator.
      */
     PropertyLink(Property* src, Property* dest, LinkEvaluatorBase* linkEvaluator = 0);
 
     /**
      * Removes this link from the source property.
+     * Deletes the LinkEvaluator;
      */
     virtual ~PropertyLink();
 
@@ -86,6 +88,7 @@ public:
     /**
      * Assigns a new evaluator to enable transparent transition to a new
      * evaluator without recreating the link.
+     * Takes ownership of the LinkEvaluator.
      */
     void setLinkEvaluator(LinkEvaluatorBase* evaluator);
 

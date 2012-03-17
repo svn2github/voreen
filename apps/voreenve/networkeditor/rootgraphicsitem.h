@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -53,7 +53,7 @@ class PropertyGraphicsItem;
  * which contains a \sa Processor. Currently this holds for \sa ProcessorGraphicsItem
  * with only one contained Processor and \sa AggregationGraphicsItem which may hold
  * multiple AggregationGraphicsItems and ProcessorGraphicsItems. Both cases should behave
- * similiarly and therefore most of the code is combined here.</br>
+ * similiarly and therefore most of the code is combined here.
  * The RootGraphicsItem has only ownership over the \sa PortGraphicsItems, not the contained
  * Processors because those are owned by the \sa ProcessorNetwork.
  */
@@ -151,7 +151,7 @@ public:
     void removePropertyGraphicsItem(PropertyGraphicsItem* item);
 
     /**
-     * Adds a aggregation prefix to the name of the form:  [prefix] - "old name"</br>
+     * Adds a aggregation prefix to the name of the form:  [prefix] - "old name"
      * Will emit the \sa renameFinished() signal afterwards.
      * \param prefix The prefix which should be added
      */
@@ -325,8 +325,9 @@ public slots:
      */
     void togglePropertyList();
 
-    void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
+    void mousePressEvent(QGraphicsSceneMouseEvent* e);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent* e);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent* e);
 
 signals:
     /**
@@ -421,7 +422,7 @@ protected:
     /// The TextGraphicsItem which shows (and allows editing of) the name of the item
     TextGraphicsItem textItem_;
 
-    /// In this list all \s PropertyGraphicsItem are collected and layouted
+    /// In this list all \sa PropertyGraphicsItem are collected and layouted
     PropertyListGraphicsItem propertyListItem_;
 
     /// This button toggles the visibility of the \sa PropertyListGraphicsItem
@@ -442,6 +443,8 @@ protected:
 
     /// The opacity with which this RootGraphicsItem will draw itself
     qreal opacity_;
+
+    QPointF clickPosition_;
 };
 
 

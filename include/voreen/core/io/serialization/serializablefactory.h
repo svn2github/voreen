@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #ifndef VRN_IISERIALIZABLEFACTORY_H
 #define VRN_IISERIALIZABLEFACTORY_H
 
+#include "voreen/core/voreencoredefine.h"
 #include <typeinfo>
 #include <string>
 #include <vector>
@@ -83,7 +84,7 @@ class Serializable;
  * @see XmlSerializer
  * @see XmlDeserializer
  */
-class SerializableFactory {
+class VRN_CORE_API SerializableFactory {
 public:
     /**
      * Virtual default destructor.

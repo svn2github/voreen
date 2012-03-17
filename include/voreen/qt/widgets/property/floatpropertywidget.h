@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -46,6 +46,7 @@ Q_OBJECT;
 public:
     FloatPropertyWidget(FloatProperty* prop, QWidget* parent = 0, bool addVisibilityControl = true);
     virtual ~FloatPropertyWidget();
+
     void updateFromProperty();
     void setWidget(const float value, const float minValue, const float maxValue, const float stepping);
 

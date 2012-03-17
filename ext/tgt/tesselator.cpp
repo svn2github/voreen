@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -26,14 +26,16 @@
 
 #include <iostream>
 
-#ifdef TGT_DEBUG
-
 namespace tgt {
+    
+SINGLETON_CLASS_SOURCE(Tesselator)
+
+#ifdef TGT_DEBUG
 
 void Tesselator::errorData(GLenum error, void* /*polygonData*/) {
     std::cout << "Tesselation error: " << gluErrorString(error) << std::endl;
 }
 
-} // namespace
-
 #endif //TGT_DEBUG
+
+} // namespace

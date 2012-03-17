@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,10 +29,13 @@
 #ifndef VRN_PROPERTY_H
 #define VRN_PROPERTY_H
 
-#include "tgt/vector.h"
 #include "voreen/core/properties/link/propertylink.h"
 #include "voreen/core/io/serialization/serialization.h"
 #include "voreen/core/processors/processor.h"
+#include "voreen/core/utils/variant.h"
+
+#include "tgt/exception.h"
+#include "tgt/vector.h"
 
 #include <string>
 #include <vector>
@@ -52,7 +55,7 @@ class ProcessorNetwork;
  *
  * @see TemplateProperty
  */
-class Property : public AbstractSerializable {
+class VRN_CORE_API Property : public AbstractSerializable {
 
     friend class PropertyLink;
     friend class PropertyVector;
@@ -92,13 +95,31 @@ public:
     Property(const std::string& id, const std::string& guiName,
              Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT);
 
+    /**
+     * Default constructor. Used for serialization. Do not call directly!
+     */
+    Property();
+    
     virtual ~Property();
+
+    /**
+     * Virtual constructor: supposed to return an instance of the concrete Property class.
+     */
+    virtual Property* create() const = 0;
+
+    /**
+     * Returns the name of this class as a string.
+     * Necessary due to the lack of code reflection in C++.
+     *
+     * This method is expected to be re-implemented by each concrete subclass.
+     */
+    virtual std::string getClassName() const = 0;
 
     /**
      * Returns a textual description of the property type,
      * usually corresponding to the type of the stored value.
      */
-    virtual std::string getTypeString() const;
+    virtual std::string getTypeDescription() const;
 
     /**
      * Returns the identifier of the property.
@@ -110,7 +131,9 @@ public:
      *
      * @return The owner is invalidated with this InvalidationLevel upon change.
      */
-    Processor::InvalidationLevel getInvalidationLevel();
+    Processor::InvalidationLevel getInvalidationLevel() const;
+
+    void setInvalidationLevel(Processor::InvalidationLevel invalidationLevel);
 
     /**
      * Returns the identifier of the property preceeded by
@@ -212,12 +235,6 @@ public:
     void toggleInteractionMode(bool interactionmode, void* source);
 
     /**
-     * Creates a widget for this property, but does not add it to the Property.
-     * The passed PropertyWidgetFactory will actually build the widget.
-     */
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
-
-    /**
      * Registers a widget at this property. This widget is considered the property
      * in the user interface and is affected by setVisible and setWidgetsEnabled.
      */
@@ -238,14 +255,6 @@ public:
      * Unregisters all assigned property widgets.
      */
     void disconnectWidgets();
-
-    /**
-     * Convenience function that creates and registers a widget
-     * for this property.
-     *
-     * @see createWidget, addWidget
-     */
-    PropertyWidget* createAndAddWidget(PropertyWidgetFactory* f);
 
     /**
      * Returns all property widgets assigned to this property.
@@ -294,6 +303,43 @@ public:
     bool isLinkedWith(const Property* dest, bool transitive = false) const;
 
     /**
+     * Returns the properties value as a variant (if possible). All subclasses which
+     * want to support property linking (among other things) should subclass this and
+     * return an appropriate Variant object. The default behavior returns an invalid
+     * Variant if called.
+     *
+     * \param normalized if true, the returned Variant object will be normalized based
+     * on the maximum and minimum values possible for the property. Returns a different
+     * value only for \sa NumericProperty and higher where the normalization makes sense.
+     *
+     * \sa Variant
+     */
+    virtual Variant getVariant(bool normalized = false) const;
+
+    /**
+     * Sets the property with the value contained in 'val' (if possible). All subclasses
+     * which want to support property linking (among other things) should subclass this
+     * and react to this Variant appropriately. The default behavior is a noop.
+     *
+     * \param normalized denotes if the passed variant should be treated as a normalized
+     * value. Normalization is done based on the maximal and minimal possible values of a
+     * property and is currently only used in \sa NumericProperty and above.
+     *
+     * \sa Variant
+     */
+    virtual void setVariant(const Variant& val, bool normalized = false);
+
+    /**
+     * Returns the type of data this property returns if \sa getValue() is called. All
+     * subclasses which want to support property linking (among other things) should
+     * subclass this and return an appropriate Variant object. The default behavior
+     * returns 'invalid'.
+     * The return type is of type 'int' to support custom VariantTypes which are not
+     * encompassed in the Variant::VariantType enumeration.
+     */
+    virtual int getVariantType() const;
+
+    /**
      * Returns the meta data container of this processor.
      * External objects, such as GUI widgets, can use it
      * to store and retrieve persistent meta data without
@@ -314,6 +360,20 @@ public:
 
     ///Deserialize the value of the property without the meta data/LOD/guiName
     virtual void deserializeValue(XmlDeserializer& s);
+
+    /**
+     * Adds the passed property link to the property.
+     * Is called by the owning ProcessorNetwork and by
+     * the PropertyLink object.
+     */
+    void registerLink(PropertyLink* link);
+
+    /**
+     * Removes the passed link from the property, but does not delete it.
+     * Is called by the PropertyLink's destructor.
+     */
+    void removeLink(PropertyLink* link);
+
  protected:
 
     /**
@@ -325,9 +385,9 @@ public:
      *       instead of the constructor! Time-consuming operations
      *       should also happen here.
      *
-     * @throw VoreenException if the initialization failed
+     * @throw tgt::Exception if the initialization failed
      */
-    virtual void initialize() throw (VoreenException);
+    virtual void initialize() throw (tgt::Exception);
 
     /**
      * Override this method for performing deinitializations
@@ -336,9 +396,9 @@ public:
      * @note All OpenGL deinitializations must be done here,
      *       instead of the destructor!
      *
-     * @throw VoreenException if the deinitialization failed
+     * @throw tgt::Exception if the deinitialization failed
      */
-    virtual void deinitialize() throw (VoreenException);
+    virtual void deinitialize() throw (tgt::Exception);
 
     /**
      * Invalidates the owner with the InvalidationLevel set in the constructor
@@ -360,26 +420,13 @@ public:
     bool widgetsEnabled_;
     bool visible_;
     LODSetting lod_;
-    int views_;
+    View views_;
     std::string groupId_;
 
     std::set<PropertyWidget*> widgets_;
     std::vector<PropertyLink*> links_;
 
 private:
-    /**
-     * Adds the passed property link to the property.
-     * Is called by the owning ProcessorNetwork and by
-     * the PropertyLink object.
-     */
-    void registerLink(PropertyLink* link);
-
-    /**
-     * Removes the passed link from the property, but does not delete it.
-     * Is called by the PropertyLink's destructor.
-     */
-    void removeLink(PropertyLink* link);
-
     /// Used for cycle prevention during interaction mode propagation
     bool interactionModeVisited_;
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_TEMPLATEPROPERTY_H
 
 #include "voreen/core/properties/templatepropertycondition.h"
+#include "voreen/core/properties/property.h"
 
 namespace voreen {
 
@@ -41,8 +42,9 @@ class TemplateProperty : public Property {
 public:
     TemplateProperty(const std::string& id, const std::string& guiText,
                      T value, Processor::InvalidationLevel = Processor::INVALID_RESULT);
-
-    TemplateProperty(const TemplateProperty*);
+    TemplateProperty();
+    
+    //TemplateProperty(const TemplateProperty*);
 
     virtual ~TemplateProperty();
 
@@ -60,35 +62,35 @@ public:
         addCondition(EqualCondition<T>(this, value, action, elseaction));
     }
 
-    void onValueLess(const T& value, const Action& action = NoAction(),
-                     const Action& elseaction = NoAction())
-    {
-        addCondition(LessCondition<T>(this, value, action, elseaction));
-    }
+    //void onValueLess(const T& value, const Action& action = NoAction(),
+    //                 const Action& elseaction = NoAction())
+    //{
+    //    addCondition(LessCondition<T>(this, value, action, elseaction));
+    //}
 
-    void onValueLessEqual(const T& value, const Action& action = NoAction(),
-                          const Action& elseaction = NoAction())
-    {
-        addCondition(LessEqualCondition<T>(this, value, action, elseaction));
-    }
+    //void onValueLessEqual(const T& value, const Action& action = NoAction(),
+    //                      const Action& elseaction = NoAction())
+    //{
+    //    addCondition(LessEqualCondition<T>(this, value, action, elseaction));
+    //}
 
-    void onValueGreater(const T& value, const Action& action = NoAction(),
-                        const Action& elseaction = NoAction())
-    {
-        addCondition(GreaterCondition<T>(this, value, action, elseaction));
-    }
+    //void onValueGreater(const T& value, const Action& action = NoAction(),
+    //                    const Action& elseaction = NoAction())
+    //{
+    //    addCondition(GreaterCondition<T>(this, value, action, elseaction));
+    //}
 
-    void onValueGreaterEqual(const T& value, const Action& action = NoAction(),
-                             const Action& elseaction = NoAction())
-    {
-        addCondition(GreaterEqualCondition<T>(this, value, action, elseaction));
-    }
+    //void onValueGreaterEqual(const T& value, const Action& action = NoAction(),
+    //                         const Action& elseaction = NoAction())
+    //{
+    //    addCondition(GreaterEqualCondition<T>(this, value, action, elseaction));
+    //}
 
-    void onValueIn(const std::set<T>& values, const Action& action = NoAction(),
-                   const Action& elseaction = NoAction())
-    {
-        addCondition(InCondition<T>(this, values, action, elseaction));
-    }
+    //void onValueIn(const std::set<T>& values, const Action& action = NoAction(),
+    //               const Action& elseaction = NoAction())
+    //{
+    //    addCondition(InCondition<T>(this, values, action, elseaction));
+    //}
 
     void onChange(const Action& action = NoAction()) {
         addCondition(TrueCondition(action));
@@ -101,11 +103,11 @@ public:
     // convenience methods for validations - return Reference to the TemplateProperty they're added to
     // these add a simple way to add Validations to TemplateProperties
     TemplateProperty<T>& verifiesValueEqual(const T& value);
-    TemplateProperty<T>& verifiesValueLess(const T& value);
-    TemplateProperty<T>& verifiesValueLessEqual(const T& value);
-    TemplateProperty<T>& verifiesValueGreater(const T& value);
-    TemplateProperty<T>& verifiesValueGreaterEqual(const T& value);
-    TemplateProperty<T>& verifiesValueIn(const std::set<T>& values);
+    //TemplateProperty<T>& verifiesValueLess(const T& value);
+    //TemplateProperty<T>& verifiesValueLessEqual(const T& value);
+    //TemplateProperty<T>& verifiesValueGreater(const T& value);
+    //TemplateProperty<T>& verifiesValueGreaterEqual(const T& value);
+    //TemplateProperty<T>& verifiesValueIn(const std::set<T>& values);
 
     Condition* addValidation(const Condition& condition) {
         validations_.push_back(condition.clone());
@@ -140,8 +142,8 @@ protected:
     std::vector<Condition*> conditions_;
     std::vector<Condition*> validations_;
 
-private:
-    std::string getTypename() const;
+//private:
+//    std::string getTypename() const;
 };
 
 //---------------------------------------------------------------------------
@@ -151,6 +153,10 @@ TemplateProperty<T>::TemplateProperty(const std::string& id, const std::string& 
                                       T value, Processor::InvalidationLevel invalidationLevel)
   : Property(id, guiText, invalidationLevel)
   , value_(value)
+{}
+
+template<class T>
+TemplateProperty<T>::TemplateProperty()
 {}
 
 template<class T>
@@ -251,30 +257,30 @@ TemplateProperty<T>& TemplateProperty<T>::verifiesValueEqual(const T& value) {
     return verifies(EqualCondition<T>(this, value));
 }
 
-template<class T>
-TemplateProperty<T>& TemplateProperty<T>::verifiesValueLess(const T& value) {
-    return verifies(LessCondition<T>(this, value));
-}
-
-template<class T>
-TemplateProperty<T>& TemplateProperty<T>::verifiesValueLessEqual(const T& value) {
-    return verifies(LessEqualCondition<T>(this, value));
-}
-
-template<class T>
-TemplateProperty<T>& TemplateProperty<T>::verifiesValueGreater(const T& value) {
-    return verifies(GreaterCondition<T>(this, value));
-}
-
-template<class T>
-TemplateProperty<T>& TemplateProperty<T>::verifiesValueGreaterEqual(const T& value) {
-    return verifies(GreaterEqualCondition<T>(this, value));
-}
-
-template<class T>
-TemplateProperty<T>& TemplateProperty<T>::verifiesValueIn(const std::set<T>& values) {
-    return verifies(InCondition<T>(this, values));
-}
+//template<class T>
+//TemplateProperty<T>& TemplateProperty<T>::verifiesValueLess(const T& value) {
+//    return verifies(LessCondition<T>(this, value));
+//}
+//
+//template<class T>
+//TemplateProperty<T>& TemplateProperty<T>::verifiesValueLessEqual(const T& value) {
+//    return verifies(LessEqualCondition<T>(this, value));
+//}
+//
+//template<class T>
+//TemplateProperty<T>& TemplateProperty<T>::verifiesValueGreater(const T& value) {
+//    return verifies(GreaterCondition<T>(this, value));
+//}
+//
+//template<class T>
+//TemplateProperty<T>& TemplateProperty<T>::verifiesValueGreaterEqual(const T& value) {
+//    return verifies(GreaterEqualCondition<T>(this, value));
+//}
+//
+//template<class T>
+//TemplateProperty<T>& TemplateProperty<T>::verifiesValueIn(const std::set<T>& values) {
+//    return verifies(InCondition<T>(this, values));
+//}
 
 } // namespace voreen
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -76,7 +76,7 @@ void TransFuncMappingCanvasRamp::mousePressEvent(QMouseEvent* event) {
     for (int i=0; i<tf_->getNumKeys(); ++i) {
         TransFuncMappingKey* key = tf_->getKey(i);
         tgt::vec2 sp = wtos(tgt::vec2(key->getIntensity(), key->getColorL().a / 255.f));
-        tgt::vec2 spr = wtos(tgt::vec2(key->getIntensity(), key->getColorR().a / 255.f));
+        //tgt::vec2 spr = wtos(tgt::vec2(key->getIntensity(), key->getColorR().a / 255.f));
         if (sHit.x > sp.x - pointSize_ && sHit.x < sp.x + pointSize_ &&
             sHit.y > sp.y - pointSize_ && sHit.y < sp.y + pointSize_)
         {

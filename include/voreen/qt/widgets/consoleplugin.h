@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,10 @@
 #define CONSOLEPLUGIN_H
 
 #include <QWidget>
+#include <QKeyEvent>
+
+#include "voreen/qt/voreenqtdefine.h"
+#include "tgt/logmanager.h"
 
 class QTextEdit;
 
@@ -37,18 +41,31 @@ namespace voreen {
 
 class ConsoleLogQt;
 
-class ConsolePlugin : public QWidget {
-    Q_OBJECT
+class VRN_QT_API ConsolePlugin : public QWidget {
+Q_OBJECT
 public:
-    ConsolePlugin(QWidget* parent = 0, bool autoScroll = true);
+    ConsolePlugin(QWidget* parent = 0, tgt::LogLevel logLevel = tgt::Info, bool autoScroll = true);
     ~ConsolePlugin();
 
     void log(const std::string& msg);
 
-protected:
+public slots:
+    void showContextMenu(const QPoint &pt);
+
+private:
+    virtual void keyPressEvent(QKeyEvent *e);
+    virtual void keyReleaseEvent(QKeyEvent *e);
+
     ConsoleLogQt* log_;
     QTextEdit* consoleText_;
+    QAction* clearText_;
+    QAction* disableAction_;
     bool autoScroll_;
+    bool ctrlButtonDown_;
+
+private slots:
+    void disableToggled();
+
 };
 
 } // namespace voreen

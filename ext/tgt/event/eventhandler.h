@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -27,13 +27,12 @@
 
 #include <deque>
 
-#include "tgt/config.h"
 #include "tgt/event/eventlistener.h"
 #include "tgt/event/event.h"
 
 namespace tgt {
 
-class EventHandler {
+class TGT_API EventHandler {
 private:
     std::deque<EventListener*> listeners_; ///< The deque containing all the listeners.
 

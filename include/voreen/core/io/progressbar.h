@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #ifndef VRN_PROGRESSBAR_H
 #define VRN_PROGRESSBAR_H
 
+#include "voreen/core/voreencoredefine.h"
 #include <string>
 
 namespace voreen {
@@ -36,7 +37,7 @@ namespace voreen {
 /**
  * Base class for GUI toolkit specific progress bars.
  */
-class ProgressBar {
+class VRN_CORE_API ProgressBar {
 public:
     ProgressBar();
     virtual ~ProgressBar() {}
@@ -73,6 +74,16 @@ public:
      * within the range [0, 1].
      */
     virtual float getProgress() const;
+
+    /**
+     * Sets the 'level' of progress. This is used if a processor
+     * has multiple expensive tasks to do in a single process call
+     * and wants to inform the user about the status of each.
+     * Usage: Use \sa setProgress as normal for the first tier
+     * after completion call setProgressTier(1) and start using
+     * \sa setProgress again, ranging from 0.f to 1.f as normal.
+     */
+    virtual void setProgressTier(int /*tier*/) {};
 
     /**
      * Assigns a message that is to displayed by the

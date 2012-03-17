@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,9 +31,10 @@
 
 #include "voreen/core/io/volumeserializerpopulator.h"
 #include "voreen/core/datastructures/volume/volume.h"
+#include "voreen/core/datastructures/volume/volumehandle.h"
 #include "voreen/core/datastructures/volume/volumecontainer.h"
 #include "voreen/core/properties/volumehandleproperty.h"
-#include "voreen/modules/base/processors/datasource/volumesource.h"
+#include "modules/base/processors/datasource/volumesource.h"
 
 #include "voreen/qt/widgets/customlabel.h"
 #include "voreen/qt/widgets/volumeloadbutton.h"
@@ -57,11 +58,11 @@ public:
     void setVolumeContainer(VolumeContainer*);
 
     /// @see VolumeCollectionObserver
-    void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
     /// @see VolumeCollectionObserver
-    void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
     /// @see VolumeCollectionObserver
-    void volumeChanged(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/);
+    void volumeChanged(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/);
 
     /// Returns the null pointer, since this widget does not need a separate label.
     virtual CustomLabel* getNameLabel() const;
@@ -90,7 +91,14 @@ private:
     CustomLabel* spacingLabel_;
     CustomLabel* memSizeLabel_;
 
+    CustomLabel* dimensionLabelCaption_;
+    CustomLabel* spacingLabelCaption_;
+    CustomLabel* memSizeLabelCaption_;
+
     VolumeContainer* volumeContainer_;
+
+private slots:
+    void volumeLoaded(const VolumeHandleBase* handle);
 
 };
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,17 +29,26 @@
 #ifndef VRN_FONTPROPERTY_H
 #define VRN_FONTPROPERTY_H
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/properties/templateproperty.h"
 #include "tgt/font.h"
 
 namespace voreen {
+    
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API TemplateProperty<tgt::Font*>;
+#endif
 
-class FontProperty : public TemplateProperty<tgt::Font*> {
+class VRN_CORE_API FontProperty : public TemplateProperty<tgt::Font*> {
 public:
     FontProperty(const std::string& id, const std::string& guiText, tgt::Font* value = 0,
                  Processor::InvalidationLevel invalidationLevel = Processor::INVALID_RESULT);
+    FontProperty();
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
+
+    virtual std::string getClassName() const       { return "FontProperty"; }
+    virtual std::string getTypeDescription() const { return "Font"; }
 
     /**
      * Frees the font object represented by this property.
@@ -56,7 +65,6 @@ public:
      */
     virtual void deserialize(XmlDeserializer& s);
 
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
 };
 
 } // namespace

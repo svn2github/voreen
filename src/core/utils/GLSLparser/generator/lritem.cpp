@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -210,16 +210,16 @@ bool ItemSet<T>::operator==(const ItemSet<T>& rhs) const {
 }
 
 template<typename T>
-T& ItemSet<T>::operator[](const int index) throw (std::runtime_error) {
-    if ((index < 0) || (index >= static_cast<int>(items_.size())))
+T& ItemSet<T>::operator[](size_t index) throw (std::runtime_error) {
+    if (index >= items_.size())
         throw std::runtime_error("ItemSet::operator[]: index out of bounds!");
 
     return items_[index];
 }
 
 template<typename T>
-const T& ItemSet<T>::operator[](const int index) const throw (std::runtime_error) {
-    if ((index < 0) || (index >= static_cast<int>(items_.size())))
+const T& ItemSet<T>::operator[](size_t index) const throw (std::runtime_error) {
+    if (index >= items_.size())
         throw std::runtime_error("ItemSet::operator[]: index out of bounds!");
 
     return items_[index];

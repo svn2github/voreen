@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -37,6 +37,10 @@
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/processors/processorfactory.h"
 #include "voreen/qt/widgets/lineeditresetwidget.h"
+#include "voreen/qt/voreenqtdefine.h"
+
+#include <vector>
+#include <map>
 
 class QMouseEvent;
 class QTreeWidgetItem;
@@ -46,28 +50,108 @@ class QContextMenuEvent;
 
 namespace voreen {
 
-class ProcessorListWidget;
+class DocumentationWidget;
+class VoreenModule;
+class Processor;
 
-class ProcessorListTreeWidget : public QTreeWidget {
+class VRN_QT_API ProcessorListItem : public QTreeWidgetItem {
+public:
+    ProcessorListItem(const std::string& id);
+    const std::string& getId() { return id_; }
+    const std::string& getInfo() { return info_; }
+    //void setProcessorInfo(const std:: string& name);
+
+private:
+    const std::string id_;
+    std::string info_;
+};
+
+class ProcessorListTreeWidget;
+class Processor;
+
+class VRN_QT_API ProcessorListWidget : public QWidget {
+Q_OBJECT
+public:
+    ProcessorListWidget(QWidget* parent = 0);
+    ~ProcessorListWidget();
+
+    void clearInfo();
+
+signals:
+    void selectedProcessorForAdding(const QString& processor);
+
+public slots:
+    void processorsSelected(const QList<Processor*>& processors);
+    void setInfo(const Processor* processor);
+    void setInfo(VoreenModule* module);
+    //void setInfo(std::string);
+    void loadSettings();
+    void resetSettings();
+
+protected:
+    ProcessorListTreeWidget* tree_;
+    QIcon resetIcon_;
+    QTextBrowser* info_;
+    QSplitter* splitter_;
+
+    QAction* sortByCategory_;            // sort by category
+    QAction* sortByModule_;              // sort by module
+    QAction* sortByModuleThenCategory_;  // sort by module then category
+    
+    QAction* showCodeStateExperimental_; // show code state experimental
+    QAction* showCodeStateBroken_;       // show code state broken
+    QAction* showCodeStateStable_;       // show code state stable
+    QAction* showCodeState_;
+    QAction* searchDescription_;
+    
+    std::map<std::string, bool> moduleVisibility_;
+    std::map<std::string, QAction*> moduleVisibilityActions_;
+    QMenu* moduleVisibilityMenu_;
+    
+    LineEditResetWidget* edit_;
+    DocumentationWidget* documentationWidget_;
+
+    VoreenModule* recentlyUsedModule_;
+    const Processor* recentlyUsedProcessor_;
+
+protected slots:
+    void reloadInfoText();
+    void setInfo();
+    void sortMenu();
+    void setModuleNameVisibility(std::string, bool);
+    void saveSettings();
+    void textBrowserRequestedContextMenu(const QPoint& pos);
+    void showDescriptionEditor();
+
+signals:
+    void sort(int);
+    void hideStatus(bool);
+    void searchDescription(bool);
+    void showModule(QString, bool);
+
+private:
+    bool resetSettings_;
+};
+
+class VRN_QT_API ProcessorListTreeWidget : public QTreeWidget {
 Q_OBJECT
 friend class ProcessorListWidget;
 public:
     ProcessorListTreeWidget(ProcessorListWidget* processorListWidget, QWidget* parent = 0);
 
-    enum SortType {
-        SORT_BY_CATEGORY,
-        SORT_BY_MODULENAME,
-        SORT_BY_MODULE_CATEGORY,
-        SORT_BY_CATEGORY_MODULE
+    enum GroupType {
+        GroupTypeCategory,
+        GroupTypeModule,
+        GroupTypeModuleCategory
     };
 
+signals:
+    void selectedProcessorForAdding(const QString& processor);
+
 public slots:
-    /**
-     * Filters the processor list based in the given text. Every processor will be listed
-     * if its name includes the text or, if checkDescrition is true, its descrition contains the text
-     */
     void filter(const QString& text);
-    /// Sorts the Processorlist by category, modulename, category then modulename or modulename then category
+
+    /// Sorts the Processorlist by category, modulename, or modulename then category
     void sort(int);
     void hideStatus(bool);
     void searchDescription(bool);
@@ -75,92 +159,38 @@ public slots:
 
 protected:
     void mousePressEvent(QMouseEvent*);
-    void setCodeStateIcon(std::string, QTreeWidgetItem*);
+
+    void setCodeStateIcon(const std::string& classname, QTreeWidgetItem*) const;
+
+private slots:
+    void itemHasBeenDoubleClicked(QTreeWidgetItem* item, int column);
 
 private:
-    //void buildItems();
-
-    ProcessorFactory::KnownClassesVector processorVector_;
     QList<QTreeWidgetItem*> items_;
-
-    // pointer to the ProcessorListWidget this widget is part of
     ProcessorListWidget* processorListWidget_;
-    ProcessorFactory::KnownClassesVector getVisibleProcessors();
 
+    std::vector<const Processor*> getVisibleProcessors() const;
+    
     void sortByCategory();
     void sortByModuleName();
-    void sortByCategoryThenModule();
     void sortByModuleThenCategory();
 
-    SortType sortType_;
+    /**
+     * Returns a widget tree representing the category hierarchy of the passed processors. The \p categoryLevel
+     * determines which category level to be considered as root level (for recursive calls).
+     */
+    QList<QTreeWidgetItem*> createCategoryHierarchy(const std::vector<const Processor*>& processors, int categoryLevel) const;
+
+    GroupType sortType_;
     std::string filterText_;
     bool showCodeState_;
     bool searchDescription_;
+
     std::map<std::string, bool> moduleVisibility_;
+    std::map<std::string, std::string> processorDescriptions_;
     std::set<Processor::CodeState> codeState_;
 
 };
-
-//---------------------------------------------------------------------------
-
-class ProcessorListItem : public QTreeWidgetItem {
-public:
-    ProcessorListItem(const std::string& id);
-    const std::string& getId() { return id_; }
-    const std::string& getInfo() { return info_; }
-    void setProcessorInfo(const std:: string& name);
-
-private:
-    const std::string id_;
-    std::string info_;
-};
-
-//---------------------------------------------------------------------------
-
-class ProcessorListWidget : public QWidget {
-Q_OBJECT
-public:
-    ProcessorListWidget(QWidget* parent = 0);
-    ~ProcessorListWidget();
-
-public slots:
-    void processorsSelected(const QList<Processor*>& processors);
-    void setInfo(Processor* processor);
-    void setInfo(std::string);
-    void loadSettings();
-
-protected:
-    ProcessorListTreeWidget* tree_;
-    QIcon resetIcon_;
-    QTextBrowser* info_;
-    QSplitter* splitter_;
-    QAction* sbc_;      // sort by category
-    QAction* sbm_;      // sort by module
-    QAction* sbmtc_;    // sort by module then category
-    QAction* sbctm_;    // sort by category then module
-    QAction* cst_;      // show code state experimental
-    QAction* csb_;      // show code state broken
-    QAction* css_;      // show code state stable
-    QAction* hideAction_;
-    QAction* searchDescription_;
-    std::map<std::string, bool> moduleVisibility_;
-    std::map<std::string, QAction*> moduleVisibilityActions_;
-    QMenu* moduleVisibilityMenu_;
-    LineEditResetWidget* edit_;
-
-protected slots:
-    void setInfo();
-    void sortMenu();
-    void setModuleNameVisibility(std::string, bool);
-    void saveSettings();
-
-signals:
-    void sort(int);
-    void hideStatus(bool);
-    void searchDescription(bool);
-    void showModule(QString, bool);
-};
-
 
 } //namespace voreen
 

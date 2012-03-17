@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,16 +29,18 @@
 #ifndef VRN_GLSLDECLARATION_H
 #define VRN_GLSLDECLARATION_H
 
-#include "voreen/core/utils/GLSLparser/glsl/glslparameter.h"
+#include "voreen/core/utils/GLSLparser/glsl/glslexternaldeclaration.h"
+#include "voreen/core/utils/GLSLparser/glsl/glslfunctionprototype.h"
 
 namespace voreen {
 
 namespace glslparser {
 
-class GLSLDeclaration : public GLSLNode {
+class GLSLDeclaration : public GLSLExternalDeclaration {
 public:
     GLSLDeclaration(const int symbolID)
-        : GLSLNode(symbolID),
+        //: GLSLNode(symbolID),
+        : GLSLExternalDeclaration(symbolID),
         leadingAnnotation_(0),
         trailingAnnotation_(0)
     {
@@ -173,33 +175,25 @@ protected:
 
 class GLSLFunctionDeclaration : public GLSLDeclaration {
 public:
-    GLSLFunctionDeclaration(IdentifierToken* const name, GLSLTypeSpecifier* const typeSpecifier)
-        : GLSLDeclaration(name->getTokenID()),
-        name_(dynamic_cast<IdentifierToken* const>(name->getCopy())),
-        typeSpecifier_(typeSpecifier)
+    /**
+     * @param   funcProto   Must not be NULL!
+     */
+    GLSLFunctionDeclaration(GLSLFunctionPrototype* const funcProto)
+        : GLSLDeclaration(funcProto->getName()->getTokenID()),
+        funcProto_(funcProto)
     {
     }
 
     virtual ~GLSLFunctionDeclaration() {
-        delete name_;
-        delete typeSpecifier_;
-
-        for (size_t i = 0; i < params_.size(); ++i)
-            delete params_[i];
+        delete funcProto_;
     }
 
     virtual int getNodeType() const { return GLSLNodeTypes::NODE_FUNCTION_DECLARATION; }
 
-    void addParameter(GLSLParameter* const param) {
-        if (param != 0)
-            params_.push_back(param);
-    }
-
+    GLSLFunctionPrototype* getFunctionPrototype() { return funcProto_; }
 protected:
-    IdentifierToken* const name_;
-    GLSLTypeSpecifier* const typeSpecifier_;
-    std::vector<GLSLParameter*> params_;
-};
+    GLSLFunctionPrototype* const funcProto_;
+};  // class GLSLFunctionDeclaration
 
 }   // namespace glslparser
 

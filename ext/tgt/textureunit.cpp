@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2010 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -51,26 +51,26 @@ TextureUnit::~TextureUnit() {
     }
 }
 
-void TextureUnit::activate() {
+void TextureUnit::activate() const {
     if (!assigned_)
         assignUnit();
     glActiveTexture(getEnum());
 }
 
-GLint TextureUnit::getEnum() {
+GLint TextureUnit::getEnum() const {
     if (!assigned_)
         assignUnit();
     return glEnum_;
 }
 
-GLint TextureUnit::getUnitNumber() {
+GLint TextureUnit::getUnitNumber() const {
     if (!assigned_)
         assignUnit();
     return number_;
 }
 
 void TextureUnit::setZeroUnit() {
-        glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void TextureUnit::cleanup() {
@@ -91,7 +91,7 @@ unsigned short TextureUnit::numLocalActive() {
     return (totalActive_ - numKeptUnits_);
 }
 
-void TextureUnit::assignUnit() {
+void TextureUnit::assignUnit() const {
     tgtAssert(totalActive_ <= maxTexUnits_, "No more texture units available");
 
     assigned_ = true;
@@ -101,8 +101,8 @@ void TextureUnit::assignUnit() {
             number_ = (GLint)i;
             busyUnits_.at(i) = true;
             totalActive_++;
-	    if(keep_)
-		numKeptUnits_++;
+            if(keep_)
+                numKeptUnits_++;
             break;
         }
     }

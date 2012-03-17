@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -43,15 +43,16 @@ class Property;
  * An object of this type is assigned to each PropertyLink, which uses
  * it for the actual link execution.
  */
-class LinkEvaluatorBase : public AbstractSerializable {
+class VRN_CORE_API LinkEvaluatorBase : public AbstractSerializable {
 public:
+    virtual ~LinkEvaluatorBase() {}
     ///Called by PropertyLink for executing the link.
     virtual void eval(Property* src, Property* dst) throw (VoreenException) = 0;
 
     virtual void propertiesChanged(Property* src, Property* dst);
 
     ///Returns the evaluator's GUI name.
-    virtual std::string name() const = 0;
+    //virtual std::string name() const = 0;
 
     /**
      * Returns the name of this class as a string.
@@ -62,7 +63,7 @@ public:
     virtual std::string getClassName() const = 0;
 
     //Returns true if the LinkEvaluator can link the two properties.
-    virtual bool arePropertiesLinkable(const Property* p1, const Property* p2) const = 0;
+    virtual bool arePropertiesLinkable(const Property* src, const Property* dst) const = 0;
 
     ///Virtual constructor: supposed to return an instance of the concrete LinkEvaluator class.
     virtual LinkEvaluatorBase* create() const = 0;

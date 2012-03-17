@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -35,9 +35,14 @@
 #include "processorgraphicsitem.h"
 #include "propertylistgraphicsitem.h"
 #include "rootgraphicsitem.h"
+
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
 #include "voreen/core/properties/eventproperty.h"
 #include "voreen/core/properties/propertyvector.h"
-#include "voreen/core/properties/link/dependencylinkevaluatorbase.h"
+#include "voreen/core/properties/volumehandleproperty.h"
+#include "voreen/core/properties/link/dependencylinkevaluator.h"
+#include "voreen/core/properties/link/dependencylinkevaluators.h"
 #include "voreen/core/properties/link/linkevaluatorfactory.h"
 #include "voreen/core/properties/link/propertylink.h"
 #include "voreen/qt/widgets/enterexitpushbutton.h"
@@ -53,6 +58,86 @@
 #include <QSlider>
 #include <QToolButton>
 #include <QVBoxLayout>
+
+
+namespace {
+
+/*
+ * Helper function: Collects compatible link evaluators for the passed property pair 
+ * by iterating over all linkevaluatorfactories of all modules.
+ */
+std::vector<std::pair<std::string, std::string> > getCompatibleEvaluators(
+    const voreen::Property* src, const voreen::Property* dest) {
+    
+    std::vector<std::pair<std::string, std::string> > result;
+
+    if (!voreen::VoreenApplication::app()) {
+        LERRORC("voreenve.PropertyLinkDialog", "VoreenApplication not instantiated");
+        return result;
+    }
+    const std::vector<voreen::VoreenModule*>& modules = voreen::VoreenApplication::app()->getModules();
+
+    for (size_t m=0; m<modules.size(); m++) {
+        const std::vector<voreen::LinkEvaluatorFactory*>& factories = modules.at(m)->getLinkEvaluatorFactories();
+        for (size_t i=0; i<factories.size(); i++) {
+            std::vector<std::pair<std::string, std::string> > evaluators = 
+                factories.at(i)->getCompatibleLinkEvaluators(src, dest);
+            result.insert(result.end(), evaluators.begin(), evaluators.end());
+        }
+    }
+
+    return result;
+}
+
+/*
+ * Helper function: Checks if the passed properties are linkable
+ * by iterating over all linkevaluatorfactories of all modules.
+ */
+bool arePropertiesLinkable(const voreen::Property* src, const voreen::Property* dest) {
+    
+    if (!voreen::VoreenApplication::app()) {
+        LERRORC("voreenve.PropertyLinkDialog", "VoreenApplication not instantiated");
+        return false;
+    }
+    const std::vector<voreen::VoreenModule*>& modules = voreen::VoreenApplication::app()->getModules();
+
+    for (size_t m=0; m<modules.size(); m++) {
+        const std::vector<voreen::LinkEvaluatorFactory*>& factories = modules.at(m)->getLinkEvaluatorFactories();
+        for (size_t i=0; i<factories.size(); i++) {
+            if (factories.at(i)->arePropertiesLinkable(src, dest))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+/*
+ * Helper function: Creates a link evaluator for the passed type string
+ * by iterating over all linkevaluatorfactories of all modules.
+ */
+voreen::LinkEvaluatorBase* createLinkEvaluator(const std::string& typeString) {
+
+    if (!voreen::VoreenApplication::app()) {
+        LERRORC("voreenve.PropertyLinkDialog", "VoreenApplication not instantiated");
+        return 0;
+    }
+    const std::vector<voreen::VoreenModule*>& modules = voreen::VoreenApplication::app()->getModules();
+
+    for (size_t m=0; m<modules.size(); m++) {
+        const std::vector<voreen::LinkEvaluatorFactory*>& factories = modules.at(m)->getLinkEvaluatorFactories();
+        for (size_t i=0; i<factories.size(); i++) {
+            voreen::LinkEvaluatorBase* evaluator = factories.at(i)->createEvaluator(typeString);
+            if (evaluator)
+                return evaluator;
+        }
+    }
+
+    return 0;
+}
+
+} // namespace anonymous
+
 
 namespace voreen {
 
@@ -88,7 +173,7 @@ namespace {
     }
 
     bool evaluatorIsDependencyLinkEvaluator(LinkEvaluatorBase* evaluator) {
-        DependencyLinkEvaluatorBase* depLinkEva = dynamic_cast<DependencyLinkEvaluatorBase*>(evaluator);
+        DependencyLinkEvaluator* depLinkEva = dynamic_cast<DependencyLinkEvaluator*>(evaluator);
         return (depLinkEva  != 0);
     }
 }
@@ -420,7 +505,7 @@ void PropertyLinkDialog::initPropertyItems(PropertyGraphicsItem* sourceItem, Pro
 void PropertyLinkDialog::initCombobox() {
     //std::vector<std::string> availableFunctions = LinkEvaluatorFactory::getInstance()->listFunctionNames();
     //foreach (std::string function, availableFunctions) {
-        ////if (function != "DependancyLink")
+        ////if (function != "DependencyLink")
             //functionCB_->addItem(QString::fromStdString(function));
     //}
 
@@ -429,15 +514,24 @@ void PropertyLinkDialog::initCombobox() {
 }
 
 void PropertyLinkDialog::updateCombobox(LinkDialogPropertyGraphicsItem* source, LinkDialogPropertyGraphicsItem* destination) {
+    
     functionCB_->clear();
-    std::vector<std::pair<std::string, std::string> > availableFunctions = LinkEvaluatorFactory::getInstance()->getCompatibleLinkEvaluators(source->getProperty(), destination->getProperty());
-    for(std::vector<std::pair<std::string, std::string> >::iterator i=availableFunctions.begin(); i!=availableFunctions.end(); i++) {
-        //if (function != "DependancyLink")
+    std::vector<std::pair<std::string, std::string> > availableFunctions = 
+        getCompatibleEvaluators(source->getProperty(), destination->getProperty());
+    for (std::vector<std::pair<std::string, std::string> >::iterator i = availableFunctions.begin();
+        i != availableFunctions.end(); ++i)
+    {
+        size_t pos0 = i->first.find("Dependency");
+        size_t pos1 = i->first.find("dependency");
+        if (pos0 == std::string::npos && pos1 == std::string::npos) {
             functionCB_->addItem(QString::fromStdString(i->first));
+        }
     }
 
-    //int index = functionCB_->findText("id");
-    //functionCB_->setCurrentIndex(index);
+    int index = functionCB_->findText(QString::fromStdString("LinkEvaluatorId"));
+    if (index != -1)
+        functionCB_->setCurrentIndex(index);
+
 }
 
 LinkDialogArrowGraphicsItem* PropertyLinkDialog::getCurrentlySelectedArrow() const {
@@ -528,7 +622,7 @@ void PropertyLinkDialog::sceneSelectionChanged() {
 
                 dependencyHistoryLengthSlider_->setEnabled(true);
 
-                DependencyLinkEvaluatorBase* depEval = dynamic_cast<DependencyLinkEvaluatorBase*>(info.evaluator);
+                DependencyLinkEvaluator* depEval = dynamic_cast<DependencyLinkEvaluator*>(info.evaluator);
                 int length = depEval->getHistoryLength();
                 dependencyHistoryLengthSlider_->setValue(length);
                 setDependencyHistoryLengthLabel(length);
@@ -565,9 +659,9 @@ void PropertyLinkDialog::comboBoxSelectionChanged(const QString& text) {
     LinkDialogArrowGraphicsItem* arrow = getCurrentlySelectedArrow();
     //tgtAssert(arrow, "no arrow has been selected but the combobox was active");
 
-    if(arrow) {
+    if (arrow) {
         ConnectionInfo& info = connectionMap_[arrow];
-        info.evaluator = LinkEvaluatorFactory::getInstance()->create(text.toStdString());
+        info.evaluator = createLinkEvaluator(text.toStdString());
     }
 }
 
@@ -636,7 +730,7 @@ void PropertyLinkDialog::modeButtonClicked(QAbstractButton* button) {
             //bidirectionalArrowButton_->setEnabled(true);
             //functionCB_->setEnabled(true);
             //ConnectionInfo& info = connectionMap_[arrow];
-            //if (evaluatorIsDependancyLinkEvaluator(info.evaluator)) {
+            //if (evaluatorIsDependencyLinkEvaluator(info.evaluator)) {
                 //info.evaluator = LinkEvaluatorFactory::getInstance()->create("LinkEvaluatorId");
                 //arrow->setNormalColor(Qt::black);
             //}
@@ -650,14 +744,14 @@ void PropertyLinkDialog::modeButtonClicked(QAbstractButton* button) {
 
         //LinkDialogArrowGraphicsItem* arrow = getCurrentlySelectedArrow();
         //if (arrow) {
-            //dependancyHistoryLengthSlider_->setEnabled(true);
+            //dependencyHistoryLengthSlider_->setEnabled(true);
             //ConnectionInfo& info = connectionMap_[arrow];
-            //if (!evaluatorIsDependancyLinkEvaluator(info.evaluator)) {
-                //info.evaluator = LinkEvaluatorFactory::getInstance()->create("DependancyLink");
+            //if (!evaluatorIsDependencyLinkEvaluator(info.evaluator)) {
+                //info.evaluator = LinkEvaluatorFactory::getInstance()->create("DependencyLink");
             //}
-            //int length = dynamic_cast<DependancyLinkEvaluatorBase*>(info.evaluator)->getHistoryLength();
-            //dependancyHistoryLengthSlider_->setValue(length);
-            //setDependancyHistoryLengthLabel(length);
+            //int length = dynamic_cast<DependencyLinkEvaluatorBase*>(info.evaluator)->getHistoryLength();
+            //dependencyHistoryLengthSlider_->setValue(length);
+            //setDependencyHistoryLengthLabel(length);
             //arrow->setNormalColor(Qt::cyan);
             //rightArrowButton_->click();
         //}
@@ -668,7 +762,7 @@ void PropertyLinkDialog::setDependencyHistoryLengthLabel(int newValue) {
     LinkDialogArrowGraphicsItem* currentArrow = getCurrentlySelectedArrow();
     if (currentArrow) {
         tgtAssert(evaluatorIsDependencyLinkEvaluator(connectionMap_[currentArrow].evaluator), "this method should not be called if the selected arrow is no DependencyLink");
-        DependencyLinkEvaluatorBase* depEval = dynamic_cast<DependencyLinkEvaluatorBase*>(connectionMap_[currentArrow].evaluator);
+        DependencyLinkEvaluator* depEval = dynamic_cast<DependencyLinkEvaluator*>(connectionMap_[currentArrow].evaluator);
         depEval->setHistoryLength(newValue);
     }
 
@@ -718,17 +812,25 @@ LinkDialogArrowGraphicsItem* PropertyLinkDialog::createdArrow(LinkDialogArrowGra
 
     if (propertyLinkModeButton_->isChecked()) {
         arrow->setNormalColor(Qt::black);
-        std::vector<std::pair<std::string, std::string> > availableFunctions = LinkEvaluatorFactory::getInstance()->getCompatibleLinkEvaluators(info.source->getProperty(), info.destination->getProperty());
+        std::vector<std::pair<std::string, std::string> > availableFunctions = 
+            getCompatibleEvaluators(info.source->getProperty(), info.destination->getProperty());
         std::string evalType;
         for(std::vector<std::pair<std::string, std::string> >::iterator i=availableFunctions.begin(); i!=availableFunctions.end(); i++) {
             if(evalType == "")
                 evalType = i->first;
             else {
-               if(i->second == "id")
-                   evalType = i->first;
+                if(i->second == "id")
+                    evalType = i->first;
+
+                //prefer other LEs over dep. LEs
+                size_t pos0 = evalType.find("Dependency");
+                size_t pos1 = evalType.find("dependency");
+                if (pos0 != std::string::npos || pos1 != std::string::npos) {
+                    evalType = i->first;
+                }
             }
         }
-        info.evaluator = LinkEvaluatorFactory::getInstance()->create(evalType);
+        info.evaluator = createLinkEvaluator(evalType);
         if(info.evaluator->arePropertiesLinkable(info.destination->getProperty(), info.source->getProperty()))
             bidirectional = true;
         else
@@ -737,13 +839,18 @@ LinkDialogArrowGraphicsItem* PropertyLinkDialog::createdArrow(LinkDialogArrowGra
     }
     else if (dependencyLinkModeButton_->isChecked()) {
         arrow->setNormalColor(arrowColorDependency);
-        std::vector<std::pair<std::string, std::string> > availableFunctions = LinkEvaluatorFactory::getInstance()->getCompatibleLinkEvaluators(info.source->getProperty(), info.destination->getProperty());
-        std::string evalType;
-        for(std::vector<std::pair<std::string, std::string> >::iterator i=availableFunctions.begin(); i!=availableFunctions.end(); i++) {
-            if(i->second == "DependancyLink")
-                evalType = i->first;
-        }
-        info.evaluator = LinkEvaluatorFactory::getInstance()->create("");
+        //std::vector<std::pair<std::string, std::string> > availableFunctions = 
+        //    getCompatibleEvaluators(info.source->getProperty(), info.destination->getProperty());
+        //std::string evalType;
+        //for(std::vector<std::pair<std::string, std::string> >::iterator i=availableFunctions.begin(); i!=availableFunctions.end(); i++) {
+        //    if(i->second == "DependencyLink")
+        //        evalType = i->first;
+        //}
+        //info.evaluator = createLinkEvaluator(evalType);
+        if (dynamic_cast<const VolumeHandleProperty*>(info.source->getProperty()))
+            info.evaluator = new DependencyLinkEvaluatorVolumeHandle;
+        else
+            info.evaluator = new DependencyLinkEvaluator;
         bidirectional = false;
     }
     info.bidirectional = bidirectional;
@@ -764,6 +871,7 @@ void PropertyLinkDialog::createPropertyLink() {
             bool evaluatorChanged = false;
             bool alreadyExists = false;
             PropertyLink* linkToRemove = 0;
+            PropertyLink* counterpart = 0;
             foreach (PropertyLink* link, previouslyExistingLinks_) {
                 bool source = ((link->getSourceProperty() == info.source->getProperty()) || (link->getSourceProperty() == info.destination->getProperty()));
                 bool destination = ((link->getDestinationProperty() == info.destination->getProperty()) || (link->getDestinationProperty() == info.source->getProperty()));
@@ -775,6 +883,15 @@ void PropertyLinkDialog::createPropertyLink() {
                 if (source && destination && !evaluator) {
                     evaluatorChanged = true;
                     linkToRemove = link;
+
+                    if (info.bidirectional) {
+                        foreach (PropertyLink* link, previouslyExistingLinks_) {
+                            if (link->getSourceProperty() == linkToRemove->getDestinationProperty() && link->getDestinationProperty() == linkToRemove->getSourceProperty()) {
+                                counterpart = link;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 if (alreadyExists || evaluatorChanged)
@@ -784,13 +901,15 @@ void PropertyLinkDialog::createPropertyLink() {
             if (evaluatorChanged) {
                 emit removeLink(linkToRemove);
                 alreadyExists = false;
+                if (counterpart)
+                    emit removeLink(counterpart);
             }
 
             if (!alreadyExists) {
                 emit createLink(info.source->getProperty(), info.destination->getProperty(), info.evaluator);
 
                 if (info.bidirectional)
-                    emit createLink(info.destination->getProperty(), info.source->getProperty(), info.evaluator);
+                    emit createLink(info.destination->getProperty(), info.source->getProperty(), info.evaluator->create());
             }
         }
 
@@ -829,7 +948,7 @@ void PropertyLinkDialog::createArrowFromPropertyLink(PropertyLink* link) {
     tgtAssert(destItem, "no destination property item found");
 
     LinkDialogArrowGraphicsItem* arrow = new LinkDialogArrowGraphicsItem(srcItem, destItem, false);
-    if (!LinkEvaluatorFactory::getInstance()->arePropertiesLinkable(srcItem->getProperty(), destItem->getProperty()))
+    if (!arePropertiesLinkable(srcItem->getProperty(), destItem->getProperty()))
         arrow->setNormalColor(Qt::yellow);
     view_->scene()->addItem(arrow);
     arrow = createdArrow(arrow, false);
@@ -880,18 +999,17 @@ void PropertyLinkDialog::showAutoLinksByName() {
 
                 if (leftItem && rightItem) {
                     ConnectionInfo info;
-                    if(LinkEvaluatorFactory::getInstance()->arePropertiesLinkable(leftProp, rightProp)
-                      && LinkEvaluatorFactory::getInstance()->arePropertiesLinkable(rightProp, leftProp)) {
+                    if(arePropertiesLinkable(leftProp, rightProp) && arePropertiesLinkable(rightProp, leftProp)) {
                         info.source = leftItem;
                         info.destination = rightItem;
                         info.bidirectional = true;
                     }
-                    else if(LinkEvaluatorFactory::getInstance()->arePropertiesLinkable(leftProp, rightProp)) {
+                    else if(arePropertiesLinkable(leftProp, rightProp)) {
                         info.source = leftItem;
                         info.destination = rightItem;
                         info.bidirectional = false;
                     }
-                    else if(LinkEvaluatorFactory::getInstance()->arePropertiesLinkable(rightProp, leftProp)) {
+                    else if(arePropertiesLinkable(rightProp, leftProp)) {
                         info.source = rightItem;
                         info.destination = leftItem;
                         info.bidirectional = false;
@@ -938,7 +1056,7 @@ bool PropertyLinkDialog::getNewArrowIsBirectional() const {
 
 bool PropertyLinkDialog::allowConnectionBetweenProperties(const Property* p1, const Property* p2) const {
     if (propertyLinkModeButton_->isChecked())
-        return LinkEvaluatorFactory::getInstance()->arePropertiesLinkable(p1, p2);
+        return arePropertiesLinkable(p1, p2);
     else
         return true;
 }

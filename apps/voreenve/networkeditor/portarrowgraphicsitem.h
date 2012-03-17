@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -46,7 +46,7 @@ class PortGraphicsItem;
 class PortArrowGraphicsItem : public ArrowGraphicsItem {
 public:
     /**
-     * Constructor. \sa ArrowGraphicsItem::ArrowGraphicsItem</br>
+     * Constructor. \sa ArrowGraphicsItem::ArrowGraphicsItem
      * Will use all default parameters from the ArrowGraphicsItem constructor.
      * \param sourceItem The source item. Must be != 0
      */

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,37 +30,38 @@
 #define VRN_VOLUMEHANDLE_H
 
 #include "voreen/core/datastructures/volume/volume.h"
+#include "voreen/core/datastructures/volume/volumederiveddata.h"
+
 #include "voreen/core/datastructures/volume/modality.h"
-#include "voreen/core/datastructures/volume/bricking/largevolumemanager.h"
 #include "voreen/core/utils/observer.h"
+
+#include "voreen/core/io/serialization/serialization.h"
+#include "voreen/core/io/serialization/meta/metadatacontainer.h"
+#include "voreen/core/io/serialization/meta/realworldmappingmetadata.h"
 
 #ifndef VRN_NO_OPENGL
 #include "voreen/core/datastructures/volume/volumegl.h"
 #endif
 
-
-#include "voreen/core/io/serialization/serialization.h"
-
 #include <set>
 #include <string>
+#include <stdexcept>
 
 namespace voreen {
 
-class VolumeHandle;
+class VolumeHandleBase;
 
 /**
  * Interface for volume handle observers.
  */
-class VolumeHandleObserver : public Observer {
-
+class VRN_CORE_API VolumeHandleObserver : public Observer {
 public:
-
     /**
      * This method is called by the observed VolumeHandle's destructor.
      *
      * @param source the calling VolumeHandle
      */
-    virtual void volumeHandleDelete(const VolumeHandle* source) = 0;
+    virtual void volumeHandleDelete(const VolumeHandleBase* source) = 0;
 
     /**
      * This method is called by the observed VolumeHandle
@@ -73,41 +74,58 @@ public:
      *
      * @param source the calling VolumeHandle
      */
-    virtual void volumeChange(const VolumeHandle* source) = 0;
-
+    virtual void volumeChange(const VolumeHandleBase* source) = 0;
 };
 
+//-------------------------------------------------------------------------------------------------
+
 /**
- * Stores the source where the Volume is loaded from.
+ * A VolumeOrigin encapsulates a URL that specifies the location of a \em single volume.
  *
- * TODO: Documentation
+ * The structure of a origin URL is as follows:
+ * \verbatim
+ *     protocol://filepath?key1=value&key2=value2...
+ * \endverbatim
+ * where only the filepath component is obligatory. The optional protocol string 
+ * specifies the data type of the referenced volume. The search string consisting
+ * of key/value pairs may be used to encode additional information necessary for
+ * distinctly identifying the referenced volume within a container file.
+ * Some examples for valid origin URLs are:
+ * - path/to/myvolume.dat
+ * - dat://path/to/myvolume.dat
+ * - dicom://path/to/DICOMDIR?SeriesInstanceUID=1.3.12.2
+ *
+ * The VolumeOrigin's MetaDataContainer may be used to provide optional information
+ * that can be presented in a user interface. The MetaDataContainer is not persisted.
+ *
  */
-struct VolumeOrigin : public Serializable {
+struct VRN_CORE_API VolumeOrigin : public Serializable {
 
     VolumeOrigin();
-    VolumeOrigin(const VolumeOrigin& rhs);
 
     /// Constructs the origin from the passed URL.
     VolumeOrigin(const std::string& URL);
 
     /// Constructs the origin from the specified protocol string, filepath and optional search string
-    VolumeOrigin(const std::string& protocol, const std::string& filepath, const std::string& searchString = "");
+    VolumeOrigin(const std::string& protocol, const std::string& filepath, 
+        const std::string& searchString = "");
 
     virtual ~VolumeOrigin();
 
     VolumeOrigin& operator=(const VolumeOrigin& rhs);
+    VolumeOrigin(const VolumeOrigin& rhs);
     bool operator==(const VolumeOrigin& rhs) const;
 
     /// Returns the complete URL where volume is loaded from.
     const std::string& getURL() const;
 
-    /// Returns the protocol portion of the URL. May be empty.
+    /// Returns the protocol portion of the URL, which specifies the data format. May be empty.
     std::string getProtocol() const;
 
-    /// Returns the path portion of the URL, without a trailing search string.
+    /// Returns the path portion of the URL, without the protocol specifier and the trailing search string.
     std::string getPath() const;
 
-    /// Returns the file name component of the URL. May be empty, if URL does not reference a file.
+    /// Returns the file name component of the URL.
     std::string getFilename() const;
 
     /// Returns the search string portion of the URL. May be empty.
@@ -116,32 +134,296 @@ struct VolumeOrigin : public Serializable {
     /// Appends the given search parameter to the URL in the form: "key=value"
     void addSearchParameter(const std::string& key, const std::string& value);
 
-    /// Returns the value corresponding to the passed key in the URL's search string.
-    std::string getSearchParameter(std::string key) const;
+    /// 
+    /**
+     * Returns the value corresponding to the passed key in the URL's search string,
+     * or an empty string, if the key is not found.
+     *
+     * @param key name of the search string attribute to extract
+     * @param caseSensitive if true, the key name is compared case-sensitively
+     */
+    std::string getSearchParameter(const std::string& key, bool caseSensitive = true) const;
 
     /**
-     * @see Serializable::serialize
+     * Return the VolumeOrigin's MetaDataContainer, which may be used to store 
+     * additional information about the referenced volume that is not required for 
+     * distinctly identifying it.
+     *
+     * @note The MetaDataContainer is not serialized.
      */
+    MetaDataContainer& getMetaDataContainer();
+
+    /// @overload
+    const MetaDataContainer& getMetaDataContainer() const;
+
     virtual void serialize(XmlSerializer& s) const;
-
-    /**
-     * @see Serializable::deserialize
-     */
     virtual void deserialize(XmlDeserializer& s);
 
 private:
-
     /// Replaces backslashes.
     void cleanupURL();
 
-    /**
-     * Copy VolumeOrigin object (used by operator=() and copy-ctor).
+    /// Specifies the location of the referenced volume.
+    std::string url_;
+
+    /// May contain additional meta information about the volume (not serialized).
+    MetaDataContainer metaDataContainer_;
+
+    static const std::string loggerCat_;
+};
+
+//-------------------------------------------------------------------------------------------------
+
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API Observable<VolumeHandleObserver>;
+#endif
+
+class VRN_CORE_API VolumeHandleBase : public Observable<VolumeHandleObserver> {
+public:
+    virtual ~VolumeHandleBase();
+
+    virtual std::vector<std::string> getMetaDataKeys() const = 0;
+    virtual const MetaDataBase* getMetaData(const std::string& key) const = 0;
+    virtual bool hasMetaData(const std::string& key) const = 0;
+
+    /*
+     * @param def Default return value in case metadata could not be found.
      */
-    void clone(const VolumeOrigin& rhs) {
-        url_ = rhs.getURL();
+    template<typename T, typename U>
+    U getMetaDataValue(const std::string& key, U def) const {
+        if(hasMetaData(key)) {
+            const MetaDataBase* mdb = getMetaData(key);
+            const T* md = dynamic_cast<const T*>(mdb);
+            if(md)
+                return static_cast<U>(md->getValue());
+            else
+                return def;
+        }
+        else
+            return def;
     }
 
-    std::string url_;
+    /**
+     * Returns the derived data item of the specified type T,
+     * which must be a concrete subtype of VolumeDerivedData.
+     *
+     * If no derived data item of the type T exists, a new item is created
+     * and stored if possible. Otherwise, 0 is returned.
+     *
+     * @see hasDerivedData
+     */
+    template<class T>
+    T* getDerivedData() const;
+
+    /**
+     * Returns whether there exists a derived data item of the specified type T,
+     * which must be a concrete subtype of VolumeDerivedData.
+     */
+    template<class T>
+    bool hasDerivedData() const;
+
+    /**
+     * Adds the given data item to the derived data associated with this handle.
+     * The template type T must be a concrete subtype of VolumeDerivedData.
+     *
+     * @note The handle takes ownership of the passed data item.
+     * @note An existing item of the type T is replaced and deleted.
+     */
+    template<class T>
+    void addDerivedData(T* data) {
+        addDerivedDataInternal<T>(data);
+    }
+
+    /**
+     * Removes and deletes the derived data item with the specified type T,
+     * which must be a concrete subtype of VolumeDerivedData.
+     * If no item with the specified type T exists, the call has no effect.
+     */
+    template<class T>
+    void removeDerivedData() {
+        removeDerivedDataInternal<T>();
+    }
+    
+    /**
+     * Deletes all derived data items associated with this handle.
+     */
+    void clearDerivedData();
+
+    /**
+     * Computes the MD5 hash of the raw volume data.
+     * The result is cached, Use VolumeAtomic::invalidate to mark cached hash as invalid.
+     */
+    virtual std::string getHash() const;
+
+    template <class T>
+    const T* getRepresentation() const {
+        if(getNumRepresentations() == 0) {
+            LWARNING("Found no representations for this volumehandle!" << this);
+            return 0;
+        }
+
+        //Check if rep. is available:
+        for(size_t i=0; i<getNumRepresentations(); i++) {
+            if(dynamic_cast<const T*>(getRepresentation(i))) {
+                return static_cast<const T*>(getRepresentation(i));
+            }
+        }
+
+        //LWARNING("Representation not available, looking for converter...");
+
+        //Check if conversion is possible:
+        ConverterFactory fac;
+        for(size_t i=0; i<getNumRepresentations(); i++) {
+            RepresentationConverter<T>* converter = fac.findConverter<T>(getRepresentation(i));
+            if(converter) {
+                const T* rep = static_cast<const T*>(useConverter(converter)); //we can static cast here because we know the converter returns T*
+
+                if(rep) 
+                    return rep;
+            }
+        }
+        LWARNING("Found no converter. Using fallback. (Converting to RAM volume)");
+        //TODO
+        //if(!hasRepresentation<Volume>()) {
+            //getRepresentationInternal<Volume>();
+            //return getRepresentationInternal<T>();
+        //}
+        //else
+            return 0;
+    }
+
+    virtual size_t getNumRepresentations() const = 0;
+    virtual const VolumeRepresentation* getRepresentation(size_t i) const = 0;
+    virtual const VolumeRepresentation* useConverter(const RepresentationConverterBase* converter) const = 0;
+
+    template <class T>
+    bool hasRepresentation() const {
+        for(size_t i=0; i<getNumRepresentations(); i++) {
+            if(dynamic_cast<const T*>(getRepresentation(i))) 
+                return true;
+        }
+        return false;
+    }
+
+    size_t getNumChannels() const;
+    tgt::svec3 getDimensions() const;
+    tgt::svec3 getOriginalDimensions() const;
+    int getBitsStored() const;
+    size_t getNumVoxels() const;
+    tgt::svec3 getBorderLLF() const;
+    tgt::svec3 getBorderURB() const;
+    bool hasBorder() const;
+
+    virtual VolumeHandle* clone() const throw (std::bad_alloc); 
+
+    //Metadata shortcuts:
+    /// Returns the associated timestep of this volume handle.
+    virtual float getTimestep() const;
+    tgt::vec3 getSpacing() const;
+    tgt::vec3 getOffset() const;
+    virtual Modality getModality() const;
+    RealWorldMapping getRealWorldMapping() const;
+
+    /// Returns the 8 cube vertices in physical coordinates.
+    virtual std::vector<tgt::vec3> getCubeVertices() const;
+
+    /**
+     * Returns volumes bounding box as MeshGeometry.
+     *
+     * @param applyTransformation if true, the bounding box
+     *  is transformed into world coordinates. Otherwise,
+     *  the bounding box is returned in the physical coordinates.
+     *  @see getVoxelToWorldMatrix
+     *
+     * @note The mesh is internally created on each call.
+     */
+    virtual MeshGeometry getBoundingBox(bool applyTransformation = true) const;
+
+    /// Returns the size of the cube in physical coordinates..
+    virtual tgt::vec3 getCubeSize() const;
+
+    /// Returns the lower left front in physical coordinates..
+    virtual tgt::vec3 getLLF() const;
+
+    /// Returns the upper right back in physical coordinates.
+    virtual tgt::vec3 getURB() const;
+
+    /**
+     * Returns the matrix mapping from voxel coordinates (i.e. [0; dim-1])
+     * to world coordinates.
+     *
+     * @note The matrix is internally created on each call.
+     */
+    virtual tgt::mat4 getVoxelToWorldMatrix() const;
+
+    /**
+     * Returns the matrix mapping from world coordinates
+     * to voxel coordinates (i.e. [0; dim-1]).
+     *
+     * @note The matrix is internally created on each call.
+     */
+    virtual tgt::mat4 getWorldToVoxelMatrix() const;
+
+    /**
+     * Returns the matrix mapping from world coordinates
+     * to texture coordinates (i.e. [0.0; 1.0]).
+     *
+     * @note The matrix is internally created on each call.
+     */
+    virtual tgt::mat4 getWorldToTextureMatrix() const;
+
+    /**
+     * Returns the matrix mapping from texture coordinates (i.e. [0.0; 1.0])
+     * to world coordinates.
+     *
+     * @note The matrix is internally created on each call.
+     */
+    virtual tgt::mat4 getTextureToWorldMatrix() const;
+
+    virtual tgt::mat4 getVoxelToPhysicalMatrix() const;
+    virtual tgt::mat4 getPhysicalToVoxelMatrix() const;
+
+    virtual tgt::mat4 getPhysicalToWorldMatrix() const;
+    virtual tgt::mat4 getWorldToPhysicalMatrix() const;
+
+    virtual tgt::mat4 getTextureToPhysicalMatrix() const;
+    virtual tgt::mat4 getPhysicalToTextureMatrix() const;
+
+    virtual tgt::mat4 getTextureToVoxelMatrix() const;
+    virtual tgt::mat4 getVoxelToTextureMatrix() const;
+
+    /**
+     * Returns the origin the volume has been loaded from,
+     * usually a file path.
+     */
+    const VolumeOrigin& getOrigin() const;
+
+    /**
+     * Sets the origin the volume has been loaded from,
+     * usually a file path.
+     */
+    void setOrigin(const VolumeOrigin& origin);
+
+    /**
+     * Notifies the registered VolumeHandleObservers about the pending
+     * deletion of the VolumeHandle.
+     */
+    void notifyDelete();
+
+    /**
+     * Notifies the registered VolumeHandleObservers that a reload
+     * of the volume was done.
+     */
+    void notifyReload();
+protected:
+    template<class T>
+        void addDerivedDataInternal(T* data) const;
+
+    template<class T>
+        void removeDerivedDataInternal() const;
+
+    VolumeOrigin origin_;
+    mutable std::set<VolumeDerivedData*> derivedData_;
 
     static const std::string loggerCat_;
 };
@@ -154,37 +436,22 @@ private:
  * It is designed for being the only class which has to take care of
  * what kind of hardware volumes are used.
  */
-class VolumeHandle : public Serializable, public Observable<VolumeHandleObserver> {
-
+class VRN_CORE_API VolumeHandle : public Serializable, public VolumeHandleBase {
 public:
-
-    /**
-     * All types of available hardware specializations.
-     * This enum is used to create a mask by OR-ing the values.
-     */
-    enum HardwareVolumes {
-        HARDWARE_VOLUME_NONE = 0,
-        HARDWARE_VOLUME_GL = 1,
-        HARDWARE_VOLUME_CUDA = 2,
-        HARDWARE_VOLUME_ALL = 0xFFFF
-    };
-
-    /**
-     * Default constructor.
-     */
-    VolumeHandle();
+    VolumeHandle();//TODO: make protected (for serialization) or add spacing
 
     /**
      * Constructor.
      *
      * @note No hardware specific volume data like VolumeGL are created initially. If you want
-     *  to use hardware specific volume data / textures, call generateHardwareVolumes() or
-     *  directly use getVolumeGL() which implicitly generates a hardware volume.
+     *  to use hardware specific volume data / textures, call getRepresentation<T>() with the desired type.
      *
      * @param   volume  The volume data for this VolumeHandle.
-     * @param   time    The timestep for this VolumeHandle.
      */
-    VolumeHandle(Volume* const volume, const float time = 0.f);
+    VolumeHandle(VolumeRepresentation* const volume, const tgt::vec3& spacing, const tgt::vec3& offset, const tgt::mat4& transformation = tgt::mat4::identity);
+    ///Copy metadata from other volumehande:
+    VolumeHandle(VolumeRepresentation* const volume, const VolumeHandleBase* vh);
+    VolumeHandle(VolumeRepresentation* const volume, const MetaDataContainer* mdc);
 
     /**
      * Delete all Volume pointers and the hardware specific ones, if they have been generated.
@@ -199,11 +466,6 @@ public:
     void releaseVolumes();
 
     /**
-     * Returns the generic Volume.
-     */
-    Volume* getVolume() const;
-
-    /**
      * (Re)Sets the volume for this handle and deletes the previous one.
      * Usually there should be no need for using this method as the volume
      * is initialized within the ctor, but some VolumeReaders need to modify
@@ -211,21 +473,53 @@ public:
      */
     void setVolume(Volume* const volume);
 
-    void setModality(Modality modality);
-    Modality getModality() const;
+    /**
+     * Returns a container storing the meta data items
+     * attached to this volume handle.
+     */
+    virtual const MetaDataContainer& getMetaDataContainer() const;
 
     /**
-     * Returns the associated timestep of this volume handle.
+     * @overload
      */
-    float getTimestep() const;
+    virtual MetaDataContainer& getMetaDataContainer();
 
-    /**
-     * Sets the timestep for this VolumeHandle.
-     */
-    void setTimestep(float timestep);
+    virtual std::vector<std::string> getMetaDataKeys() const {
+        return metaData_.getKeys();
+    }
 
-    void setOrigin(const VolumeOrigin& origin);
-    const VolumeOrigin& getOrigin() const;
+    virtual const MetaDataBase* getMetaData(const std::string& key) const {
+        return metaData_.getMetaData(key);
+    }
+
+    virtual bool hasMetaData(const std::string& key) const {
+        return metaData_.hasMetaData(key);
+    }
+
+    template<typename T, typename U>
+    void setMetaDataValue(const std::string& key, U value) {
+        MetaDataContainer& mdc = getMetaDataContainer();
+        if(mdc.hasMetaData(key)) {
+            MetaDataBase* mdb = mdc.getMetaData(key);
+            T* md = dynamic_cast<T*>(mdb);
+
+            if(md)
+                md->setValue(value);
+            else {
+                LWARNING("MetaData type mismatch! Replacing.");
+                mdc.removeMetaData(key);
+
+                T* md = new T();
+                md->setValue(value);
+                mdc.addMetaData(key, md);
+            }
+        }
+        else {
+            T* md = new T();
+            md->setValue(value);
+            mdc.addMetaData(key, md);
+        }
+    }
 
     /**
      * Reloads the volume from its origin, usually from the
@@ -241,38 +535,8 @@ public:
      */
     bool reloadVolume();
 
-    /**
-     * Returns the mask indicating what hardware volume are currently used
-     * by this handle.
-     * The used types can be extracted by AND-ing the mask with the desired bit(s)
-     * like usual.
-     */
-    int getHardwareVolumeMask() const;
-
-    /**
-     * Returns whether the specified types of hardware volumes exists.
-     */
-    bool hasHardwareVolumes(int volumeMask) const;
-
-    /**
-     * Generate hardware volumes. If the hardware volume already exists, it is rebuild.
-     *
-     * @param volumeMask OR-junction of HardwareVolumes enum determining what kind of hardware
-     *    volumes to create.
-     */
-    void generateHardwareVolumes(int volumeMask);
-
-    /**
-     * Remove hardware volumes and free memory.
-     *
-     * @param volumeMask OR-junction of HardwareVolumes enum determining which hardware
-     *    volumes to delete.
-     */
-    void freeHardwareVolumes(int volumeMask = HARDWARE_VOLUME_ALL);
-
-    LargeVolumeManager* getLargeVolumeManager();
-    void setLargeVolumeManager(LargeVolumeManager* largeVolumeManager);
-
+    ///Set the MD5 hash. Should only be called by a reader.
+    virtual void setHash(const std::string& hash) const;
 
     /**
      * @see Serializable::serialize
@@ -284,52 +548,186 @@ public:
      */
     virtual void deserialize(XmlDeserializer& s);
 
-#ifndef VRN_NO_OPENGL
-    /**
-     * Returns an OpenGL hardware volume for this volume, generating a new one via
-     * generateHardwareVolumes() if it does not already exist. You can use hasHardwareVolumes() to
-     * check if such a hardware volume already exists.
-     */
-    VolumeGL* getVolumeGL();
-#endif
+    void addRepresentation(VolumeRepresentation* rep) {
+        //TODO: check for duplicates using RTI
+        representations_.push_back(rep);
+    }
 
+    template<class T>
+    void removeRepresentation() {
+        //Check if rep. is available:
+        for(size_t i=0; i<representations_.size(); i++) {
+            T* test = dynamic_cast<T*>(representations_[i]);
+
+            if(test) {
+                representations_.erase(representations_.begin() + i);
+                delete test;
+            }
+        }
+    }
+
+    ///Delete all other representations.
+    template<class T>
+    void makeRepresentationExclusive() {
+        if(!hasRepresentation<T>()) {
+            //we would be without representations if we delete all...
+            if(!VolumeHandleBase::getRepresentation<T>())
+                return;
+        }
+
+        for(size_t i=0; i<representations_.size(); i++) {
+            T* test = dynamic_cast<T*>(representations_[i]);
+
+            if(!test) {
+                delete representations_[i];
+                representations_.erase(representations_.begin() + i);
+            }
+        }
+    }
+
+    virtual const VolumeRepresentation* useConverter(const RepresentationConverterBase* converter) const {
+        for(size_t i=0; i<representations_.size(); i++) {
+            if(converter->canConvert(representations_[i])) {
+                VolumeRepresentation* rep = converter->convert(representations_[i]);
+
+                if(rep) {
+                    representations_.push_back(rep);
+                    return rep;
+                }
+            }
+        }
+        return 0;
+    }
+
+    virtual size_t getNumRepresentations() const {
+        return representations_.size();
+    }
+
+    virtual const VolumeRepresentation* getRepresentation(size_t i) const {
+        return representations_[i];
+    }
+
+    template <class T>
+    const T* getRepresentation() const {
+        return VolumeHandleBase::getRepresentation<T>();
+    }
+
+    template <class T>
+    T* getWritableRepresentation() {
+        T* rep = const_cast<T*>(getRepresentation<T>());
+        makeRepresentationExclusive<T>();
+        clearDerivedData();
+        return rep;
+    }
+
+    void deleteAllRepresentations() {
+        while(!representations_.empty()) {
+            delete representations_.back();
+            representations_.pop_back();
+        }
+    }
+
+    void releaseAllRepresentations() {
+        representations_.clear();
+    }
+
+    /// Specifies the voxel dimensions of the volume.
+    virtual void setSpacing(const tgt::vec3 spacing);
+
+    virtual void setOffset(const tgt::vec3 offset);
+
+    void setModality(Modality modality);
+    void setRealWorldMapping(RealWorldMapping rwm);
+
+    /**
+     * Sets the timestep for this VolumeHandle.
+     */
+    void setTimestep(float timestep);
+
+    virtual void setPhysicalToWorldMatrix(const tgt::mat4& transformationMatrix);
 
 protected:
+    mutable std::vector<VolumeRepresentation*> representations_;
 
-    /**
-     * Notifies the registered VolumeHandleObservers about the pending
-     * deletion of the VolumeHandle.
-     */
-    void notifyDelete();
-
-    /**
-     * Notifies the registered VolumeHandleObservers that a reload
-     * of the volume was done.
-     */
-    void notifyReload();
-
-    VolumeOrigin origin_;
-
-    Volume* volume_;
-    float time_;
-    Modality modality_;
-    int hardwareVolumeMask_;
-
-    LargeVolumeManager* largeVolumeManager_; /** In case this handle holds a bricked
-                                                 volume, this is the Manager responsible
-                                                 for updating bricks etc. 0 if no bricked
-                                                 volume is present.*/
-
-#ifndef VRN_NO_OPENGL
-    VolumeGL* volumeGL_;
-#endif
-
+    MetaDataContainer metaData_;
 
     static const std::string loggerCat_;
 
 private:
     friend class KeyValueFactory;
 };
+
+
+//---------------------------------------------------------------------------
+// template definitions
+
+template<class T>
+T* VolumeHandleBase::getDerivedData() const {
+    for (std::set<VolumeDerivedData*>::iterator it=derivedData_.begin(); it!=derivedData_.end(); ++it) {
+        if (typeid(**it) == typeid(T))
+            return dynamic_cast<T*>(*it);
+    }
+
+    // try to create derived data item
+    T* dummy = new T();
+    if (!dynamic_cast<VolumeDerivedData*>(dummy)) {
+        LERROR("template parameter is not a subtype of VolumeDerivedData");
+        delete dummy;
+        throw std::invalid_argument("template parameter is not a subtype of VolumeDerivedData");
+    }
+    T* result = dynamic_cast<T*>(static_cast<VolumeDerivedData*>(dummy)->createFrom(this));
+    if (result)
+        addDerivedDataInternal<T>(result);
+    delete dummy;
+    return result;
+}
+
+template<class T>
+bool VolumeHandleBase::hasDerivedData() const {
+    for (std::set<VolumeDerivedData*>::const_iterator it=derivedData_.begin(); it!=derivedData_.end(); ++it) {
+        if (typeid(**it) == typeid(T))
+            return true;
+    }
+    return false;
+}
+
+template<class T>
+void VolumeHandleBase::addDerivedDataInternal(T* data) const {
+    if (!dynamic_cast<VolumeDerivedData*>(data)) {
+        LERROR("derived data item is not of type VolumeDerivedData");
+        throw std::invalid_argument("passed data item is not of type VolumeDerivedData");
+    }
+
+    if (hasDerivedData<T>())
+        removeDerivedDataInternal<T>();
+
+    derivedData_.insert(static_cast<VolumeDerivedData*>(data));
+}
+
+template<class T>
+void VolumeHandleBase::removeDerivedDataInternal() const {
+    if (!hasDerivedData<T>())
+        return;
+
+    T* data = getDerivedData<T>();
+    for (std::set<VolumeDerivedData*>::iterator it=derivedData_.begin(); it!=derivedData_.end(); ++it) {
+        if (*it == data) {
+            derivedData_.erase(it);
+            delete data;
+            return;
+        }
+    }
+
+}
+
+/*
+ * Position volume centered at (0,0,0), max edge length = 1
+ * WARNING: Destroys correct spacing!
+ */
+void VRN_CORE_API oldVolumePosition(VolumeHandle* vh);
+
+///Center volume in world coordinates by modifying the offset.
+void VRN_CORE_API centerVolume(VolumeHandle* vh);
 
 } // namespace
 

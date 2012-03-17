@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,92 +36,140 @@
 
 namespace voreen {
 
-class FloatVec2Property : public NumericProperty<tgt::vec2> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::vec2>;
+#endif
+class VRN_CORE_API FloatVec2Property : public NumericProperty<tgt::vec2> {
 public:
     FloatVec2Property(const std::string& id, const std::string& guiText, const tgt::vec2& value,
                   const tgt::vec2& minimum = tgt::vec2(0.0f), const tgt::vec2& maximum = tgt::vec2(1.0f),
                   Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    FloatVec2Property();
     virtual ~FloatVec2Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "FloatVec2Property"; }
+    virtual std::string getTypeDescription() const { return "FloatVector2"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class FloatVec3Property : public NumericProperty<tgt::vec3> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::vec3>;
+#endif
+class VRN_CORE_API FloatVec3Property : public NumericProperty<tgt::vec3> {
 public:
     FloatVec3Property(const std::string& id, const std::string& guiText, const tgt::vec3& value,
                   const tgt::vec3& minimum = tgt::vec3(0.0f), const tgt::vec3& maximum = tgt::vec3(1.0f),
                   Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    FloatVec3Property();
     virtual ~FloatVec3Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "FloatVec3Property"; }
+    virtual std::string getTypeDescription() const { return "FloatVector3"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class FloatVec4Property : public NumericProperty<tgt::vec4> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::vec4>;
+#endif
+class VRN_CORE_API FloatVec4Property : public NumericProperty<tgt::vec4> {
 public:
+    FloatVec4Property();
     FloatVec4Property(const std::string& id, const std::string& guiText, const tgt::vec4& value,
                   const tgt::vec4& minimum = tgt::vec4(0.0f), const tgt::vec4& maximum = tgt::vec4(1.0f),
                   Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
     virtual ~FloatVec4Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "FloatVec4Property"; }
+    virtual std::string getTypeDescription() const { return "FloatVector4"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class IntVec2Property : public NumericProperty<tgt::ivec2> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::ivec2>;
+#endif
+class VRN_CORE_API IntVec2Property : public NumericProperty<tgt::ivec2> {
 public:
+    IntVec2Property();
     IntVec2Property(const std::string& id, const std::string& guiText, const tgt::ivec2& value,
                 const tgt::ivec2& minimum = tgt::ivec2(0), const tgt::ivec2& maximum = tgt::ivec2(100),
                 Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
     virtual ~IntVec2Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "IntVec2Property"; }
+    virtual std::string getTypeDescription() const { return "IntVector2"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class IntVec3Property : public NumericProperty<tgt::ivec3> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::ivec3>;
+#endif
+class VRN_CORE_API IntVec3Property : public NumericProperty<tgt::ivec3> {
 public:
     IntVec3Property(const std::string& id, const std::string& guiText, const tgt::ivec3& value,
                 const tgt::ivec3& minimum = tgt::ivec3(0), const tgt::ivec3& maximum = tgt::ivec3(100),
                 Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    IntVec3Property();
     virtual ~IntVec3Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "IntVec3Property"; }
+    virtual std::string getTypeDescription() const { return "IntVector3"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 //---------------------------------------------------------------------------
 
-class IntVec4Property : public NumericProperty<tgt::ivec4> {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API NumericProperty<tgt::ivec4>;
+#endif
+class VRN_CORE_API IntVec4Property : public NumericProperty<tgt::ivec4> {
 public:
     IntVec4Property(const std::string& id, const std::string& guiText, const tgt::ivec4& value,
                 const tgt::ivec4& minimum = tgt::ivec4(0), const tgt::ivec4& maximum = tgt::ivec4(100),
                 Processor::InvalidationLevel invalidationLevel=Processor::INVALID_RESULT);
-
+    IntVec4Property();
     virtual ~IntVec4Property() {}
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const;
 
-    virtual PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "IntVec4Property"; }
+    virtual std::string getTypeDescription() const { return "IntVector4"; }
+
+    virtual Variant getVariant(bool normalized = false) const;
+    virtual void setVariant(const Variant& val, bool normalized = false);
+    virtual int getVariantType() const;
 };
 
 } // namespace voreen

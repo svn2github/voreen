@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -65,12 +65,13 @@ FlythroughNavigation::FlythroughNavigation(tgt::GLCanvas* canvas, bool /*default
 
 void FlythroughNavigation::keyEvent(tgt::KeyEvent* e) {
 
-    float motionOffset = 0.01f;
-    float motionOffsetBig = 0.06f;
-    float angle = 0.01f;
-
     bool cameraModified = false;
     if (e->pressed()) {
+
+        float motionOffset = 0.01f;
+        float motionOffsetBig = 0.06f;
+        float angle = 0.01f;
+
         switch (e->keyCode()) {
         case KeyEvent::K_UP :
             if (e->modifiers() == 0)

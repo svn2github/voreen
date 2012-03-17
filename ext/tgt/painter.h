@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,7 +25,7 @@
 #ifndef TGT_PAINTER_H
 #define TGT_PAINTER_H
 
-#include "tgt/config.h"
+#include "tgt/types.h"
 #include "tgt/vector.h"
 
 namespace tgt {
@@ -40,7 +40,7 @@ class Camera;
  * A tgt application is supposed to derive it's own Painter(s) and override paint, initialize
  * and sizeChanged method
  */
-class Painter {
+class TGT_API Painter {
 public:
     /// Constructor
     Painter(GLCanvas* canvas = 0);

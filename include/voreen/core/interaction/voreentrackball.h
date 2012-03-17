@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -31,7 +31,7 @@
 
 #include <cmath>
 #include <vector>
-
+#include "voreen/core/voreencoredefine.h"
 #include "tgt/camera.h"
 
 namespace voreen {
@@ -42,7 +42,7 @@ class CameraProperty;
  *  This class implements a Trackball which can be used to freely rotate an object
  *  around a given center.
  */
-class VoreenTrackball {
+class VRN_CORE_API VoreenTrackball {
 
 public:
 

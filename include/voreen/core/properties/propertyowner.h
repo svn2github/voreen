@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,6 +30,7 @@
 #define VRN_PROPERTYOWNER_H
 
 #include "voreen/core/utils/observer.h"
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/io/serialization/serialization.h"
 
 namespace voreen {
@@ -37,12 +38,15 @@ namespace voreen {
 class Property;
 class PropertyWidget;
 
-class PropertyOwnerObserver : public Observer {
+class VRN_CORE_API PropertyOwnerObserver : public Observer {
 public:
     virtual void preparePropertyRemoval(Property* property);
 };
 
-class PropertyOwner : public AbstractSerializable, public Observable<PropertyOwnerObserver>  {
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API Observable<PropertyOwnerObserver>;
+#endif
+class VRN_CORE_API PropertyOwner : public AbstractSerializable, public Observable<PropertyOwnerObserver>  {
 
     friend class Property;
 

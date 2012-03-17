@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,15 +29,24 @@
 #ifndef VRN_PROCESSORWIDGETFACTORY_H
 #define VRN_PROCESSORWIDGETFACTORY_H
 
-#include "voreen/core/processors/processorwidget.h"
-#include "voreen/core/processors/processor.h"
-
 namespace voreen {
 
+class Processor;
+class ProcessorWidget;
+
+/**
+ * Interface for factories that create ProcessorWidgets.
+ *
+ * Usually, a module provides a ProcessorWidgetFactory for its processors.
+ * However, since a processor does not necessarily need to be represented
+ * by a specialized widget, providing a ProcessorWidgetFactory is optional.
+ *
+ * @see VoreenModule::addProcessorWidgetFactory
+ */
 class ProcessorWidgetFactory {
 public:
     virtual ~ProcessorWidgetFactory() {};
-    virtual ProcessorWidget* createWidget(Processor*) const = 0;
+    virtual ProcessorWidget* createWidget(Processor* processor) const = 0;
 };
 
 } //namespace voreen

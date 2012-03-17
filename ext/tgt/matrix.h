@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -27,7 +27,6 @@
 
 #include <cstring>
 
-#include "tgt/config.h"
 #include "tgt/vector.h"
 #include "tgt/assert.h"
 
@@ -349,7 +348,7 @@ struct Matrix3 {
     */
     bool invert(Matrix3<T>& result) const;
 
-    float det() {
+    T det() {
         return elem[0]*elem[4]*elem[8] + elem[1]*elem[5]*elem[6] + elem[2]*elem[3]*elem[7] - elem[0]*elem[5]*elem[7] - elem[1]*elem[3]*elem[8] - elem[2]*elem[4]*elem[6];
     }
 /*
@@ -400,9 +399,9 @@ bool Matrix3<T>::invert(Matrix3<T>& result) const {
     using std::abs; // use overloaded abs
     result = Matrix3<T>::identity;
 
-    float z = elem[0]*(elem[4]*elem[8] - elem[5]*elem[7]) + elem[1]*(elem[5]*elem[6] - elem[3]*elem[8]) + elem[2]*(elem[3]*elem[7] - elem[4]*elem[6]);
+    T z = elem[0]*(elem[4]*elem[8] - elem[5]*elem[7]) + elem[1]*(elem[5]*elem[6] - elem[3]*elem[8]) + elem[2]*(elem[3]*elem[7] - elem[4]*elem[6]);
 
-    if(abs(z) < 0.00001f)
+    if( abs(z) < 0.00001)
         return false;
 
     //we have a row-matrix:
@@ -691,9 +690,14 @@ typedef Matrix2f        mat2;
 typedef Matrix3f        mat3;
 typedef Matrix4f        mat4;
 
-typedef Matrix2<bool>   bmat2;
-typedef Matrix3<bool>   bmat3;
-typedef Matrix4<bool>   bmat4;
+#ifdef DLL_TEMPLATE_INST
+template struct TGT_API Matrix2<float>;
+template struct TGT_API Matrix3<float>;
+template struct TGT_API Matrix4<float>;
+template struct TGT_API Matrix2<double>;
+template struct TGT_API Matrix3<double>;
+template struct TGT_API Matrix4<double>;
+#endif
 
 /*
     Prepare to implement 3 * 5 * 7 = 105 operators and a couple of functions
@@ -1083,7 +1087,7 @@ Matrix4<T> Matrix4<T>::createPerspective(T fov, T aspect, T pnear, T pfar) {
     }
 #endif // TGT_DEBUG
 
-    T f = T(1) / tanf( fov/T(2) );
+    T f = T(1) / tan( fov/T(2) );
     Matrix4<T> m(
         f / aspect,         T(0),            T(0),                          T(0),
             T(0),             f,             T(0),                          T(0),
@@ -1104,9 +1108,9 @@ Matrix4<T> Matrix4<T>::createOrtho(T left, T right, T top, T bottom, T pnear, T 
 #endif // TGT_DEBUG
     
     Matrix4<T> m(
-        T(2)/(right-left),      T(0),              T(0),         -(right+left)/(right-left),
-             T(0),         T(2)/(top-bottom),      T(0),         -(top+bottom)/(top-bottom),
-             T(0),              T(0),         T(2)/(pfar-pnear), -(pfar+pnear)/(pfar-pnear),
+        T(2)/(right-left),      T(0),              T(0),          -(right+left)/(right-left),
+             T(0),         T(2)/(top-bottom),      T(0),          -(top+bottom)/(top-bottom),
+             T(0),              T(0),         T(-2)/(pfar-pnear), -(pfar+pnear)/(pfar-pnear),
              T(0),              T(0),              T(0),                      T(1)
     );
 
@@ -1159,7 +1163,7 @@ Vector3<T> operator * (const Matrix4<T>& m, const Vector3<T>& v) {
 template<class T>
 bool Matrix4<T>::invert(Matrix4<T>& result) const {
     using std::abs; // use overloaded abs
-    float t;
+    T t;
     Matrix4<T> tmp = *this;
     result = Matrix4<T>::identity;
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #ifndef VRN_VOLUMEWRITER_H
 #define VRN_VOLUMEWRITER_H
 
+#include "voreen/core/voreencoredefine.h"
 #include <string>
 #include <vector>
 
@@ -38,13 +39,13 @@ namespace voreen {
 
 // forward declarations
 class ProgressBar;
-class VolumeHandle;
+class VolumeHandleBase;
 
 /**
- * Reads a volume dataset.
+ * Writes a volume dataset.
  * Implement this class in order to support a new format.
  */
-class VolumeWriter {
+class VRN_CORE_API VolumeWriter {
 public:
     VolumeWriter(ProgressBar* progress = 0);
     virtual ~VolumeWriter() {}
@@ -55,18 +56,42 @@ public:
     virtual VolumeWriter* create(ProgressBar* progress = 0) const = 0;
 
     /**
+     * Returns the name of this class as a string.
+     * Necessary due to the lack of code reflection in C++.
+     */
+    virtual std::string getClassName() const = 0;
+
+    /**
+     * Returns a description of the file format the writer supports.
+     *
+     * @note The description is to be shown in a file dialog 
+     *      and should therefore be short.
+     */
+    virtual std::string getFormatDescription() const = 0;
+
+    /**
      * Saves a Volume to the given file.
      *
      * @param fileName The file name where the data should go.
      * @param Volume The volume which should be saved.
      */
-    virtual void write(const std::string& fileName, VolumeHandle* volumeHandle)
+    virtual void write(const std::string& fileName, const VolumeHandleBase* volumeHandle)
         throw (tgt::IOException) = 0;
 
     /**
      * Returns the filename extensions that are supported by the writer.
      */
-    const std::vector<std::string>& getExtensions() const;
+    const std::vector<std::string>& getSupportedExtensions() const;
+
+    /**
+     * Returns a list of filenames that are supported by this writer.
+     */
+    const std::vector<std::string>& getSupportedFilenames() const;
+
+    /**
+     * Returns a list of protocols that are supported by this writer.
+     */
+    const std::vector<std::string>& getSupportedProtocols() const;
 
     /**
      * Use this method as a helper to get a file name without its extension
@@ -84,13 +109,31 @@ public:
      */
     static std::string getExtension(const std::string& filename);
 
-protected:
-    ProgressBar* progress_;
+    /**
+     * Assigns a progress bar to the writer. May be null.
+     */
+    void setProgressBar(ProgressBar* progressBar);
 
-    /// List of filename extensions supported by the reader.
+    /**
+     * Returns the assigned progress bar. May be null.
+     */
+    ProgressBar* getProgressBar() const;
+
+protected:
+    /// List of filename extensions supported by the writer.
     std::vector<std::string> extensions_;
 
+    /// List of filenames supported by the writer.
+    std::vector<std::string> filenames_;
+
+    /// List of protocols supported by the writer.
+    std::vector<std::string> protocols_;
+
     static const std::string loggerCat_;
+
+private:
+    ProgressBar* progress_;
+
 };
 
 } // namespace voreen

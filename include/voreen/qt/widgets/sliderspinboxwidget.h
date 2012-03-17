@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,33 +29,32 @@
 #ifndef VRN_SLIDERSPINBOXWIDGET_H
 #define VRN_SLIDERSPINBOXWIDGET_H
 
-#include <QApplication>
-#include <QHBoxLayout>
-#include <QSlider>
-#include <QSpacerItem>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QVBoxLayout>
 #include <QWidget>
+
+class QDoubleSpinBox;
+class QHBoxLayout;
+class QLineEdit;
+class QSlider;
+class QSpinBox;
 
 #include "voreen/core/properties/property.h"
 
 namespace voreen {
 
 class SliderSpinBoxWidget : public QWidget {
-    Q_OBJECT;
-    Q_PROPERTY( int value READ getValue WRITE setValue );
-    Q_PROPERTY( int minValue READ getMinValue WRITE setMinValue );
-    Q_PROPERTY( int maxValue READ getMaxValue WRITE setMaxValue );
+Q_OBJECT
+Q_PROPERTY(int value READ getValue WRITE setValue)
+Q_PROPERTY(int minValue READ getMinValue WRITE setMinValue)
+Q_PROPERTY(int maxValue READ getMaxValue WRITE setMaxValue)
+
 public:
     SliderSpinBoxWidget(QWidget* parent = 0);
-    virtual int getValue()const;
-    virtual int getMinValue()const;
-    virtual int getMaxValue()const;
-    virtual bool isSliderDown()const;
-    virtual QSize sizeHint () const;
-    virtual void setFocusPolicy(Qt::FocusPolicy policy);
-    virtual void setView(Property::View);
+    int getValue() const;
+    int getMinValue() const;
+    int getMaxValue() const;
+    bool isSliderDown() const;
+    void setFocusPolicy(Qt::FocusPolicy policy);
+    void setView(Property::View);
 
     /**
      * If slider tracking is disabled, valueChanged signals
@@ -70,7 +69,7 @@ public:
      *
      * @see QAbstractSlider
      */
-    virtual void setSliderTracking(bool tracking);
+    void setSliderTracking(bool tracking);
 
     /// Returns whether slider tracking is enabled (default: true).
     bool hasSliderTracking() const;
@@ -94,26 +93,27 @@ signals:
     void valueChanged(int);
     void sliderPressedChanged(bool);
     void editingFinished();
-public slots:
-    virtual void setValue( int value );
-    virtual void setMaxValue( int value );
-    virtual void setMinValue( int value );
-    virtual void setSingleStep(int value);
 
-protected slots:
-    virtual void spinEditingFinished();
-    virtual void sliderPressed();
-    virtual void sliderReleased();
+public slots:
+    void setValue(int value);
+    void setMaxValue(int value);
+    void setMinValue(int value);
+    void setSingleStep(int value);
+
+private slots:
+    void spinEditingFinished();
+    void sliderPressed();
+    void sliderReleased();
 
 protected:
-    QVBoxLayout *vboxLayout;
-    QHBoxLayout *hboxLayout;
-    QSlider *sliderSLD;
-    QSpinBox *spinBoxSPB;
-    QSpacerItem *spacerItem;
+    void changeEvent(QEvent*);
 
-    bool sliderTracking_;
-    bool spinboxTracking_;
+    QHBoxLayout* layout_;
+    QSlider* slider_;
+    QSpinBox* spinbox_;
+
+    bool isSliderTrackingEnabled_;
+    bool isSpinboxTrackingEnabled_;
     int value_;
 };
 
@@ -122,21 +122,21 @@ protected:
 
 
 class DoubleSliderSpinBoxWidget : public QWidget {
-    Q_OBJECT
-    Q_PROPERTY( double value READ getValue WRITE setValue )
-    Q_PROPERTY( double minValue READ getMinValue WRITE setMinValue )
-    Q_PROPERTY( double maxValue READ getMaxValue WRITE setMaxValue )
+Q_OBJECT
+Q_PROPERTY(double value READ getValue WRITE setValue)
+Q_PROPERTY(double minValue READ getMinValue WRITE setMinValue)
+Q_PROPERTY(double maxValue READ getMaxValue WRITE setMaxValue)
+
 public:
     DoubleSliderSpinBoxWidget(QWidget* parent = 0);
-    virtual double getValue() const;
-    virtual double getMinValue() const;
-    virtual double getMaxValue() const;
-    virtual double getSingleStep() const;
-    virtual int getDecimals() const;
-    virtual bool isSliderDown() const;
-    virtual QSize sizeHint () const;
-    virtual void setFocusPolicy(Qt::FocusPolicy policy);
-    virtual void setView(Property::View);
+    double getValue() const;
+    double getMinValue() const;
+    double getMaxValue() const;
+    double getSingleStep() const;
+    int getDecimals() const;
+    bool isSliderDown() const;
+    void setFocusPolicy(Qt::FocusPolicy policy);
+    void setView(Property::View);
 
     /**
      * If slider tracking is disabled, valueChanged signals
@@ -151,7 +151,7 @@ public:
      *
      * @see QAbstractSlider
      */
-    virtual void setSliderTracking(bool tracking);
+    void setSliderTracking(bool tracking);
 
     /// Returns whether slider tracking is enabled (default: true).
     bool hasSliderTracking() const;
@@ -166,7 +166,7 @@ public:
      *
      * @see QAbstractSpinbox
      */
-    virtual void setSpinboxTracking(bool tracking);
+    void setSpinboxTracking(bool tracking);
 
     /// Returns whether spin box tracking is enabled (default: false).
     bool hasSpinboxTracking() const;
@@ -175,29 +175,30 @@ signals:
     void valueChanged(double);
     void sliderPressedChanged(bool);
     void editingFinished();
+
 public slots:
-    virtual void setValue( double value );
-    virtual void setMaxValue( double value );
-    virtual void setMinValue( double value );
-    virtual void setSingleStep( double step );
-    virtual void setDecimals( int decimals );
-    virtual void sliderPressed();
-    virtual void sliderReleased();
+    void setValue(double value);
+    void setMaxValue(double value);
+    void setMinValue(double value);
+    void setSingleStep(double step);
+    void setDecimals(int decimals);
+    void sliderPressed();
+    void sliderReleased();
 
 protected slots:
-    virtual void sliderValueChanged( int value );
-    virtual void spinEditingFinished();
-    virtual void adjustSliderScale();
+    void sliderValueChanged(int value);
+    void spinEditingFinished();
+    void adjustSliderScale();
 
 protected:
-    QVBoxLayout *vboxLayout;
-    QHBoxLayout *hboxLayout;
-    QSlider *sliderSLD;
-    QDoubleSpinBox *spinBoxSPB;
-    QSpacerItem *spacerItem;
+    void changeEvent(QEvent*);
 
-    bool sliderTracking_;
-    bool spinboxTracking_;
+    QHBoxLayout* layout_;
+    QSlider* slider_;
+    QDoubleSpinBox* spinbox_;
+
+    bool isSliderTrackingEnabled_;
+    bool isSpinboxTrackingEnabled_;
     double value_;
 };
 

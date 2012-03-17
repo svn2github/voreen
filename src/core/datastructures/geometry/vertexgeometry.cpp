@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,9 +26,11 @@
  *                                                                    *
  **********************************************************************/
 
-#include "tgt/glmath.h"
-
 #include "voreen/core/datastructures/geometry/vertexgeometry.h"
+
+#include "tgt/glmath.h"
+#include "voreen/core/io/serialization/xmlserializer.h"
+#include "voreen/core/io/serialization/xmldeserializer.h"
 
 namespace voreen {
 
@@ -36,8 +38,17 @@ VertexGeometry::VertexGeometry(const tgt::vec3& coords, const tgt::vec3& texcoor
     : coords_(coords)
     , texcoords_(texcoords)
     , color_(color)
-{
-}
+    , normalIsSet_(false)
+    , normal_(tgt::vec3(0.f))
+{}
+
+VertexGeometry::VertexGeometry(const tgt::vec3& coords, const tgt::vec3& texcoords, const tgt::vec4& color, const tgt::vec3& normal)
+    : coords_(coords)
+    , texcoords_(texcoords)
+    , color_(color)
+    , normalIsSet_(true)
+    , normal_(normal)
+{}
 
 tgt::vec3 VertexGeometry::getCoords() const {
     return coords_;
@@ -75,6 +86,27 @@ void VertexGeometry::setColor(const tgt::vec3& color) {
     setHasChanged(true);
 }
 
+tgt::vec3 VertexGeometry::getNormal() const {
+    tgtAssert(normalIsSet_, "Tried to access the normal when it was not set");
+    return normal_;
+}
+
+void VertexGeometry::setNormal(const tgt::vec3& normal) {
+    normal_ = normal;
+    normalIsSet_ = true;
+
+    setHasChanged(true);
+}
+
+void VertexGeometry::removeNormal() {
+    normal_ = tgt::vec3(0.f);
+    normalIsSet_ = false;
+}
+
+bool VertexGeometry::isNormalDefined() const {
+    return normalIsSet_;
+}
+
 double VertexGeometry::getLength() const {
     return tgt::length(coords_);
 }
@@ -91,10 +123,12 @@ double VertexGeometry::getDistance(const VertexGeometry& vertex) const {
     return tgt::length(vertex.coords_ - coords_);
 }
 
-void VertexGeometry::render() {
+void VertexGeometry::render() const {
     glBegin(GL_POINTS);
 
     glColor4fv(color_.elem);
+    if (normalIsSet_)
+        tgt::normal(normal_);
     tgt::texCoord(texcoords_);
     tgt::vertex(coords_);
 
@@ -113,6 +147,7 @@ void VertexGeometry::interpolate(const VertexGeometry& vertex, double t) {
     coords_ += (vertex.coords_ - coords_) * static_cast<tgt::vec3::ElemType>(t);
     texcoords_ += (vertex.texcoords_ - texcoords_) * static_cast<tgt::vec3::ElemType>(t);
     color_ += (vertex.color_ - color_) * static_cast<tgt::vec4::ElemType>(t);
+    normal_ += (vertex.normal_ - normal_) * static_cast<tgt::vec4::ElemType>(t);
 
     setHasChanged(true);
 }
@@ -139,6 +174,29 @@ bool VertexGeometry::operator==(const VertexGeometry& vertex) const {
 
 bool VertexGeometry::operator!=(const VertexGeometry& vertex) const {
     return !(*this == vertex);
+}
+
+void VertexGeometry::serialize(XmlSerializer& s) const {
+    s.serialize("coords", coords_);
+    s.serialize("texcoords", texcoords_);
+    s.serialize("color", color_);
+    if (normalIsSet_)
+        s.serialize("normal", normal_);
+}
+
+void VertexGeometry::deserialize(XmlDeserializer& s) {
+    s.deserialize("coords", coords_);
+    s.deserialize("texcoords", texcoords_);
+    s.deserialize("color", color_);
+    try {
+        s.deserialize("normal", normal_);
+        normalIsSet_ = true;
+    }
+    catch (...) {
+        normalIsSet_ = false;
+        s.removeLastError();
+    }
+    setHasChanged(true);
 }
 
 } // namespace

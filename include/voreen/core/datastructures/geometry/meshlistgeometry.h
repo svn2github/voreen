@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -188,11 +188,14 @@ public:
      * @returns the mesh geometry at the given @c index
      */
     MeshGeometry& operator[](size_t index);
+    const MeshGeometry& operator[](size_t index) const;
+
+    void getBoundingBox(tgt::vec3& llf, tgt::vec3& urb) const;
 
     /**
      * @see Geometry::render
      */
-    virtual void render();
+    virtual void render() const;
 
     /**
      * Transforms the face geometry using the given transformation matrix.
@@ -212,6 +215,10 @@ public:
      * @return The clipping faces generated for closing the clipped meshes.
      */
     MeshListGeometry clip(const tgt::vec4& clipplane, double epsilon = 1e-6);
+
+    virtual void serialize(XmlSerializer& s) const;
+
+    virtual void deserialize(XmlDeserializer& s);
 
 private:
     /**

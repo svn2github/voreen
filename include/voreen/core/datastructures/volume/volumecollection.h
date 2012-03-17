@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,8 +44,7 @@ class Modality;
 /**
  * Interface for volume collection observers.
  */
-class VolumeCollectionObserver : public Observer {
-
+class VRN_CORE_API VolumeCollectionObserver : public Observer {
 public:
 
     /**
@@ -55,7 +54,7 @@ public:
      * @param source the calling collection
      * @param handle the volume handle that has been added
      */
-    virtual void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {};
+    virtual void volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {};
 
     /**
      * This method is called by the observed collection after
@@ -64,7 +63,7 @@ public:
      * @param source the calling collection
      * @param handle the volume handle that has been removed
      */
-    virtual void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {};
+    virtual void volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {};
 
     /**
     * This method is called by the observed collection after
@@ -74,9 +73,13 @@ public:
     * @param source the calling collection
     * @param handle the volume handle that has been changed
     */
-    virtual void volumeChanged(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {};
+    virtual void volumeChanged(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {};
 
 };
+
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API Observable<VolumeCollectionObserver>;
+#endif
 
 /**
  * Collection of volume handles that can be serialized and observed.
@@ -86,7 +89,7 @@ public:
  *
  * @see VolumeContainer
  */
-class VolumeCollection : public Serializable, public Observable<VolumeCollectionObserver>, protected VolumeHandleObserver {
+class VRN_CORE_API VolumeCollection : public Serializable, public Observable<VolumeCollectionObserver>, protected VolumeHandleObserver {
 
 public:
 
@@ -102,7 +105,7 @@ public:
      * added VolumeHandle and does therefore not delete it
      * on its own destruction.
      */
-    virtual void add(VolumeHandle* volumeHandle);
+    virtual void add(VolumeHandleBase* volumeHandle);
 
     /**
      * Adds VolumeHandles contained by the passed VolumeCollection
@@ -118,7 +121,7 @@ public:
      * Removes the passed VolumeHandle from the Collection
      * without deleting it.
      */
-    virtual void remove(const VolumeHandle* volumeHandle);
+    virtual void remove(const VolumeHandleBase* volumeHandle);
 
     /**
      * Removes all VolumeHandles contained by the passed collection
@@ -130,20 +133,20 @@ public:
      * Returns whether the passed VolumeHandle is contained
      * by the collection.
      */
-    virtual bool contains(const VolumeHandle* volumeHandle) const;
+    virtual bool contains(const VolumeHandleBase* volumeHandle) const;
 
     /**
      * Returns the VolumeElement at a specified index position.
      *
      * @param The index of the VolumeHandle to return. Must be valid, i.e. i < size().
      */
-    virtual VolumeHandle* at(size_t i) const;
+    virtual VolumeHandleBase* at(size_t i) const;
 
     /**
      * Returns the first VolumeHandle of the collection, or null
      * if the collection is empty.
      */
-    virtual VolumeHandle* first() const;
+    virtual VolumeHandleBase* first() const;
 
     /**
      * Clears the collection without deleting the VolumeHandles.
@@ -185,6 +188,22 @@ public:
     virtual VolumeCollection* selectOrigin(const VolumeOrigin& origin) const;
 
     /**
+     * Returns a collection containing all VolumeHandles with the
+     * specified origin and timestep
+     **/
+    virtual VolumeCollection* selectOriginTimestep(const VolumeOrigin& origin, float timestep) const;
+
+    /**
+     * Returns a new collection containing the volumes between the passed start and end indices (inclusive).
+     */
+    virtual VolumeCollection* subCollection(size_t start, size_t end) const;
+
+    /**
+     * Returns a new collection containing the volumes at the passed indices.
+     */
+    virtual VolumeCollection* subCollection(const std::vector<size_t>& indices) const;
+
+    /**
      * Returns the number of VolumeHandles contained by the collection.
      */
     virtual size_t size() const;
@@ -195,10 +214,10 @@ public:
     virtual bool empty() const;
 
     /// @see VolumeHandleObserver::volumeChange
-    virtual void volumeChange(const VolumeHandle* handle);
+    virtual void volumeChange(const VolumeHandleBase* handle);
 
     /// @see VolumeHandleObserver::volumeHandleDelete
-    virtual void volumeHandleDelete(const VolumeHandle* handle);
+    virtual void volumeHandleDelete(const VolumeHandleBase* handle);
 
     /// @see Serializable::serialize
     void serialize(XmlSerializer& s) const;
@@ -212,18 +231,18 @@ protected:
      * within the volumeHandles_ vector. Returns volumeHandles_.end(), if
      * the handle is not contained by the collection.
      */
-    std::vector<VolumeHandle*>::iterator find(const VolumeHandle* volumeHandle);
-    std::vector<VolumeHandle*>::const_iterator find(const VolumeHandle* volumeHandle) const;
+    std::vector<VolumeHandleBase*>::iterator find(const VolumeHandleBase* volumeHandle);
+    std::vector<VolumeHandleBase*>::const_iterator find(const VolumeHandleBase* volumeHandle) const;
 
     /// Notifies all VolumeCollectionObservers that a handle has been added.
-    void notifyVolumeAdded(const VolumeHandle* handle);
+    void notifyVolumeAdded(const VolumeHandleBase* handle);
     /// Notifies all VolumeCollectionObservers that a handle has been removed.
-    void notifyVolumeRemoved(const VolumeHandle* handle);
+    void notifyVolumeRemoved(const VolumeHandleBase* handle);
     /// Notifies all VolumeCollectionObservers that a handle has been changed.
-    void notifyVolumeChanged(const VolumeHandle* handle);
+    void notifyVolumeChanged(const VolumeHandleBase* handle);
 
     /// Vector storing the VolumeHandles contained by the collection.
-    std::vector<VolumeHandle*> volumeHandles_;
+    std::vector<VolumeHandleBase*> volumeHandles_;
 
     /// category for logging.
     static const std::string loggerCat_;

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,6 +34,7 @@
 
 #include "tinyxml/tinyxml.h"
 
+#include "voreen/core/voreencoredefine.h"
 #include "voreen/core/io/serialization/serializationexceptions.h"
 #include "voreen/core/io/serialization/xmlserializationconstants.h"
 #include "voreen/core/io/serialization/serializable.h"
@@ -48,8 +49,7 @@ namespace voreen {
  * @see XmlSerializer
  * @see XmlDeserializer
  */
-class XmlSerializerBase
-{
+class VRN_CORE_API XmlSerializerBase {
 public:
     /**
      * Default constructor.
@@ -145,6 +145,13 @@ public:
      */
     void registerFactory(SerializableFactory* factory);
 
+    /**
+     * Convenience method for serialization factory registration.
+     *
+     * @see registerFactory
+     */
+    void registerFactories(const std::vector<SerializableFactory*>& factories);
+
 protected:
     /**
      * Category for logging.
@@ -230,7 +237,7 @@ protected:
      *       class to ensure that cleanup code concerning the XML node
      *       for inserting or reading data is executed.
      */
-    class TemporaryNodeChanger {
+    class VRN_CORE_API TemporaryNodeChanger {
     public:
         /**
          * Creates a @c TemporaryNodeChange, which changes the actual XML node for
@@ -266,7 +273,7 @@ protected:
      *       class to ensure that cleanup code concerning the XML node
      *       for inserting or reading data is executed.
      */
-    class TemporaryUsePointerContentSerializationChanger {
+    class VRN_CORE_API TemporaryUsePointerContentSerializationChanger {
     public:
         /**
          * Creates a @c TemporaryUsePointerContentSerializationChanger,

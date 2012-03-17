@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,21 +26,21 @@
  *                                                                    *
  **********************************************************************/
 
-float fetchCurvature(in sampler3D curvatureVolume, in VOLUME_PARAMETERS curvatureVolumeParameters, in vec3 sample) {
-    float curvature = getVoxel(curvatureVolume, curvatureVolumeParameters, sample).a;
+float fetchCurvature(in VOLUME_STRUCT curvatureVolumeParameters, in vec3 samplePos) {
+    float curvature = getVoxel(curvatureVolumeParameters, samplePos).a;
     curvature -= 0.5;
     curvature *= 2.0;
     return curvature;
 }
 
-mat3 computeHessian(in sampler3D gradientVolume, in VOLUME_PARAMETERS gradientVolumeParameters, in vec3 sample) {
+mat3 computeHessian(in VOLUME_STRUCT gradientVolumeParameters, in vec3 samplePos) {
     vec3 offset = gradientVolumeParameters.datasetDimensionsRCP_;
-    vec3 gradientr = textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample + vec3(offset.x,0.0,0.0)).xyz;
-    vec3 gradientl = textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample + vec3(-offset.x,0.0,0.0)).xyz;
-    vec3 gradientu = textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample + vec3(0.0,offset.y,0.0)).xyz;
-    vec3 gradientd = textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample + vec3(0.0,-offset.y,0.0)).xyz;
-    vec3 gradientf = textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample + vec3(0.0,0.0,offset.z)).xyz;
-    vec3 gradientb = textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample + vec3(0.0,0.0,-offset.z)).xyz;
+    vec3 gradientr = textureLookup3DUnnormalized(gradientVolumeParameters, samplePos + vec3(offset.x,0.0,0.0)).xyz;
+    vec3 gradientl = textureLookup3DUnnormalized(gradientVolumeParameters, samplePos + vec3(-offset.x,0.0,0.0)).xyz;
+    vec3 gradientu = textureLookup3DUnnormalized(gradientVolumeParameters, samplePos + vec3(0.0,offset.y,0.0)).xyz;
+    vec3 gradientd = textureLookup3DUnnormalized(gradientVolumeParameters, samplePos + vec3(0.0,-offset.y,0.0)).xyz;
+    vec3 gradientf = textureLookup3DUnnormalized(gradientVolumeParameters, samplePos + vec3(0.0,0.0,offset.z)).xyz;
+    vec3 gradientb = textureLookup3DUnnormalized(gradientVolumeParameters, samplePos + vec3(0.0,0.0,-offset.z)).xyz;
     mat3 H;
     H[0][0] = gradientl.x - gradientr.x;
     H[0][1] = gradientl.y - gradientr.y;
@@ -54,9 +54,9 @@ mat3 computeHessian(in sampler3D gradientVolume, in VOLUME_PARAMETERS gradientVo
     return H;
 }
 
-vec2 computeCurvature(in sampler3D gradientVolume, in VOLUME_PARAMETERS gradientVolumeParameters, in vec3 sample) {
-    mat3 H = computeHessian(gradientVolume, gradientVolumeParameters, sample);
-    vec3 gradient = (textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample).xyz-vec3(0.5))*2.0;
+vec2 computeCurvature(in VOLUME_STRUCT gradientVolumeParameters, in vec3 samplePos) {
+    mat3 H = computeHessian(gradientVolumeParameters, samplePos);
+    vec3 gradient = (textureLookup3DUnnormalized(gradientVolumeParameters, samplePos).xyz-vec3(0.5))*2.0;
 
     vec3 n = -gradient / length(gradient);
     mat3 nnT;
@@ -95,9 +95,9 @@ vec2 computeCurvature(in sampler3D gradientVolume, in VOLUME_PARAMETERS gradient
     return curvature;
 }
 
-float computeViewCurvature(in sampler3D gradientVolume, in VOLUME_PARAMETERS gradientVolumeParameters, in vec3 sample, in vec3 v, in float T) {
-    mat3 H = computeHessian(gradientVolume, gradientVolumeParameters, sample);
-    vec3 gradient = (textureLookup3DUnnormalized(gradientVolume, gradientVolumeParameters, sample).xyz-vec3(0.5))*2.0;
+float computeViewCurvature(in VOLUME_STRUCT gradientVolumeParameters, in vec3 samplePos, in vec3 v, in float T) {
+    mat3 H = computeHessian(gradientVolumeParameters, samplePos);
+    vec3 gradient = (textureLookup3DUnnormalized(gradientVolumeParameters, samplePos).xyz-vec3(0.5))*2.0;
 
     vec3 n = -gradient / length(gradient);
     mat3 nnT;

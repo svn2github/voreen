@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -66,9 +66,9 @@ CameraInteractionHandler::CameraInteractionHandler(const std::string& id, const 
     addProperty(navigationMetaphor_);
 
     // navigations
-    rotateNavi_ = new TrackballNavigation(cameraProp_, TrackballNavigation::ROTATE_MODE, 0.05f, 15.f);
-    zoomNavi_ = new TrackballNavigation(cameraProp_,   TrackballNavigation::ZOOM_MODE, 0.05f, 15.f);
-    shiftNavi_ = new TrackballNavigation(cameraProp_,  TrackballNavigation::SHIFT_MODE, 0.05f, 15.f);
+    rotateNavi_ = new TrackballNavigation(cameraProp_, TrackballNavigation::ROTATE_MODE);
+    zoomNavi_ = new TrackballNavigation(cameraProp_,   TrackballNavigation::ZOOM_MODE);
+    shiftNavi_ = new TrackballNavigation(cameraProp_,  TrackballNavigation::SHIFT_MODE);
     fpNavi_ = new FirstPersonNavigation(cameraProp_);
 
     // event properties trackball

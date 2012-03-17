@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -130,52 +130,91 @@ Texture* TextureReaderDevil::loadTexture(const std::string& filename, Texture::F
     Texture* t = new Texture();
     t->setName(filename);
 
-    if (!ilLoadL(IL_TYPE_UNKNOWN, imdata, len))        {
+    if (!ilLoadL(IL_TYPE_UNKNOWN, imdata, static_cast<ILuint>(len))) {
         LERROR("Failed to open via ilLoadL " << filename);
         delete[] imdata;
         delete t;
         return 0;
     }
     delete[] imdata;
+    imdata = 0;
 
     t->setBpp(ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL));
-    switch ( t->getBpp() ) {
-//         case 1:
-//             t->setFormat(GL_RGB);
-        case 3:
-            if (!ilConvertImage(IL_RGB, IL_UNSIGNED_BYTE)) {
-                delete t;
-                return 0;
-            }
-            t->setFormat(GL_RGB);
-            break;
 
-        case 4:
-            if (!ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE)) {
-                delete t;
-                return 0;
-            }
-            t->setFormat(GL_RGBA);
+    // determine image format
+    ILint devilFormat;
+    switch (ilGetInteger(IL_IMAGE_FORMAT)) {
+        case IL_LUMINANCE:         // intensity channel only
+            devilFormat = IL_LUMINANCE;
+            t->setFormat(GL_LUMINANCE);    
             break;
-
-        case 8: //16-bit per channel rgba
-            if (!ilConvertImage(IL_RGBA, IL_UNSIGNED_SHORT)) {
-                delete t;
-                return 0;
-            }
-            t->setFormat(GL_RGBA);
+        case IL_LUMINANCE_ALPHA:   // intensity-alpha channels
+            devilFormat = IL_LUMINANCE_ALPHA;
+            t->setFormat(GL_LUMINANCE_ALPHA);    
             break;
-
-        case 12: //HDR
-            if (!ilConvertImage(IL_RGB, IL_UNSIGNED_BYTE)) {
-                delete t;
-                return 0;
-            }
-            t->setFormat(GL_RGB);
+        case IL_RGB:
+            devilFormat = IL_RGB;  // three color channels
+            t->setFormat(GL_RGB);    
             break;
+        case IL_RGBA: 
+            devilFormat = IL_RGBA; // color-alpha channels
+            t->setFormat(GL_RGBA);    
+            break;
+        case IL_BGR:
+            devilFormat = IL_RGB;  // B-G-R ordered color channels, convert to RGB
+            t->setFormat(GL_RGB);    
+            break;
+        case IL_BGRA: 
+            devilFormat = IL_RGBA; // R-G-B-A ordered color channels, convert to RGBA
+            t->setFormat(GL_RGBA);    
+            break;
+        default: 
+            LERROR("unsupported format: " << ilGetInteger(IL_IMAGE_FORMAT) << " (" << filename << ")");
+            delete t;
+            return 0;
+    }
+    
+    // determine data type
+    ILint devilDataType;
+    switch (ilGetInteger(IL_IMAGE_TYPE)) {
+    case IL_UNSIGNED_BYTE:
+        devilDataType = IL_UNSIGNED_BYTE;
+        t->setDataType(GL_UNSIGNED_BYTE);    
+        break;
+    case IL_BYTE:
+        devilDataType = IL_BYTE;
+        t->setDataType(GL_BYTE);    
+        break;
+    case IL_UNSIGNED_SHORT: 
+        devilDataType = IL_UNSIGNED_SHORT;
+        t->setDataType(GL_UNSIGNED_SHORT);    
+        break;
+    case IL_SHORT: 
+        devilDataType = IL_SHORT;
+        t->setDataType(GL_SHORT);    
+        break;
+    case IL_UNSIGNED_INT: 
+        devilDataType = IL_UNSIGNED_INT;
+        t->setDataType(GL_UNSIGNED_INT);    
+        break;
+    case IL_INT: 
+        devilDataType = IL_INT;
+        t->setDataType(GL_INT);    
+        break;
+    case IL_FLOAT:
+        devilDataType = IL_FLOAT;
+        t->setDataType(GL_FLOAT);    
+        break;
+    default: 
+        LERROR("unsupported data type: " << ilGetInteger(IL_IMAGE_TYPE) << " (" << filename << ")");
+        delete t;
+        return 0;
+    }
 
-        default:
-            LERROR("Texturmanager: unsupported bpp " << filename);
+    if (!ilConvertImage(devilFormat, devilDataType)) {
+        LERROR("failed to convert loaded image: " << filename);
+        delete t;
+        return 0;
     }
 
     tgt::ivec3 dims;
@@ -195,12 +234,6 @@ Texture* TextureReaderDevil::loadTexture(const std::string& filename, Texture::F
 
     t->alloc();
     memcpy(t->getPixelData(), ilGetData(), t->getArraySize());
-
-    // TODO also include ints and floats as image types
-    if(ilGetInteger(IL_IMAGE_TYPE) == IL_UNSIGNED_SHORT)
-        t->setDataType( GL_UNSIGNED_SHORT );
-    else
-        t->setDataType( GL_UNSIGNED_BYTE );
 
     bool success;
     if (textureRectangle)

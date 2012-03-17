@@ -2,15 +2,8 @@
 # Configurations common for all projects #
 ##########################################
 
-# check qmake version
-QMAKE_VERS = $$[QMAKE_VERSION]
-QMAKE_VERSION_CHECK = $$find(QMAKE_VERS, "^[234]\\.")
-isEmpty(QMAKE_VERSION_CHECK) {
-   error("Your qmake version '$$QMAKE_VERS' is too old, qmake from Qt 4 is required!")
-}
-
 CONFIG += stl rtti thread
-
+ 
 # directories for installation on unix
 unix: !isEmpty(INSTALL_PREFIX) {
   DEFINES += 'VRN_INSTALL_PREFIX="$$INSTALL_PREFIX"'
@@ -18,15 +11,21 @@ unix: !isEmpty(INSTALL_PREFIX) {
   INSTALLPATH_LIB = $$INSTALL_PREFIX/lib
   INSTALLPATH_SHARE = $$INSTALL_PREFIX/share/voreen
   INSTALLPATH_DOC = $$INSTALL_PREFIX/share/doc/voreen
-  DEFINES *= VRN_DISTRIBUTION
+  DEFINES *= VRN_DEPLOYMENT
 }
 
 # detect Microsoft Compiler
 MSC_VER = $$find(QMAKE_COMPILER_DEFINES, "_MSC_VER")
 !isEmpty(MSC_VER) {
-  # usually something like win32-msvc2008 is defined, we add this to 
-  # match all versions
-  CONFIG += win32-msvc
+
+  !contains(QMAKE_HOST.arch, x86_64) {
+    # MSVC++ 32 bit build
+    CONFIG += win32-msvc  
+  }
+  else {
+    # MSVC++ 64 bit build
+    CONFIG += win64-msvc  
+  }  
 
   # are we running through Visual Studio or nmake?
   contains(TEMPLATE, "vcapp") {
@@ -36,6 +35,43 @@ MSC_VER = $$find(QMAKE_COMPILER_DEFINES, "_MSC_VER")
   } else {
     CONFIG += nmake
   }
+  
+  contains(MSC_VER, 1600) {
+    VS_VERSION_NUMBER = 2010
+  }
+  else {
+    VS_VERSION_NUMBER = 2008
+  }
+  
+  visual_studio {
+    # Contains "Release" or "Debug" as selected in the IDE
+    win32-msvc: WIN32_CONFIG_NAME = $(ConfigurationName)
+    win64-msvc: WIN64_CONFIG_NAME = $(ConfigurationName)
+  }
+  else {
+    CONFIG(debug, debug|release) {
+      win32-msvc: WIN32_CONFIG_NAME = Debug
+      win64-msvc: WIN64_CONFIG_NAME = Debug
+    } else {
+      win32-msvc: WIN32_CONFIG_NAME = Release
+      win64-msvc: WIN64_CONFIG_NAME = Release
+    }
+  }
+ 
+  contains(DEFINES, VRN_DYNAMIC_LIBS) {
+    # Linking against Windows DLLs requires explicit instantiation of templates
+    DEFINES += DLL_TEMPLATE_INST
+  }
+}
+
+# build configuration for mingw compiler
+win32-g++ {
+    CONFIG(debug, debug|release) {
+        WIN32_CONFIG_NAME = Debug
+    } 
+    else {
+        WIN32_CONFIG_NAME = Release
+    }
 }
 
 #####################
@@ -46,27 +82,6 @@ MSC_VER = $$find(QMAKE_COMPILER_DEFINES, "_MSC_VER")
 DEFINES += TGT_WITHOUT_DEFINES
 
 # tgt defines #
-contains(DEFINES, VRN_WITH_DEVIL) {
-  DEFINES += TGT_HAS_DEVIL
-}
-
-contains(DEFINES, VRN_WITH_FFMPEG) {
-  DEFINES += TGT_HAS_FFMPEG
-}
-
-contains(DEFINES, VRN_WITH_FONTRENDERING) {
-  DEFINES += TGT_HAS_FREETYPE
-  DEFINES += TGT_HAS_FTGL
-}
-
-contains(DEFINES, VRN_WITH_ZLIB) {
-  DEFINES += TGT_HAS_ZLIB
-}
-
-contains(DEFINES, VRN_WITH_TRACKING) {
-  DEFINES += TGT_WITH_TRACKING
-}
-
 contains(DEFINES, VRN_DEBUG) {
   DEFINES += TGT_DEBUG
 }
@@ -87,6 +102,7 @@ win32 {
 }
 
 INCLUDEPATH += \
+  "$${VRN_HOME}" \
   "$${VRN_HOME}/include" \
   "$${VRN_HOME}/ext"
 
@@ -94,11 +110,11 @@ INCLUDEPATH += \
 # dependencies. This will be used when crawling through included files.
 DEPENDPATH += \
   "$${VRN_HOME}/include" \
+  "$${VRN_HOME}/modules" \
   "$${VRN_HOME}/ext"
 
 # some definitions for modules
-VRN_MODULE_SRC_DIR=$${VRN_HOME}/src/modules
-VRN_MODULE_INC_DIR=$${VRN_HOME}/include/voreen/modules
+VRN_MODULE_DIR=$${VRN_HOME}/modules
 
 # meta-modules that include default modules 
 # (= modules without dependencies on external libs)
@@ -107,8 +123,8 @@ contains(VRN_MODULES, most) {
   VRN_MODULES += default
 }
 contains(VRN_MODULES, default) {
-  include(src/modules/default.pri)
-  exists(src/modules/default-internal.pri) : include(src/modules/default-internal.pri)
+  include(modules/default.pri)
+  !contains(DEFINES, VRN_DEPLOYMENT) : exists(modules/default-internal.pri) : include(modules/default-internal.pri)
 }
 # remove meta-modules and duplicates
 VRN_MODULES -= all most default
@@ -129,8 +145,8 @@ contains(DEFINES, VRN_NO_MODULE_AUTO_REGISTRATION) {
 # First, look for dependency files 'foo_depends.pri' in the module subdir 
 # specifying which other modules a specific module depends on. This file is optional.
 for(i, VRN_MODULES) : {
-  exists($${VRN_HOME}/src/modules/$${i}/$${i}_depends.pri) {
-    include($${VRN_HOME}/src/modules/$${i}/$${i}_depends.pri)
+  exists($${VRN_MODULE_DIR}/$${i}/$${i}_depends.pri) {
+    include($${VRN_MODULE_DIR}/$${i}/$${i}_depends.pri)
   }
 }
 
@@ -141,9 +157,32 @@ contains(VRN_MODULES, core) {
 }
 
 contains(DEFINES, VRN_WITH_DCMTK) {
-  warning("DICOM support is now provided by the 'dicom' module, please adapt your config.txt")
+  warning("DICOM support is now provided by the 'dcmtk' module, please adapt your config.txt")
   DEFINES -= VRN_WITH_DCMTK
-  VRN_MODULES += dicom
+  VRN_MODULES += dcmtk
+}
+contains(VRN_MODULES, dicom) {
+  warning("The 'dicom' module has been renamed to 'dcmtk', please adapt your config.txt")
+  VRN_MODULES -= dicom
+  VRN_MODULES += dcmtk
+}
+
+contains(DEFINES, VRN_WITH_DEVIL) {
+  warning("DevIL support is now provided by the 'devil' module, please adapt your config.txt")
+  DEFINES -= VRN_WITH_DEVIL
+  VRN_MODULES += devil
+}
+
+contains(DEFINES, VRN_WITH_FFMPEG) {
+  warning("FFmpeg support is now provided by the 'ffmpeg' module, please adapt your config.txt")
+  DEFINES -= VRN_WITH_FFMPEG
+  VRN_MODULES += ffmpeg
+}
+
+contains(DEFINES, VRN_WITH_FONTRENDERING) {
+  warning("Font rendering is now provided by the 'fontrendering' module, please adapt your config.txt")
+  DEFINES -= VRN_WITH_FONTRENDERING
+  VRN_MODULES += fontrendering
 }
 
 contains(DEFINES, VRN_WITH_TIFF) {
@@ -158,12 +197,18 @@ contains(DEFINES, VRN_WITH_PYTHON) {
   VRN_MODULES += python
 }
 
+contains(DEFINES, VRN_WITH_ZLIB) {
+  warning("ZIP support is now provided by the 'zip' module, please adapt your config.txt")
+  DEFINES -= VRN_WITH_ZLIB
+  VRN_MODULES += zip
+}
+
 # again remove duplicates
 VRN_MODULES = $$unique(VRN_MODULES)
 
 # Include module configuration files 'foo_common.pri' in the module subdir.
 # This file is mandatory.
-for(i, VRN_MODULES) : include($${VRN_HOME}/src/modules/$${i}/$${i}_common.pri)
+for(i, VRN_MODULES) : include($${VRN_MODULE_DIR}/$${i}/$${i}_common.pri)
 
 ##############
 # Libraries  #
@@ -178,7 +223,8 @@ for(i, VRN_MODULES) : include($${VRN_HOME}/src/modules/$${i}/$${i}_common.pri)
 # Windows settings #
 ####################
 win32 {
-  CONFIG -= flat
+  !win32-msvc2010: CONFIG -= flat
+  
   DEFINES += _WINDOWS
   DEFINES -= UNICODE 
 
@@ -193,32 +239,19 @@ win32 {
 
   INCLUDEPATH += "$${VRN_HOME}/ext/glew/include"
 
-  contains(DEFINES, VRN_WITH_DEVIL) {
-    INCLUDEPATH += "$${DEVIL_DIR}/include"
-  }
-
-  contains(DEFINES, VRN_WITH_FFMPEG) {
-    INCLUDEPATH += "$${FFMPEG_DIR}"
-  }
-
-  contains(DEFINES, VRN_WITH_FONTRENDERING) {
-    INCLUDEPATH += "$${FREETYPE_DIR}/include/freetype2"
-    INCLUDEPATH += "$${FREETYPE_DIR}/include"
-    INCLUDEPATH += "$${FTGL_DIR}/include"
-  }
-
-  contains(DEFINES, VRN_WITH_ZLIB) {
-	INCLUDEPATH += "$${VRN_HOME}/ext/zlib/include"
-  }
-
-  win32-msvc {
+  # common compiler/linker flags for VC++ 32/64 bit builds
+  win32-msvc | win64-msvc {
+    # Allow 2^32 instead of 2^16 addressable sections per obj-file
+    QMAKE_CXXFLAGS += /bigobj
+   
     # Disable warnings for Microsoft compiler:
     # C4305: 'identifier' : truncation from 'type1' to 'type2'
     # C4800: 'type' : forcing value to bool 'true' or 'false' (performance warning
     # C4290: C++ exception specification ignored except to indicate a function is
     #       not __declspec(nothrow)
     # C4068: unknown pragma
-    QMAKE_CXXFLAGS += /wd4305 /wd4800 /wd4290 /wd4068
+    # C4251 class needs to have dll interface (used for std classes)
+    QMAKE_CXXFLAGS += /wd4305 /wd4800 /wd4290 /wd4251
     
     # C4355: 'this' : used in base member initializer list 
     # Occurs in processors' constructors when initializing event properties, 
@@ -238,8 +271,6 @@ win32 {
     QMAKE_CXXFLAGS_DEBUG -= /Zi
     QMAKE_CXXFLAGS_DEBUG += /ZI
 
-    QMAKE_LFLAGS += /MACHINE:X86
-
     # Enable parallel compiler processes with Visual Studio
     QMAKE_CXXFLAGS += /MP 
     # Enable static code analysis with PREfast in Visual Studio
@@ -248,6 +279,21 @@ win32 {
     # Disable warnings for Microsoft linker:
     # LNK4049 / LNK4217: locally defined 'symbol' imported (occurs for some external libs) 
     QMAKE_LFLAGS += /ignore:4049 /ignore:4217
+    
+    # No libcmt when using DCMTK
+    contains(VRN_MODULES, dcmtk){
+      LIBS += /NODEFAULTLIB:libcmt.lib
+    }
+  }
+  
+  # VC++ 32 bit settings
+  win32-msvc {
+    QMAKE_LFLAGS += /MACHINE:X86
+  }
+  
+  # VC++ 64 bit settings
+  win64-msvc {
+    QMAKE_LFLAGS += /MACHINE:X64
   }
   
   CONFIG(debug, debug|release) {
@@ -263,7 +309,6 @@ win32 {
     QMAKE_CXXFLAGS_RELEASE -= /O2
     QMAKE_CXXFLAGS_RELEASE += /Od /Zi
     QMAKE_LFLAGS_RELEASE += /DEBUG
-
   }
 }
 
@@ -278,15 +323,18 @@ unix {
   # are not installing, i.e., the INSTALL_PREFIX is not set.
   QMAKE_RPATHDIR += $${LIBDIR}
   isEmpty(INSTALL_PREFIX) {
-    QMAKE_RPATHDIR += $${VRN_HOME}
+    QMAKE_RPATHDIR += $${VRN_HOME}/bin
   } else {
     QMAKE_RPATHDIR += $${INSTALLPATH_LIB}
   }
 
-  LIBDIR += $${VRN_HOME}
+  LIBDIR += $${VRN_HOME}/bin
 
   for(dir, LIBDIR) {
     LIBS  += "-L$$dir"
+  }
+  !macx {
+  	LIBS += -lrt
   }
 
   isEmpty(OBJECTS_DIR) {
@@ -295,10 +343,6 @@ unix {
   
   MOC_DIR = .moc
   UI_DIR = .ui
-
-  contains (DEFINES, VRN_WITH_FONTRENDERING) {
-    INCLUDEPATH += $${FREETYPE_DIR}
-  }
 
   
 #################################
@@ -309,7 +353,9 @@ unix {
     # set by Xcode for executables and libraries
     QMAKE_CXXFLAGS += -fvisibility=hidden
     QMAKE_CXXFLAGS += -fvisibility-inlines-hidden
-    
+    LIBS += -framework GLUT
+    LIBS += -framework OpenGL
+
     INCLUDEPATH += $${GLEW_DIR}
     LIBS += $${GLEW_LIBS}
 
@@ -343,6 +389,3 @@ contains(DEFINES, VRN_WITH_SVNVERSION) {
   # contains(DEFINES, VRN_WITH_SVNVERSION) : revtarget.depends = $$SOURCES $$HEADERS $$FORMS
 }
 
-### Local Variables:
-### mode:conf-unix
-### End:

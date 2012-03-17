@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,9 +27,13 @@
  **********************************************************************/
 
 #include "voreen/core/ports/port.h"
+
+#include "voreen/core/ports/conditions/portcondition.h"
 #include "voreen/core/processors/processor.h"
+#include "tgt/event/event.h"
 
 #include <sstream>
+#include <stdexcept>
 
 namespace voreen {
 
@@ -53,15 +57,27 @@ Port::Port(const std::string& name, PortDirection direction, bool allowMultipleC
 }
 
 Port::~Port() {
+    for (size_t i=0; i<conditions_.size(); i++)
+        delete conditions_.at(i);
+    conditions_.clear();
+
     if (isInitialized()) {
-        std::string id;
-        if (getProcessor())
-            id = getProcessor()->getName() + ".";
-        id += getName();
-        LWARNING("~Port() '" << id << "' has not been deinitialized");
+        LWARNING("~Port() '" << getQualifiedName() << "' has not been deinitialized");
     }
 
     disconnectAll();
+}
+
+void Port::addCondition(PortCondition* condition) {
+    tgtAssert(condition, "condition must not be null");
+    if (isOutport()) {
+        std::string message = "Adding port conditions to an outport is not allowed";
+        LERROR(message);
+        throw std::invalid_argument(message);
+    }
+
+    condition->setCheckedPort(this);
+    conditions_.push_back(condition);
 }
 
 void Port::setProcessor(Processor* p) {
@@ -105,7 +121,10 @@ void Port::disconnectAll() {
 }
 
 bool Port::isReady() const {
-    return isConnected();
+    if (isInport())
+        return isConnected() && checkConditions();
+    else
+        return isConnected();
 }
 
 bool Port::testConnectivity(const Port* inport) const {
@@ -199,8 +218,11 @@ int Port::getLoopIteration() const {
     }
 }
 
-const std::vector<Port*>& Port::getConnected() const {
-       return connectedPorts_;
+const std::vector<const Port*> Port::getConnected() const {
+    std::vector<const Port*> p;
+    for(size_t i=0; i<connectedPorts_.size(); i++)
+        p.push_back(connectedPorts_[i]);
+    return p;
 }
 
 bool Port::isConnected() const {
@@ -246,11 +268,23 @@ std::string Port::getName() const {
     return name_;
 }
 
+std::string Port::getQualifiedName() const {
+    std::string id;
+    if (getProcessor())
+        id = getProcessor()->getName() + ".";
+    id += getName();
+    return id;
+}
+
+bool Port::hasData() const {
+    return false;
+}
+
 bool Port::hasChanged() const {
-       if (isOutport()) {
+    if (isOutport()) {
         LWARNINGC("voreen.port", "Called hasChanged() on outport!");
-       }
-       return hasChanged_;
+    }
+    return hasChanged_;
 }
 
 void Port::setValid() {
@@ -259,6 +293,22 @@ void Port::setValid() {
     if (isOutport()) {
            LWARNINGC("voreen.port", "Called setValid() on outport!" << getName() );
     }
+}
+
+bool Port::supportsCaching() const {
+    return false;
+}
+
+std::string Port::getHash() const {
+    return "";
+}
+
+void Port::saveData(const std::string& /*path*/) const throw (VoreenException)  {
+    throw VoreenException("Port type does not support saving of its data.");
+}
+
+void Port::loadData(const std::string& /*path*/) throw (VoreenException) {
+    throw VoreenException("Port type does not support loading of its data.");
 }
 
 void Port::distributeEvent(tgt::Event* e) {
@@ -288,7 +338,7 @@ void Port::setLoopIteration(int iteration) {
         LWARNINGC("voreen.Port", "Current loop iteration greater than number of loop iterations");
 }
 
-void Port::initialize() throw (VoreenException) {
+void Port::initialize() throw (tgt::Exception) {
 
     if (isInitialized()) {
         std::string id;
@@ -302,18 +352,28 @@ void Port::initialize() throw (VoreenException) {
     initialized_ = true;
 }
 
-void Port::deinitialize() throw (VoreenException) {
+void Port::deinitialize() throw (tgt::Exception) {
 
     if (!isInitialized()) {
-        std::string id;
+        /*std::string id;
         if (getProcessor())
             id = getProcessor()->getName() + ".";
         id += getName();
-        LWARNING("deinitialize(): '" << id << "' not initialized");
+        LWARNING("deinitialize(): '" << id << "' not initialized"); */
         return;
     }
 
     initialized_ = false;
+}
+
+bool Port::checkConditions() const {
+    for (size_t i=0; i<conditions_.size(); i++) {
+        if (!conditions_.at(i)->acceptsPortData()) {
+            LWARNING("Port condition of '" << getQualifiedName() << "' not met: " << conditions_.at(i)->getDescription());
+            return false;
+        }
+    }
+    return true;
 }
 
 bool Port::isInitialized() const {

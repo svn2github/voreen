@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,7 +28,7 @@
 
 #include "voreen/core/properties/stringproperty.h"
 #include "voreen/core/properties/condition.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
+
 #include <sstream>
 
 namespace voreen {
@@ -36,6 +36,9 @@ namespace voreen {
 StringProperty::StringProperty(const std::string& id, const std::string& guiText,
                        const std::string& value, Processor::InvalidationLevel invalidationLevel)
     : TemplateProperty<std::string>(id, guiText, value, invalidationLevel)
+{}
+
+StringProperty::StringProperty()
 {}
 
 void StringProperty::serialize(XmlSerializer& s) const {
@@ -57,12 +60,20 @@ void StringProperty::deserialize(XmlDeserializer& s) {
     }
 }
 
-PropertyWidget* StringProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+Property* StringProperty::create() const {
+    return new StringProperty();
 }
 
-std::string StringProperty::getTypeString() const {
-    return "String";
+Variant StringProperty::getVariant(bool) const {
+    return Variant(get());
+}
+
+void StringProperty::setVariant(const Variant& val, bool) {
+    set(val.getString());
+}
+
+int StringProperty::getVariantType() const {
+    return Variant::VariantTypeString;
 }
 
 }   // namespace

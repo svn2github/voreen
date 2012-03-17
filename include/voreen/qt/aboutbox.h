@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,10 +30,11 @@
 #define VRN_ABOUTBOX_H
 
 #include <QDialog>
+#include "voreen/qt/voreenqtdefine.h"
 
 namespace voreen {
 
-class AboutBox : public QDialog {
+class VRN_QT_API AboutBox : public QDialog {
     Q_OBJECT
 public:
     AboutBox(const QString& application, const QString& description, QWidget* parent = 0);

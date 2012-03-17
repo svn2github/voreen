@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -124,6 +124,14 @@ TransFunc* TransFuncKeyWiseInterpolationFunction::interpolate(TransFunc* startva
             func->setThresholds((1-time)*t1.x+time*t2.x,
                                 (1-time)*t1.y+time*t2.y);
 
+            tgt::vec2 d1 = func1->getDomain(0);
+            tgt::vec2 d2 = func2->getDomain(0);
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain((1-time)*d1.x+time*d2.x,
+                            (1-time)*d1.y+time*d2.y, 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -189,6 +197,14 @@ TransFunc* TransFuncKeyWiseQuadInInterpolationFunction::interpolate(TransFunc* s
 
             func->setThresholds(BasicFloatInterpolation::inQuadInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inQuadInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain(0);
+            tgt::vec2 d2 = func2->getDomain(0);
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inQuadInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inQuadInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -256,6 +272,14 @@ TransFunc* TransFuncKeyWiseQuadOutInterpolationFunction::interpolate(TransFunc* 
             func->setThresholds(BasicFloatInterpolation::outQuadInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outQuadInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outQuadInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outQuadInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -321,6 +345,14 @@ TransFunc* TransFuncKeyWiseQuadInOutInterpolationFunction::interpolate(TransFunc
 
             func->setThresholds(BasicFloatInterpolation::inOutQuadInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutQuadInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutQuadInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutQuadInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -388,6 +420,14 @@ TransFunc* TransFuncKeyWiseQuadOutInInterpolationFunction::interpolate(TransFunc
             func->setThresholds(BasicFloatInterpolation::outInQuadInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInQuadInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInQuadInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInQuadInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -453,6 +493,14 @@ TransFunc* TransFuncKeyWiseCubicInInterpolationFunction::interpolate(TransFunc* 
 
             func->setThresholds(BasicFloatInterpolation::inQuadInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inQuadInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inQuadInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inQuadInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -520,6 +568,14 @@ TransFunc* TransFuncKeyWiseCubicOutInterpolationFunction::interpolate(TransFunc*
             func->setThresholds(BasicFloatInterpolation::outCubicInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outCubicInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outCubicInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outCubicInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -585,6 +641,14 @@ TransFunc* TransFuncKeyWiseCubicInOutInterpolationFunction::interpolate(TransFun
 
             func->setThresholds(BasicFloatInterpolation::inOutCubicInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutCubicInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutCubicInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutCubicInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -652,6 +716,14 @@ TransFunc* TransFuncKeyWiseCubicOutInInterpolationFunction::interpolate(TransFun
             func->setThresholds(BasicFloatInterpolation::outInCubicInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInCubicInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInCubicInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInCubicInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -717,6 +789,14 @@ TransFunc* TransFuncKeyWiseQuartInInterpolationFunction::interpolate(TransFunc* 
 
             func->setThresholds(BasicFloatInterpolation::inQuartInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inQuartInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inQuartInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inQuartInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -784,6 +864,14 @@ TransFunc* TransFuncKeyWiseQuartOutInterpolationFunction::interpolate(TransFunc*
             func->setThresholds(BasicFloatInterpolation::outQuartInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outQuartInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outQuartInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outQuartInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -849,6 +937,14 @@ TransFunc* TransFuncKeyWiseQuartInOutInterpolationFunction::interpolate(TransFun
 
             func->setThresholds(BasicFloatInterpolation::inOutQuartInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutQuartInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutQuartInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutQuartInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -916,6 +1012,14 @@ TransFunc* TransFuncKeyWiseQuartOutInInterpolationFunction::interpolate(TransFun
             func->setThresholds(BasicFloatInterpolation::outInQuartInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInQuartInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInQuartInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInQuartInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -981,6 +1085,14 @@ TransFunc* TransFuncKeyWiseQuintInInterpolationFunction::interpolate(TransFunc* 
 
             func->setThresholds(BasicFloatInterpolation::inQuintInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inQuintInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inQuintInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inQuintInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1048,6 +1160,14 @@ TransFunc* TransFuncKeyWiseQuintOutInterpolationFunction::interpolate(TransFunc*
             func->setThresholds(BasicFloatInterpolation::outQuintInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outQuintInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outQuintInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outQuintInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1113,6 +1233,14 @@ TransFunc* TransFuncKeyWiseQuintInOutInterpolationFunction::interpolate(TransFun
 
             func->setThresholds(BasicFloatInterpolation::inOutQuintInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutQuintInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutQuintInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutQuintInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1181,6 +1309,14 @@ TransFunc* TransFuncKeyWiseQuintOutInInterpolationFunction::interpolate(TransFun
             func->setThresholds(BasicFloatInterpolation::outInQuintInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInQuintInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInQuintInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInQuintInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1246,6 +1382,14 @@ TransFunc* TransFuncKeyWiseSineInInterpolationFunction::interpolate(TransFunc* s
 
             func->setThresholds(BasicFloatInterpolation::inSineInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inSineInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inSineInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inSineInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1313,6 +1457,14 @@ TransFunc* TransFuncKeyWiseSineOutInterpolationFunction::interpolate(TransFunc* 
             func->setThresholds(BasicFloatInterpolation::outSineInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outSineInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outSineInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outSineInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1378,6 +1530,14 @@ TransFunc* TransFuncKeyWiseSineInOutInterpolationFunction::interpolate(TransFunc
 
             func->setThresholds(BasicFloatInterpolation::inOutSineInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutSineInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutSineInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutSineInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1445,6 +1605,14 @@ TransFunc* TransFuncKeyWiseSineOutInInterpolationFunction::interpolate(TransFunc
             func->setThresholds(BasicFloatInterpolation::outInSineInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInSineInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInSineInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInSineInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1510,6 +1678,14 @@ TransFunc* TransFuncKeyWiseExponentInInterpolationFunction::interpolate(TransFun
 
             func->setThresholds(BasicFloatInterpolation::inExponentInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inExponentInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inExponentInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inExponentInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1577,6 +1753,14 @@ TransFunc* TransFuncKeyWiseExponentOutInterpolationFunction::interpolate(TransFu
             func->setThresholds(BasicFloatInterpolation::outExponentInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outExponentInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outExponentInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outExponentInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1642,6 +1826,14 @@ TransFunc* TransFuncKeyWiseExponentInOutInterpolationFunction::interpolate(Trans
 
             func->setThresholds(BasicFloatInterpolation::inOutExponentInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutExponentInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutExponentInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutExponentInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1709,6 +1901,14 @@ TransFunc* TransFuncKeyWiseExponentOutInInterpolationFunction::interpolate(Trans
             func->setThresholds(BasicFloatInterpolation::outInExponentInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInExponentInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInExponentInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInExponentInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1774,6 +1974,14 @@ TransFunc* TransFuncKeyWiseCircInInterpolationFunction::interpolate(TransFunc* s
 
             func->setThresholds(BasicFloatInterpolation::inCircInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inCircInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inCircInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inCircInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
@@ -1841,6 +2049,14 @@ TransFunc* TransFuncKeyWiseCircOutInterpolationFunction::interpolate(TransFunc* 
             func->setThresholds(BasicFloatInterpolation::outCircInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outCircInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outCircInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outCircInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1907,6 +2123,14 @@ TransFunc* TransFuncKeyWiseCircInOutInterpolationFunction::interpolate(TransFunc
             func->setThresholds(BasicFloatInterpolation::inOutCircInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::inOutCircInterpolation(t1.y,t2.y,time));
 
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::inOutCircInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::inOutCircInterpolation(d1.y,d2.y,time), 0);
+
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();
             std::vector<TransFuncMappingKey*>::iterator it2 = keys2.begin();
@@ -1972,6 +2196,14 @@ TransFunc* TransFuncKeyWiseCircOutInInterpolationFunction::interpolate(TransFunc
 
             func->setThresholds(BasicFloatInterpolation::outInCircInterpolation(t1.x,t2.x,time),
                                 BasicFloatInterpolation::outInCircInterpolation(t1.y,t2.y,time));
+
+            tgt::vec2 d1 = func1->getDomain();
+            tgt::vec2 d2 = func2->getDomain();
+            if(d1 != d2)
+                LWARNING("Transfer functions have different domains...interpolation is (probably) incorrect.");
+
+            func->setDomain(BasicFloatInterpolation::outInCircInterpolation(d1.x,d2.x,time),
+                            BasicFloatInterpolation::outInCircInterpolation(d1.y,d2.y,time), 0);
 
             func->clearKeys();
             std::vector<TransFuncMappingKey*>::iterator it1 = keys1.begin();

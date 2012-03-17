@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -30,7 +30,7 @@
 #include "voreen/core/datastructures/transfunc/transfuncmappingkey.h"
 #include "voreen/core/datastructures/transfunc/transfuncfactory.h"
 
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     #include <IL/il.h>
 #endif
 
@@ -57,19 +57,20 @@ TransFuncIntensity::TransFuncIntensity(int width)
     : TransFunc(width, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, tgt::Texture::NEAREST)
     , lowerThreshold_(0.f)
     , upperThreshold_(1.f)
+    , domain_(0.0, 1.0f)
 {
     loadFileFormats_.push_back("tfi");
     loadFileFormats_.push_back("lut");
     loadFileFormats_.push_back("table");
     loadFileFormats_.push_back("plist");
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     loadFileFormats_.push_back("jpg");
     loadFileFormats_.push_back("png");
 #endif
 
     saveFileFormats_.push_back("tfi");
     saveFileFormats_.push_back("lut");
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     saveFileFormats_.push_back("png");
 #endif
 
@@ -88,7 +89,16 @@ TransFuncIntensity::~TransFuncIntensity() {
         delete keys_[i];
 }
 
-bool TransFuncIntensity::operator==(const TransFuncIntensity& tf) {
+bool TransFuncIntensity::operator==(const TransFuncIntensity& tf) const {
+    if (lowerThreshold_ != tf.lowerThreshold_)
+        return false;
+    if (upperThreshold_ != tf.upperThreshold_)
+        return false;
+    if (domain_ != tf.getDomain(0))
+        return false;
+    if (dimensions_ != tf.dimensions_)
+        return false;
+
     if (keys_.size() != tf.keys_.size())
         return false;
     for (size_t i = 0; i < keys_.size(); ++i) {
@@ -99,7 +109,7 @@ bool TransFuncIntensity::operator==(const TransFuncIntensity& tf) {
     return true;
 }
 
-bool TransFuncIntensity::operator!=(const TransFuncIntensity& tf) {
+bool TransFuncIntensity::operator!=(const TransFuncIntensity& tf) const {
     return !(*this == tf);
 }
 
@@ -195,7 +205,7 @@ tgt::vec2 TransFuncIntensity::getThresholds() const {
 }
 
 int TransFuncIntensity::getNumKeys() const {
-    return keys_.size();
+    return static_cast<int>(keys_.size());
 }
 
 TransFuncMappingKey* TransFuncIntensity::getKey(int i) const {
@@ -292,7 +302,6 @@ bool TransFuncIntensity::saveTfi(const std::string& filename) const {
     bool success = true;
     try {
         XmlSerializer s(filename);
-        s.registerFactory(TransFuncFactory::getInstance());
         s.serialize("TransFuncIntensity", this);
 
         s.write(stream);
@@ -323,7 +332,7 @@ bool TransFuncIntensity::saveImage(const std::string& filename) const {
     size_t dotPosition = filename.rfind(".");
     fileExtension = filename.substr(dotPosition+1);
 
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
     //IL does _NOT_ overwrite files by default
     ilEnable(IL_FILE_OVERWRITE);
     ILuint img;
@@ -357,7 +366,7 @@ bool TransFuncIntensity::saveImage(const std::string& filename) const {
 #else
     LERROR("Saving of " << filename  << " failed: No DevIL support.");
     return false;
-#endif // VRN_WITH_DEVIL
+#endif // VRN_MODULE_DEVIL
 }
 
 bool TransFuncIntensity::saveLUT(const std::string& filename) const {
@@ -398,7 +407,7 @@ bool TransFuncIntensity::load(const std::string& filename) {
     return loadImage(filename);
 }
 
-#ifdef VRN_WITH_DEVIL
+#ifdef VRN_MODULE_DEVIL
 bool TransFuncIntensity::loadImage(const std::string& filename) {
     ILuint imageID;
     ILboolean success;
@@ -455,7 +464,7 @@ bool TransFuncIntensity::loadImage(const std::string& filename) {
 bool TransFuncIntensity::loadImage(const std::string&) {
     LERROR("Loading failed: No DevIL support.");
     return false;
-#endif // VRN_WITH_DEVIL
+#endif // VRN_MODULE_DEVIL
 }
 
 namespace {
@@ -548,7 +557,6 @@ bool TransFuncIntensity::loadTfi(const std::string& filename) {
     bool success = true;
     try {
         XmlDeserializer d(filename);
-        d.registerFactory(TransFuncFactory::getInstance());
 
         if (converted.empty())
             d.read(stream);
@@ -577,16 +585,16 @@ bool TransFuncIntensity::loadTfi(const std::string& filename) {
 }
 
 void TransFuncIntensity::updateFrom(const TransFuncIntensity& tf) {
-
     lowerThreshold_ = tf.lowerThreshold_;
     upperThreshold_ = tf.upperThreshold_;
+
+    domain_ = tf.domain_;
 
     clearKeys();
     for (size_t i = 0; i < tf.keys_.size(); ++i) {
         TransFuncMappingKey* k = new TransFuncMappingKey(*(tf.keys_.at(i)));
         addKey(k);
     }
-
 }
 
 void TransFuncIntensity::serialize(XmlSerializer& s) const {
@@ -599,6 +607,8 @@ void TransFuncIntensity::serialize(XmlSerializer& s) const {
     // serialize thresholds...
     s.serialize("lower", lowerThreshold_);
     s.serialize("upper", upperThreshold_);
+
+    s.serialize("domain", domain_);
 }
 
 void TransFuncIntensity::deserialize(XmlDeserializer& s) {
@@ -611,6 +621,8 @@ void TransFuncIntensity::deserialize(XmlDeserializer& s) {
     // deserialize thresholds...
     s.deserialize("lower", lowerThreshold_);
     s.deserialize("upper", upperThreshold_);
+
+    s.optionalDeserialize("domain", domain_, tgt::vec2(0.0f, 1.0f));
 }
 
 bool TransFuncIntensity::loadTextTable(const std::string& filename) {
@@ -715,7 +727,7 @@ bool TransFuncIntensity::loadImageJ(const std::string& filename) {
         // Determine the length of file; necessary for typeswitch later
         size_t length;
         fileStream.seekg(0, std::ios::end);
-        length = fileStream.tellg();
+        length = static_cast<size_t>(fileStream.tellg());
         fileStream.seekg(std::ios::beg);
 
         // If the length is that high, we can't use the data anyway
@@ -800,21 +812,30 @@ int TransFuncIntensity::openImageJBinary(std::ifstream& fileStream, bool raw) {
     return 256;
 }
 
-int TransFuncIntensity::openImageJText(std::ifstream& fileStream){
+int TransFuncIntensity::openImageJText(std::ifstream& fileStream) {
     // in this array, the converted values are stored
     // The maximum are 256*4 entries
     unsigned char* data = new unsigned char[256*4];
     int tmp;
     int numValues = 0;
-    char* entry = new char[50];
     int strToIntConversionStatus = 0;
 
     while (strToIntConversionStatus != -1) {
-        fileStream >> entry;
+        char* entry = new char[50];
+        try {
+            fileStream >> entry;
 
-        // After this line StrToIntConversionStatus is:
-        // 1 if 'line' was an integer ; 0 otherwise ; -1 if the end of the sfile is reached
-        strToIntConversionStatus = sscanf(entry, "%i", &tmp);
+            // After this line StrToIntConversionStatus is:
+            // 1 if 'line' was an integer ; 0 otherwise ; -1 if the end of the sfile is reached
+            strToIntConversionStatus = sscanf(entry, "%i", &tmp);
+        }
+        catch (const std::exception& e) {
+            LERROR(e.what());
+            delete[] entry;
+            return 0;
+        }
+        
+        delete[] entry;
 
         // If an integer is encountered, add it to the array and increase the number of values
         if (strToIntConversionStatus == 1) {
@@ -822,7 +843,6 @@ int TransFuncIntensity::openImageJText(std::ifstream& fileStream){
             ++numValues;
         }
     }
-    delete[] entry;
 
     /*  Now, two values of 'numValues' are possible. 256*3 = 768 or 256*4 = 1024.
         768, if there were 3 entries in a row
@@ -1055,6 +1075,8 @@ TransFunc* TransFuncIntensity::clone() const {
     func->lowerThreshold_ = lowerThreshold_;
     func->upperThreshold_ = upperThreshold_;
 
+    func->domain_ = domain_;
+
     func->keys_.clear();
     std::vector<TransFuncMappingKey*>::const_iterator it;
     for(it = keys_.begin(); it!=keys_.end(); it++) {
@@ -1064,6 +1086,22 @@ TransFunc* TransFuncIntensity::clone() const {
     func->textureInvalid_ = true;
 
     return func;
+}
+
+tgt::vec2 TransFuncIntensity::getDomain(int dimension) const {
+    tgtAssert(dimension == 0, "Only one dimension!");
+
+    if(dimension == 0)
+        return domain_;
+    else
+        return tgt::vec2(0.0f);
+}
+
+void TransFuncIntensity::setDomain(tgt::vec2 domain, int dimension) {
+    tgtAssert(dimension == 0, "Only one dimension!");
+
+    if(dimension == 0)
+        domain_ = domain;
 }
 
 } // namespace voreen

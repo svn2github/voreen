@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -26,6 +26,34 @@
  *                                                                    *
  **********************************************************************/
 
+#include "voreen/qt/widgets/animation/templatepropertytimelinewidget.h"
+
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
+
+#include "voreen/core/properties/boolproperty.h"
+#include "voreen/core/properties/buttonproperty.h"
+#include "voreen/core/properties/cameraproperty.h"
+#include "voreen/core/properties/filedialogproperty.h"
+#include "voreen/core/properties/floatproperty.h"
+#include "voreen/core/properties/fontproperty.h"
+#include "voreen/core/properties/intproperty.h"
+#include "voreen/core/properties/matrixproperty.h"
+#include "voreen/core/properties/optionproperty.h"
+#include "voreen/core/properties/propertyvector.h"
+#include "voreen/core/properties/shaderproperty.h"
+#include "voreen/core/properties/stringproperty.h"
+#include "voreen/core/properties/transfuncproperty.h"
+#include "voreen/core/properties/vectorproperty.h"
+#include "voreen/core/properties/volumecollectionproperty.h"
+#include "voreen/core/properties/volumehandleproperty.h"
+#include "voreen/core/properties/link/propertylink.h"
+
+#include "voreen/core/animation/interpolationfunction.h"
+#include "voreen/core/animation/interpolationfunctionfactory.h"
+
+#include "voreen/core/properties/propertywidget.h"
+#include "voreen/qt/widgets/property/qpropertywidget.h"
 #include "voreen/qt/widgets/property/buttonpropertywidget.h"
 #include "voreen/qt/widgets/property/colorpropertywidget.h"
 #include "voreen/qt/widgets/animation/currentframegraphicsitem.h"
@@ -33,22 +61,11 @@
 #include "voreen/qt/widgets/animation/keyframegraphicsitem.h"
 #include "voreen/qt/widgets/animation/propertytimelinewidget.h"
 #include "voreen/qt/widgets/property/qpropertywidget.h"
-#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
 #include "voreen/qt/widgets/property/shaderpropertywidget.h"
 #include "voreen/qt/widgets/property/stringpropertywidget.h"
-#include "voreen/qt/widgets/animation/templatepropertytimelinewidget.h"
-
-#include "voreen/core/animation/interpolationfunction.h"
-#include "voreen/core/animation/interpolationfunctionfactory.h"
-#include "voreen/core/properties/optionproperty.h"
-#include "voreen/core/properties/stringproperty.h"
-#include "voreen/core/properties/transfuncproperty.h"
-#include "voreen/core/properties/volumecollectionproperty.h"
-#include "voreen/core/properties/link/propertylink.h"
 
 #include "tgt/camera.h"
 #include "tgt/vector.h"
-#include "voreen/core/properties/shaderproperty.h"
 
 #include <QContextMenuEvent>
 #include <QGraphicsView>
@@ -62,6 +79,19 @@
 #include <iostream>
 
 using tgt::Camera;
+
+namespace {
+
+voreen::QPropertyWidget* createQPropertyWidget(voreen::Property* prop) {
+
+    voreen::PropertyWidget* propWidget = voreen::VoreenApplication::app()->createPropertyWidget(prop);
+    //if (propWidget)
+    //  prop->addWidget(propWidget);
+    voreen::QPropertyWidget* qPropWidget = dynamic_cast<voreen::QPropertyWidget*>(propWidget);
+    return qPropWidget;
+}
+
+} // namespace anonymous
 
 namespace voreen {
 
@@ -464,7 +494,7 @@ void TemplatePropertyTimelineWidget<T>::setTemplateInInterpolation(QAction* acti
 
 template<>
 void TemplatePropertyTimelineWidget<float>::visualize() {
-    QPoint left = propertyTimelineView_->mapFromScene(QPoint(0,0));
+    //QPoint left = propertyTimelineView_->mapFromScene(QPoint(0,0));
     QPainterPath path;                                      // TODO: don't plot the the whole duration but only the the viewport width
     float max = dynamic_cast<FloatProperty*>(property_)->getMaxValue();
     float min = dynamic_cast<FloatProperty*>(property_)->getMinValue();
@@ -751,136 +781,140 @@ TemplateProperty<VolumeHandle*>* TemplatePropertyTimelineWidget<VolumeHandle*>::
 
 template <class T>
 QPropertyWidget* TemplatePropertyTimelineWidget<T>::getWidget() {
-    QPropertyWidgetFactory* qpwf = new QPropertyWidgetFactory();
 
+    if (!VoreenApplication::app()) {
+        LERRORC("voreen.qt.TemplatePropertyTimelineWidget", "VoreenApplication not instantiated");
+        return 0;
+    }
+    
     property_ = copyProperty(templatePropertyTimeline_->getCorrespondingProperty());
     if (property_ != 0) {
-    // start casting
+        // start casting
         if (dynamic_cast<BoolProperty*>(property_) != 0) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<BoolProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<TemplateProperty<Camera>*>(property_)) {
             return new StringPropertyWidget(new StringProperty("","",""), this);
         }
         else if (dynamic_cast<FloatProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<FloatProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<IntProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<IntProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<ShaderProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<ShaderProperty*>(property_));
+            /*QPropertyWidget* retWidget = static_cast<QPropertyWidget*>(qpwf->createWidget(dynamic_cast<ShaderProperty*>(property_)));
             retWidget->hideLODControls();
             retWidget->updateFromProperty();
             retWidget->update();
             delete qpwf;
+            return retWidget; */
+
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget) {
+                retWidget->hideLODControls();
+                retWidget->updateFromProperty();
+                retWidget->update();
+            }
             return retWidget;
         }
         else if (dynamic_cast<StringOptionProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<OptionPropertyBase*>(property_));
-
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<OptionProperty<std::string>*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<OptionProperty<std::string>*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<FileDialogProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<FileDialogProperty*>(property_));
-
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<StringProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<StringProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<StringOptionProperty*>(property_)) {
-            QPropertyWidget* retWidget;
-            if (dynamic_cast<StringOptionProperty*>(property_))
-                retWidget = qpwf->createWidget(dynamic_cast<StringOptionProperty*>(property_));
-            else
-                return 0;
-
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<TransFuncProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<TransFuncProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         //VectorProperties
         else if (dynamic_cast<FloatVec2Property*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<FloatVec2Property*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<FloatVec3Property*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<FloatVec3Property*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
-            return retWidget;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
+             return retWidget;
         }
         else if (dynamic_cast<FloatVec4Property*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<FloatVec4Property*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<IntVec2Property*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<IntVec2Property*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<IntVec3Property*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<IntVec3Property*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<IntVec4Property*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<IntVec4Property*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
 
         else if (dynamic_cast<VolumeCollectionProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<VolumeCollectionProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
         else if (dynamic_cast<VolumeHandleProperty*>(property_)) {
-            QPropertyWidget* retWidget = qpwf->createWidget(dynamic_cast<VolumeHandleProperty*>(property_));
-            retWidget->hideLODControls();
-            delete qpwf;
+            QPropertyWidget* retWidget = createQPropertyWidget(property_);
+            if (retWidget)
+                retWidget->hideLODControls();
             return retWidget;
         }
     }
 
-    delete qpwf;
     return 0;
 }
 template <class T>

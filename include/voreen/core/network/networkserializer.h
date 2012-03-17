@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,7 +44,7 @@ class ProcessorNetwork;
  *
  * @see XmlProcessor
  */
-class NetworkSerializer : public XmlProcessor {
+class VRN_CORE_API NetworkSerializer : public XmlProcessor {
 public:
     /**
     * Writes the ProcessorNetwork as XML to the given file.
@@ -89,7 +89,7 @@ private:
     /**
      * Helper class ensuring freeing used resources in case an exception is thrown.
      */
-    class SerializationResource {
+    class VRN_CORE_API SerializationResource {
     public:
         /**
          * Creates a @c SerializationResource.

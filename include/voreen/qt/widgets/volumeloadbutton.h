@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,77 +29,31 @@
 #ifndef VRN_VOLUMELOADBUTTON_H
 #define VRN_VOLUMELOADBUTTON_H
 
-#include <QToolButton>
+#include <QPushButton>
 
-#ifdef VRN_MODULE_DICOM
-#include "voreen/modules/dicom/dicomvolumereader.h"
-#include "voreen/modules/dicom/qt/dicomdialog.h"
-#endif
+#include "voreen/qt/widgets/volumeiohelper.h"
 
 namespace voreen {
 
 class VolumeContainer;
 
-class VolumeLoadButton : public QToolButton {
+class VolumeLoadButton : public QPushButton {
     Q_OBJECT
 public:
     VolumeLoadButton(VolumeContainer* vc, QWidget* parent = 0);
+    ~VolumeLoadButton();
+
     void setVolumeContainer(VolumeContainer* vc);
 
-public slots:
-    void loadVolume();
+signals:
+    void volumeLoaded(const VolumeHandleBase* handle);
+
+private slots:
     void loadActionTriggered(QAction*);
-
-    /// opens the file dialog  with a preset raw filter. Restores old filter afterwards.
-    void loadVolumeRawFilter();
-
-    void loadRawVolume(const std::string& filename);
-    void loadRawSlices(std::vector<std::string> sliceFiles);
-    void loadDicomFiles();
 
 protected:
     QAction* loadDatAction_;
-    QAction* loadRawAction_;
-
-#ifdef VRN_MODULE_DICOM
-    QAction* loadDicomAction_;
-#endif
-    VolumeContainer* volumeContainer_;
-
-    /// Filter string used in the dialog
-    QString volumeFilesFilter_;
-    QString rawVolumeFilesFilter_;
-    QString philipsUSFilesFilter_;
-    QString rawSliceFilesFilter_;
-
-    // currently selected filter
-    QString selectedFilter_;
-
-#ifdef VRN_MODULE_DICOM
-    DicomDirDialog* dicomDirDialog_;
-#endif
-
-    static const std::string loggerCat_;
-
-    std::string getExtensions() const;
-
-private slots:
-    /// returns a vector of strings with selected filenames
-    std::vector<std::string> openFileDialog();
-    /// allows adding multiple volumes to the attached volumecontainer
-    void addMultipleVolumes(std::vector<std::string>);
-
-    // opens a dicomdir
-    void loadDicomDir(const std::string& file);
-    /// opens dicom files
-    void loadDicomFiles(const std::string& dir);
-    void dicomDirDialogFinished();
-
-    /// store the changed file filter
-    void filterChanged(QString filter);
-
-signals:
-    void VolumeAdded(int);
+    VolumeIOHelper volumeIOHelper_;
 };
 
 } // namespace

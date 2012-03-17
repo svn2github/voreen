@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #ifndef VRN_VOLUMESERIALIZERPOPULATOR_H
 #define VRN_VOLUMESERIALIZERPOPULATOR_H
 
+#include "voreen/core/voreencoredefine.h"
 #include <vector>
 #include <string>
 
@@ -39,19 +40,26 @@ class ProgressBar;
 class VolumeReader;
 class VolumeWriter;
 class VolumeSerializer;
+class ProgressBar;
 
 /**
  * This class creates a VolumeSerializer and registers all known VolumeReader
  * and VolumeWriter objects. You can get a pointer to the VolumeSerializer.
  * The VolumeSerializer will be destroyed when this class is deleted.
  */
-class VolumeSerializerPopulator {
+class VRN_CORE_API VolumeSerializerPopulator {
 public:
-    VolumeSerializerPopulator(bool showProgress = true);
+    /**
+     * Constructor. 
+     *
+     * @param progressBar Optional progress bar to assign to the volume readers and writers.
+     *          Is <emph>not</emph> deleted by the populator's destructor.
+     */
+    VolumeSerializerPopulator(ProgressBar* progressBar = 0);
     ~VolumeSerializerPopulator();
 
     /// get a pointer of the generated VolumeSerializer
-    const VolumeSerializer* getVolumeSerializer() const;
+    VolumeSerializer* getVolumeSerializer() const;
 
     /**
      * Returns all file extensions that are supported by the
@@ -60,16 +68,28 @@ public:
     std::vector<std::string> getSupportedReadExtensions() const;
 
     /**
+     * Returns all filenames that are supported by the
+     * available volume readers.
+     */
+    std::vector<std::string> getSupportedReadFilenames() const;
+
+    /**
      * Returns all file extensions that are supported by the
      * available volume writers.
      */
     std::vector<std::string> getSupportedWriteExtensions() const;
 
+    /**
+     * Returns all filenames that are supported by the
+     * available volume writers.
+     */
+    std::vector<std::string> getSupportedWriteFilenames() const;
+
 private:
     std::vector<VolumeReader*> readers_;
     std::vector<VolumeWriter*> writers_;
     VolumeSerializer* const vs_;
-    ProgressBar* progressDialog_;
+    ProgressBar* progressBar_;
 };
 
 } // namespace voreen

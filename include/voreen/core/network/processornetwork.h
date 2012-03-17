@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -41,13 +41,17 @@ namespace voreen {
 class NetworkSerializer;
 class Property;
 class PropertyLink;
+class PropertyStateCollection;
 class LinkEvaluatorBase;
 class Port;
 
+#ifdef DLL_TEMPLATE_INST
+template class VRN_CORE_API Observable<ProcessorNetworkObserver>;
+#endif
 /**
  * Manages a network of processors.
  */
-class ProcessorNetwork : public Serializable, public PropertyOwnerObserver, public Observable<ProcessorNetworkObserver> {
+class VRN_CORE_API ProcessorNetwork : public Serializable, public PropertyOwnerObserver, public Observable<ProcessorNetworkObserver> {
 public:
     ProcessorNetwork();
     ~ProcessorNetwork();
@@ -85,7 +89,7 @@ public:
     /**
      * Returns the number of processor of the network.
      */
-    int numProcessors() const;
+    size_t numProcessors() const;
 
     /**
      * Returns true, if the network does not contain any processors.
@@ -195,7 +199,7 @@ public:
      * @param dest the destination property of the link. Must be owned by processor of this network
      *      and must not equal src.
      * @param linkEvaluator the link evaluator defining the type of the link.
-     *      If not passed, an identity link is created.
+     *      If not passed, an identity link is created. Will be deleted by the PropertyLink.
      *
      * @return the created property link or null, if the link could not be created.
      */
@@ -392,6 +396,64 @@ public:
     void processorWidgetDeleted(const Processor* processor);
     void portsAndPropertiesChanged(const Processor*);
 
+    /**
+     * Adds a \sa PropertyStateCollection to the list maintained by this ProcessorNetwork. Transfers ownership
+     * of the PropertyStateCollection. Duplicate entries are allowed. c.f. Copy-by-value
+     */
+    void addPropertyStateCollection(PropertyStateCollection* collection);
+
+    /**
+     * Removes a \sa PropertyStateCollection from the list maintained by this ProcessorNetwork. Does not however
+     * delete the collection. If the collection does not exist in the list, nothing happens.
+     */
+    void removePropertyStateCollection(PropertyStateCollection* collection);
+
+    /**
+     * Adds a path and name of a file containing one or more \sa PropertyStateCollections to the maintained list
+     * The file is parsed immediately and its contents are stored locally. Except from this initial parsing,
+     * files are always loaded on deserialization of the ProcessorNetwork. c.f. Copy-by-reference
+     */
+    void addPropertyStateCollectionReferenceFile(const std::string& reference);
+
+    /**
+     * Remove the path to a reference file. Deletes all relevant PropertyStateCollections which were imported
+     * from that file as well.
+     */ 
+    void removePropertyStateCollectionReferenceFile(const std::string& reference);
+
+    /**
+     * Get a list of all the referenced files.
+     */
+    const std::vector<std::string>& getReferencedFiles() const;
+
+    /**
+     * Add a whole directory full of referenced files to this network. The directory is parsed once and all its
+     * contents are stored locally. Except from this inital parsing, directories are always parsed on deserialization
+     * of the ProcessorNetwork. c.f. Copy-by-reference
+     */
+    void addPropertyStateCollectionReferenceDirectory(const std::string& reference);
+
+    /**
+     * Remove the directory from the list of referenced directories. Also deletes all relevant PropertyStateCollections
+     * which were imported from that directory as well.
+     */
+    void removePropertyStateCollectionReferenceDirectory(const std::string& reference);
+
+    /**
+     * Returns a list of all referenced directories.
+     */
+    const std::vector<std::string>& getReferencedDirectories() const;
+
+    /**
+     * Get all \sa PropertyStateCollections which are stored directly within the ProcessorNetwork.
+     */
+    const std::vector<PropertyStateCollection*>& getPropertyStateCollections() const;
+    
+    /**
+     * Get all \sa PropertyStateCollections which are stored in the ProcessorNetwork by reference only.
+     */
+    const std::vector<PropertyStateCollection*>& getReferencedPropertyStateCollections() const;
+
 private:
     /// Calls networkChanged() on the registered observers.
     void notifyNetworkChanged() const;
@@ -417,11 +479,29 @@ private:
     /// Calls propertyLinkRemoved() on the registered observers.
     void notifyPropertyLinkRemoved(const PropertyLink* link) const;
 
+    /// List of all \sa Processor contained in the network
     std::vector<Processor*> processors_;
+
+    /// List of all \sa PropertyList contained in the network
     std::vector<PropertyLink*> propertyLinks_;
 
+    /// The network version
     int version_;
     std::vector<std::string> errorList_;
+
+    /// List of all directory stored \sa PropertyStateCollections which shall be serialized automatically
+    std::vector<PropertyStateCollection*> propertyStateCollections_;
+
+    /// List of all referenced \sa PropertyStateCollections which will be filled during deserialization but
+    /// not serialized themselves
+    std::vector<PropertyStateCollection*> referencedStateCollections_;
+
+    /// List of all referenced files each containing one or more \sa PropertyStateCollection
+    std::vector<std::string> propertyStateFileReferences_;
+
+    /// List of all referenced directories each containing one or more files containing each one or more
+    /// \sa PropertyStateCollection
+    std::vector<std::string> propertyStateDirectoryReferences_;
 
     /**
      * Contains the associated meta data.
@@ -433,120 +513,6 @@ private:
     mutable MetaDataContainer metaDataContainer_;
 
     static const std::string loggerCat_; ///< category used in logging
-};
-
-//-------------------------------------------------------------------------------------------------
-
-/**
- * The @c PortConnection is responsible for serialization and deserialization
- * of connections between different processor ports.
- *
- * @see Serializable
- */
-class PortConnection : public Serializable {
-public:
-    /**
-     * Creates a @c PortConnection from given outport to given inport.
-     *
-     * @param outport the outport
-     * @param inport the inport
-     */
-    PortConnection(Port* outport, Port* inport);
-
-    /**
-     * @see Serializable::serialize
-     */
-    virtual void serialize(XmlSerializer& s) const;
-
-    /**
-     * @see Serializable::deserialize
-     */
-    virtual void deserialize(XmlDeserializer& s);
-
-    /**
-     * Sets the outport of the connection.
-     *
-     * @param value the outport
-     */
-    void setOutport(Port* value);
-
-    /**
-     * Returns the outport of the connection.
-     *
-     * @return the outport
-     */
-    Port* getOutport() const;
-
-    /**
-     * Sets the inport of the connection.
-     *
-     * @param value the inport
-     */
-    void setInport(Port* value);
-
-    /**
-     * Returns the inport of the connection.
-     *
-     * @return the inport
-     */
-    Port* getInport() const;
-
-private:
-    /**
-     * The @c PortEntry class processes the port data
-     * to get a well readable XML file.
-     *
-     * @see PortConnection
-     * @see Serializable
-     */
-    class PortEntry : public Serializable {
-    public:
-        /**
-         * Creates a @c PortEntry for given @c Port.
-         *
-         * @param port the port
-         */
-        PortEntry(Port* port);
-
-        /**
-        * @see Serializable::serialize
-        */
-        virtual void serialize(XmlSerializer& s) const;
-
-        /**
-        * @see Serializable::deserialize
-        */
-        virtual void deserialize(XmlDeserializer& s);
-
-        /**
-         * Returns the port which data will be processed.
-         *
-         * @return the port
-         */
-        Port* getPort() const;
-
-    private:
-        /**
-         * Port which data will be processed.
-         */
-        Port* port_;
-    };
-
-    friend class XmlDeserializer;
-    /**
-     * Default constructor for serialization purposes.
-     */
-    PortConnection();
-
-    /**
-     * Outport entry of connection.
-     */
-    PortEntry outport_;
-
-    /**
-     * Inport entry of connection.
-     */
-    PortEntry inport_;
 };
 
 //---------------------------------------------------------------------------

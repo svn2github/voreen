@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,7 +28,6 @@
 
 #include "voreen/core/io/serialization/meta/aggregationmetadata.h"
 
-#include "voreen/core/network/processornetwork.h"
 #include "voreen/core/ports/port.h"
 #include "voreen/core/processors/processor.h"
 
@@ -131,18 +130,8 @@ void AggregationMetaDataContainer::deserialize(XmlDeserializer& s) {
     s.deserialize("Aggregations", aggregations_);
 }
 
-const std::string AggregationMetaDataContainer::getTypeString(const std::type_info& type) const {
-    if (type == typeid(AggregationMetaDataContainer))
-        return "AggregationMetaDataContainer";
-    else
-        return "";
-}
-
-Serializable* AggregationMetaDataContainer::createType(const std::string& typeString) {
-    if (typeString == "AggregationMetaDataContainer")
-        return new AggregationMetaDataContainer();
-    else
-        return 0;
+std::string AggregationMetaDataContainer::toString() const{
+    return "";
 }
 
 void AggregationMetaDataContainer::addAggregation(AggregationMetaData* aggregation) {
@@ -167,6 +156,16 @@ bool AggregationMetaDataContainer::isEmpty() const {
 
 const std::vector<AggregationMetaData*>& AggregationMetaDataContainer::getAggregations() const {
     return aggregations_;
+}
+
+MetaDataBase* AggregationMetaDataContainer::clone() const {
+    AggregationMetaDataContainer* md = new AggregationMetaDataContainer();
+    md->aggregations_ = aggregations_;
+    return md;
+}
+
+Serializable* AggregationMetaDataContainer::create() const {
+    return new AggregationMetaDataContainer();
 }
 
 } // namespace

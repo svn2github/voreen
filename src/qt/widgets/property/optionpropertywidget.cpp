@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -64,7 +64,7 @@ void OptionPropertyWidget::updateFromProperty() {
     // set selected options
     int itemIndex = cBox_->findData(QString::fromStdString(property_->get()));
     if (itemIndex == -1) {
-        LWARNINGC("OptionPropertyWidget", "Data item not found");
+        LWARNINGC("OptionPropertyWidget", std::string("Data item ") + property_->get() + " not found");
     }
     else {
         cBox_->setCurrentIndex(itemIndex);

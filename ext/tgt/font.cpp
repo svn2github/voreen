@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2009 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -275,7 +275,7 @@ Font::VerticalTextAlignment Font::getVerticalTextAlignment() {
     return vAlign_;
 }
 
-void Font::render(const vec3& pos, const std::string& text) {
+void Font::render(const vec3& pos, const std::string& text) const {
     if (simpleLayout_) {
         float delta = 0;
 
@@ -309,7 +309,7 @@ void Font::render(const vec3& pos, const std::string& text) {
     }
 }
 
-Bounds Font::getBounds(const vec3& pos, const std::string& text) {
+Bounds Font::getBounds(const vec3& pos, const std::string& text) const {
     if (!font_)
         return Bounds();
 
@@ -325,8 +325,6 @@ Bounds Font::getBounds(const vec3& pos, const std::string& text) {
     FTBBox box_tmp = font_->BBox(line.c_str(), -1, point);
     delta -= box_tmp.Upper().Yf() - box_tmp.Lower().Yf(); // height of first line
 
-    vec3 dpos = vec3(pos.x, pos.y, pos.z);
-    
     FTBBox box = simpleLayout_->BBox(text.c_str(), -1, point);
     FTPoint upper = box.Upper();
     FTPoint lower = box.Lower();
@@ -420,9 +418,9 @@ void Font::setTextAlignment(TextAlignment /*textAlignment*/) {}
 
 void Font::setVerticalTextAlignment(VerticalTextAlignment /*verticalTextAlignment*/) {}
 
-void Font::render(const vec3& /*pos*/, const std::string& /*text*/) {}
+void Font::render(const vec3& /*pos*/, const std::string& /*text*/) const {}
 
-Bounds Font::getBounds(const vec3& /*pos*/, const std::string& /*text*/) {
+Bounds Font::getBounds(const vec3& /*pos*/, const std::string& /*text*/) const {
     return Bounds();
 }
 

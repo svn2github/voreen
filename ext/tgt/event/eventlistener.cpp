@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -22,9 +22,13 @@
  *                                                                    *
  **********************************************************************/
 
-#include <typeinfo>
-
 #include "tgt/event/eventlistener.h"
+
+#include "tgt/event/event.h"
+#include "tgt/event/keyevent.h"
+#include "tgt/event/mouseevent.h"
+#include "tgt/event/timeevent.h"
+#include <typeinfo>
 
 namespace tgt {
 

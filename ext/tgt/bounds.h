@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,7 +25,7 @@
 #ifndef TGT_BOUNDS_H
 #define TGT_BOUNDS_H
 
-#include "tgt/config.h"
+#include "tgt/types.h"
 #include "tgt/vector.h"
 
 namespace tgt {
@@ -33,7 +33,7 @@ namespace tgt {
 /**
 *   Axis-aligned bounding box
 */
-class Bounds {
+class TGT_API Bounds {
     unsigned int points_;   //points added to the box
     vec3 llf_; //lower left front
     vec3 urb_; //upper right back
@@ -158,7 +158,7 @@ class Bounds {
     bool inside(const vec3& v) const;
 };
 
-class HasBounds {
+class TGT_API HasBounds {
 public:
     HasBounds(const Bounds& bounds)
       : boundingBox_(bounds)

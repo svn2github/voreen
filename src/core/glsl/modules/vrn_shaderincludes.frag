@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,12 +34,7 @@
 
 // include required shader modules
 #include "modules/mod_sampler2d.frag"
-
-#ifdef BRICKED_VOLUME
-#include "modules/bricking/mod_bricking.frag"
-#else
 #include "modules/mod_sampler3d.frag"
-#endif
 
 #include "modules/mod_curvature.frag"
 #include "modules/mod_raysetup.frag"

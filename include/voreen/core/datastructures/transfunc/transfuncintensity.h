@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -42,7 +42,7 @@ class TransFuncMappingKey;
  *
  * Internally, it is represented by a one-dimensional RGBA texture of type GL_UNSIGNED_BYTE.
  */
-class TransFuncIntensity : public TransFunc {
+class VRN_CORE_API TransFuncIntensity : public TransFunc {
 public:
     /**
      * Constructor
@@ -70,7 +70,7 @@ public:
      * @param tf transfer function that is compared with this transfer function
      * @return true when the keys of both transfer functions are equal
      */
-    bool operator==(const TransFuncIntensity& tf);
+    bool operator==(const TransFuncIntensity& tf) const;
 
     /**
      * Operator to compare two TransFuncIntensity objects. False is returned when the width of the
@@ -80,7 +80,7 @@ public:
      * @return true when the keys of both transfer functions differ or the width of the texture
      *         is not the same, false otherwise
      */
-    bool operator!=(const TransFuncIntensity& tf);
+    bool operator!=(const TransFuncIntensity& tf) const;
 
     /**
      * Re-generates the texture from the already existing keys.
@@ -270,6 +270,11 @@ public:
      */
     virtual TransFunc* clone() const;
 
+    virtual int getNumDimensions() const { return 1; }
+    virtual tgt::vec2 getDomain(int dimension = 0) const;
+    virtual void setDomain(tgt::vec2 domain, int dimension = 0);
+    virtual void setDomain(float lower, float upper, int dimension) { setDomain(tgt::vec2(lower, upper), dimension); } 
+
 protected:
     /**
      * Loads a transfer function from an file with ending tfi.
@@ -357,6 +362,8 @@ protected:
 
     float lowerThreshold_; ///< lower threshold
     float upperThreshold_; ///< upper threshold
+
+    tgt::vec2 domain_;
 
     static const std::string loggerCat_; ///< logger category
 };

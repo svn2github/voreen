@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -38,7 +38,7 @@ namespace voreen {
  *
  * @see MetaDataBase
  */
-class WindowStateMetaData : public MetaDataBase {
+class VRN_CORE_API WindowStateMetaData : public MetaDataBase {
 public:
     /**
      * Creates a @c WindowStateMetaData object storing the given window state.
@@ -52,6 +52,11 @@ public:
     WindowStateMetaData(const bool& visible = false, const int& x = -1, const int& y = -1, const int& width = -1, const int& height = -1);
     virtual ~WindowStateMetaData() {}
 
+    virtual std::string getClassName() const { return "WindowStateMetaData"; }
+    virtual Serializable* create() const;
+    virtual MetaDataBase* clone() const;
+    virtual std::string toString() const;
+
     /**
      * @see Serializable::serialize
      */
@@ -61,16 +66,6 @@ public:
      * @see Serializable::deserialize
      */
     virtual void deserialize(XmlDeserializer& s);
-
-    /**
-     * @see SerializableFactory::getTypeString
-     */
-    virtual const std::string getTypeString(const std::type_info& type) const;
-
-    /**
-     * @see SerializableFactory::createType
-     */
-    virtual Serializable* createType(const std::string& typeString);
 
     /**
      * Sets the window visibility flag.

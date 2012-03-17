@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -62,7 +62,7 @@ std::string TextPort::getData() const {
                 return p->getData();
         }
     }
-    return 0;
+    return "";
 }
 
 std::vector<std::string> TextPort::getAllData() const {
@@ -83,8 +83,8 @@ std::vector<std::string> TextPort::getAllData() const {
     }
 }
 
-std::vector<TextPort*> TextPort::getConnected() const {
-    std::vector<TextPort*> ports;
+std::vector<const TextPort*> TextPort::getConnected() const {
+    std::vector<const TextPort*> ports;
     for (size_t i = 0; i < connectedPorts_.size(); ++i) {
         TextPort* p = static_cast<TextPort*>(connectedPorts_[i]);
 
@@ -94,7 +94,11 @@ std::vector<TextPort*> TextPort::getConnected() const {
 }
 
 bool TextPort::isReady() const {
-    return isConnected();
+    return Port::isReady();
+}
+
+bool TextPort::hasData() const {
+    return true;
 }
 
 } // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,15 +25,15 @@
 #ifndef TGT_RENDERABLE_H
 #define TGT_RENDERABLE_H
 
-#include "tgt/config.h"
 #include "tgt/bounds.h"
+#include "tgt/types.h"
 
 namespace tgt {
 
 /**
  * Inherit from this abstract class in order to create a renderable object
 */
-class Renderable : public HasBounds {
+class TGT_API Renderable : public HasBounds {
 protected:
 
     bool    static_;

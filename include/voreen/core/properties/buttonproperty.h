@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -34,15 +34,16 @@
 
 namespace voreen {
 
-class ButtonProperty : public Property {
+class VRN_CORE_API ButtonProperty : public Property {
 public:
     ButtonProperty(const std::string& id, const std::string& guiText, Processor::InvalidationLevel invalidationLevel=Processor::VALID);
-
+    ButtonProperty();
     virtual ~ButtonProperty();
 
-    virtual std::string getTypeString() const;
+    virtual Property* create() const; 
 
-    PropertyWidget* createWidget(PropertyWidgetFactory* f);
+    virtual std::string getClassName() const       { return "ButtonProperty"; }
+    virtual std::string getTypeDescription() const { return "Button"; }
 
     void onChange(const Action& action = NoAction());
 

@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,26 +28,49 @@
 
 #include "voreen/core/properties/shaderproperty.h"
 #include "voreen/core/properties/condition.h"
-#include "voreen/core/properties/propertywidgetfactory.h"
 
 namespace voreen {
 
 void ShaderSource::serialize(XmlSerializer& s) const {
     //fragment:
     s.serialize("fragmentModified", fragmentModified_);
-    s.serialize("fragmentFilename", fragmentFilename_);
+    if (!fragmentFilename_.empty()) {
+        std::string relFragPath = tgt::FileSystem::relativePath(tgt::FileSystem::dirName(ShdrMgr.completePath(fragmentFilename_)),
+                    tgt::FileSystem::dirName(s.getDocumentPath()));
+        if (!relFragPath.empty()) relFragPath = relFragPath + "/";
+        std::string relFragmentFilename =  relFragPath + tgt::FileSystem::fileName(fragmentFilename_);
+        s.serialize("fragmentFilename", relFragmentFilename);
+    } else {
+        s.serialize("fragmentFilename", fragmentFilename_);
+    }
     if (fragmentModified_)
         s.serialize("fragmentSource", fragmentSource_);
 
     //vertex:
     s.serialize("vertexModified", vertexModified_);
-    s.serialize("vertexFilename", vertexFilename_);
+    if (!vertexFilename_.empty()) {
+        std::string relVertPath = tgt::FileSystem::relativePath(tgt::FileSystem::dirName(ShdrMgr.completePath(vertexFilename_)),
+                    tgt::FileSystem::dirName(s.getDocumentPath()));
+        if (!relVertPath.empty()) relVertPath = relVertPath + "/";
+        std::string relVertexFilename = relVertPath + tgt::FileSystem::fileName(vertexFilename_);
+        s.serialize("vertexFilename", relVertexFilename);
+    } else {
+        s.serialize("vertexFilename", vertexFilename_);
+    }
     if (vertexModified_)
         s.serialize("vertexSource", vertexSource_);
 
     //geometry:
     s.serialize("geometryModified", geometryModified_);
-    s.serialize("geometryFilename", geometryFilename_);
+    if (!geometryFilename_.empty()) {
+        std::string relGeomPath = tgt::FileSystem::relativePath(tgt::FileSystem::dirName(ShdrMgr.completePath(geometryFilename_)),
+            tgt::FileSystem::dirName(s.getDocumentPath()));
+        if (!relGeomPath.empty()) relGeomPath = relGeomPath + "/";
+        std::string relGeometryFilename = relGeomPath + tgt::FileSystem::fileName(geometryFilename_);
+        s.serialize("geometryFilename", relGeometryFilename);
+    } else {
+        s.serialize("geometryFilename", geometryFilename_);
+    }
     if (geometryModified_)
         s.serialize("geometrySource", geometrySource_);
 }
@@ -56,24 +79,27 @@ void ShaderSource::deserialize(XmlDeserializer& s) {
     //current format:
     s.deserialize("fragmentModified", fragmentModified_);
     s.deserialize("fragmentFilename", fragmentFilename_);
+    if (!fragmentFilename_.empty())
+        fragmentFilename_ = tgt::FileSystem::absolutePath(
+        tgt::FileSystem::dirName(s.getDocumentPath())) + "/" + fragmentFilename_;
     if (fragmentModified_)
         s.deserialize("fragmentSource", fragmentSource_);
-    //else
-        //resetfragmentShader();
 
     s.deserialize("vertexModified", vertexModified_);
     s.deserialize("vertexFilename", vertexFilename_);
+    if (!vertexFilename_.empty())
+        vertexFilename_ = tgt::FileSystem::absolutePath(
+        tgt::FileSystem::dirName(s.getDocumentPath())) + "/" + vertexFilename_;
     if (vertexModified_)
         s.deserialize("vertexSource", vertexSource_);
-    //else
-        //resetVertexShader();
 
     s.deserialize("geometryModified", geometryModified_);
     s.deserialize("geometryFilename", geometryFilename_);
+    if (!geometryFilename_.empty())
+        geometryFilename_ = tgt::FileSystem::absolutePath(
+        tgt::FileSystem::dirName(s.getDocumentPath())) + "/" + geometryFilename_;
     if (geometryModified_)
         s.deserialize("geometrySource", geometrySource_);
-    //else
-        //resetGeometryShader();
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -96,6 +122,13 @@ ShaderProperty::ShaderProperty(const std::string& id, const std::string& guiText
     value_.fragmentFilename_ = originalFragmentFilename_;
 }
 
+ShaderProperty::ShaderProperty() 
+    : geom_(0)
+    , vert_(0)
+    , frag_(0)
+    , shader_(0)
+{}
+
 ShaderProperty::~ShaderProperty() {
     if (shader_) {
         LWARNINGC("voreen.ShaderProperty",
@@ -103,13 +136,17 @@ ShaderProperty::~ShaderProperty() {
     }
 }
 
-void ShaderProperty::initialize() throw (VoreenException) {
+Property* ShaderProperty::create() const {
+    return new ShaderProperty();
+}
+
+void ShaderProperty::initialize() throw (tgt::Exception) {
     TemplateProperty<ShaderSource>::initialize();
     rebuild();
     LGL_ERROR;
 }
 
-void ShaderProperty::deinitialize() throw (VoreenException) {
+void ShaderProperty::deinitialize() throw (tgt::Exception) {
     delete shader_;
     shader_ = 0;
     LGL_ERROR;
@@ -158,14 +195,29 @@ void ShaderProperty::deserialize(XmlDeserializer& s) {
         ShaderSource n = get();
         n.deserialize(s);
         set(n);
+
+        if(!value_.fragmentModified_ && !value_.fragmentFilename_.empty())
+            value_.fragmentSource_ = getShaderAsString(value_.fragmentFilename_);
+        if(!value_.vertexModified_ && !value_.vertexFilename_.empty())
+            value_.vertexSource_ = getShaderAsString(value_.vertexFilename_);
+        if(!value_.geometryModified_ && !value_.geometryFilename_.empty())
+            value_.geometrySource_ = getShaderAsString(value_.geometryFilename_);
     }
 
     invalidate();
     updateWidgets();
 }
 
-PropertyWidget* ShaderProperty::createWidget(PropertyWidgetFactory* f) {
-    return f->createWidget(this);
+Variant ShaderProperty::getVariant(bool) const {
+    return Variant(&(get()));
+}
+
+void ShaderProperty::setVariant(const Variant& val, bool) {
+    set(*(val.getShader()));
+}
+
+int ShaderProperty::getVariantType() const {
+    return Variant::VariantTypeShaderSource;
 }
 
 void ShaderProperty::setHeader(std::string header) {
@@ -314,7 +366,7 @@ void ShaderProperty::rebuild() {
             shader_->attachObject(vert_);
         else {
             //failedCompile = true;
-            LWARNINGC("voreen.shaderproperty", "Failed to compile vertex shader: " << vert_->getCompilerLog());
+            LWARNINGC("voreen.ShaderProperty", "Failed to compile vertex shader: " << vert_->getCompilerLog());
         }
     }
 
@@ -333,7 +385,7 @@ void ShaderProperty::rebuild() {
             shader_->attachObject(frag_);
         else {
             //failedCompile = true;
-            LWARNINGC("voreen.shaderproperty", "Failed to compile fragment shader: " << frag_->getCompilerLog());
+            LWARNINGC("voreen.ShaderProperty", "Failed to compile fragment shader: " << frag_->getCompilerLog());
         }
     }
 
@@ -352,14 +404,14 @@ void ShaderProperty::rebuild() {
             shader_->attachObject(geom_);
         else {
             //failedCompile = true;
-            LWARNINGC("voreen.shaderproperty", "Failed to compile geometry shader: " << geom_->getCompilerLog());
+            LWARNINGC("voreen.ShaderProperty", "Failed to compile geometry shader: " << geom_->getCompilerLog());
         }
     }
 
     //if(!failedCompile) {
         shader_->linkProgram();
         if(!shader_->isLinked()) {
-            LWARNINGC("voreen.shaderproperty", "Failed to link shader: " << shader_->getLinkerLog());
+            LWARNINGC("voreen.ShaderProperty", "Failed to link shader: " << shader_->getLinkerLog());
         }
     //}
 
@@ -370,8 +422,5 @@ tgt::Shader* ShaderProperty::getShader() {
    return shader_;
 }
 
-std::string ShaderProperty::getTypeString() const {
-    return "Shader";
-}
 
 }   // namespace

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -28,11 +28,12 @@
 #include <list>
 #include <string>
 
-#include "tgt/config.h"
+#include "tgt/exception.h"
 #include "tgt/manager.h"
-#include "tgt/vector.h"
 #include "tgt/matrix.h"
 #include "tgt/tgt_gl.h"
+#include "tgt/types.h"
+#include "tgt/vector.h"
 
 namespace tgt {
 
@@ -56,7 +57,7 @@ namespace tgt {
  * //GL_GEOMETRY_VERTICES_OUT_EXT(42)
  * [...]
  */
-class ShaderObject {
+class TGT_API ShaderObject {
 public:
     friend class Shader;
     friend class ShaderPreprocessor;
@@ -88,7 +89,13 @@ public:
      */
     ~ShaderObject();
 
-    bool loadSourceFromFile(const std::string& filename);
+    /**
+     * Loads the shader source from the specified file.
+     *
+     * @throw Exception if loading failed.
+     */
+    void loadSourceFromFile(const std::string& filename)
+        throw (Exception);
 
 	/**
      * Set directives using glProgramParameteriEXT(...), used for geometry shaders.
@@ -168,7 +175,7 @@ protected:
  *
  * @note Convenient loading of shaders from file is provided by ShaderManager.
  */
-class Shader {
+class TGT_API Shader {
 
     friend class ShaderManager;
 
@@ -362,8 +369,11 @@ protected:
      * Load filename.vert and filename.frag (vertex and fragment shader) and link shader.
      *
      * @param customHeader Header to be put in front of the shader source. 
+     *
+     * @throw Exception if loading failed
      */
-    bool load(const std::string& filename, const std::string& customHeader = "");
+    void load(const std::string& filename, const std::string& customHeader = "")
+        throw (Exception);
 
     /**
      * Load vertex shader \p vertFilename, geometry shader \p geomFilename, 
@@ -371,10 +381,11 @@ protected:
      *
      * @param customHeader header to be put in front of the shader source 
      *
-     * @return The loaded shader, or 0 on failure
+     * @throw Exception if loading failed
      */
-    bool loadSeparate(const std::string& vertFilename, const std::string& geomFilename,
-		const std::string& fragFilename, const std::string& customHeader = "");
+    void loadSeparate(const std::string& vertFilename, const std::string& geomFilename,
+		const std::string& fragFilename, const std::string& customHeader = "")
+        throw (Exception);
 
     typedef std::list<ShaderObject*> ShaderObjects;
     ShaderObjects objects_;
@@ -388,12 +399,18 @@ protected:
 
 //------------------------------------------------------------------------------
 
+class ShaderManager;
+#ifdef DLL_TEMPLATE_INST
+template class TGT_API ResourceManager<Shader>;
+#endif
+
 /**
  * Loads shaders from the file system, managing a shader search path.
  *
  * @see ResourceManager
  */
-class ShaderManager : public ResourceManager<Shader> {
+class TGT_API ShaderManager : public ResourceManager<Shader> {
+SINGLETON_CLASS_HEADER(ShaderManager)
 public:
 
     ShaderManager();
@@ -405,10 +422,13 @@ public:
      * @param customHeader Header to be put in front of the shader source 
      * @param activate activate the shader after loading
      *
-     * @return The loaded shader, or 0 on failure
+     * @return The loaded shader
+     *
+     * @throw Exception if loading failed
      */
     Shader* load(const std::string& filename, const std::string& customHeader = "",
-                 bool activate = true);
+                 bool activate = true)
+                 throw (Exception);
 
     /**
      * Load vertex shader \p vertFilename and fragment shader \p fragFilename, 
@@ -419,10 +439,13 @@ public:
      * @param customHeader header to be put in front of the shader source 
      * @param activate activate the shader after loading
      *
-     * @return The loaded shader, or 0 on failure
+     * @return The loaded shader
+     *
+     * @throw Exception if loading failed
      */
     Shader* loadSeparate(const std::string& vertFilename, const std::string& fragFilename,
-                         const std::string& customHeader = "", bool activate = true);
+                         const std::string& customHeader = "", bool activate = true)
+                         throw (Exception);
 
     /**
      * Load vertex shader \p vertFilename, geometry shader \p geomFilename, 
@@ -433,11 +456,14 @@ public:
      * @param customHeader header to be put in front of the shader source 
      * @param activate activate the shader after loading
      *
-     * @return The loaded shader, or 0 on failure
+     * @return The loaded shader
+     *
+     * @throw Exception if loading failed
      */
     Shader* loadSeparate(const std::string& vertFilename, const std::string& geomFilename,
                          const std::string& fragFilename,
-                         const std::string& customHeader, bool activate = true);
+                         const std::string& customHeader, bool activate = true)
+                         throw(Exception);
 
     bool rebuildAllShadersFromFile();
 
@@ -445,8 +471,69 @@ protected:
     static const std::string loggerCat_;   
 };
 
+/**
+ * Parses #include statements and geometry shader settings
+ */
+class ShaderPreprocessor {
+public:
+    enum Mode {
+        MODE_NONE      = 0,
+        MODE_INCLUDE   = 1,
+        MODE_GEOMETRY  = 2
+    };
+
+    ShaderPreprocessor(ShaderObject* obj, Mode mode = Mode(MODE_INCLUDE | MODE_GEOMETRY));
+
+    // Returns the parsed result
+    std::string getResult() const;
+    
+    GLint getGeomShaderInputType() const;
+    GLint getGeomShaderOutputType() const;
+    GLint getGeomShaderVerticesOut() const;
+    
+protected:
+    void parse();
+    void parsePart(const std::string& input, const std::string& name = "");
+
+    void outputComment(const std::string& comment, const std::string& type = "INFO");
+    
+	/**
+     *	Scan for geometry shader directives in shader source.
+     *	
+     *	Accepted directives:
+     *	GL_GEOMETRY_INPUT_TYPE_EXT(GL_POINTS | GL_LINES | GL_LINES_ADJACENCY_EXT | GL_TRIANGLES | GL_TRIANGLES_ADJACENCY_EXT)
+     *	GL_GEOMETRY_OUTPUT_TYPE_EXT(GL_POINTS | GL_LINE_STRIP | GL_TRIANGLE_STRIP)
+     *	GL_GEOMETRY_VERTICES_OUT_EXT(<int>)
+     *	No newline or space allowed between each pair of brackets.
+     *
+     *	Example geometry shader header:
+     *	#version 120 
+     *	#extension GL_EXT_geometry_shader4 : enable
+     *
+     *	//GL_GEOMETRY_INPUT_TYPE_EXT(GL_LINES)
+     *	//GL_GEOMETRY_OUTPUT_TYPE_EXT(GL_LINE_STRIP)
+     *	//GL_GEOMETRY_VERTICES_OUT_EXT(42)
+     *	[...]
+     */
+    bool scanGeomShaderDirectives();
+
+	std::string getGeomShaderDirective(const std::string& d);
+
+    
+    ShaderObject* shd_;
+    std::vector<ShaderObject::LineInfo>& lineTracker_; ///< keeps track of line numbers when includes are used
+    int activeLine_;
+    std::ostringstream result_;
+
+    GLint inputType_;
+    GLint outputType_;
+    GLint verticesOut_;
+    
+    static const std::string loggerCat_;   
+};
+
 } // namespace tgt
 
-#define ShdrMgr tgt::Singleton<tgt::ShaderManager>::getRef()
+#define ShdrMgr tgt::ShaderManager::getRef()
 
 #endif //TGT_SHADERMANAGER_H

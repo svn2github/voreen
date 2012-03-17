@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -32,16 +32,10 @@
 #ifdef _MSC_VER
     #include "tgt/gpucapabilitieswindows.h"
 #endif
-#include "tgt/modelmanager.h"
 #include "tgt/tesselator.h"
 #include "tgt/texturemanager.h"
 #include "tgt/shadermanager.h"
-#include "tgt/memorymanager.h"
 #include "tgt/event/eventhandler.h"
-
-#ifdef TGT_HAS_FCOLLADA
-#include "tgt/modelreaderfcollada.h"
-#endif
 
 #ifdef TGT_HAS_DEVIL
 #include "tgt/texturereaderdevil.h"
@@ -50,7 +44,7 @@
 
 namespace tgt {
 
-void init(InitFeature::Features featureset) {
+void init(InitFeature::Features featureset, LogLevel logLevel) {
     if (featureset & InitFeature::SHADER_MANAGER) {
         featureset = (InitFeature::Features) (featureset | InitFeature::GPU_PROPERTIES | InitFeature::FILE_SYSTEM);
     }
@@ -60,25 +54,25 @@ void init(InitFeature::Features featureset) {
     }
 
     if (featureset & InitFeature::LOG_MANAGER) {
-        Singleton<LogManager>::init(new LogManager());
+        LogManager::init();
         if (featureset & InitFeature::LOG_TO_CONSOLE) {
             ConsoleLog* log = new ConsoleLog();
-            log->addCat("", true, Info);
+            log->addCat("", true, logLevel);
             LogMgr.addLog(log);
         }
         // LogMgr disposes all its logs
     }
 
     if (featureset & InitFeature::FILE_SYSTEM)
-        Singleton<FileSystem>::init(new FileSystem());
+        FileSystem::init();
 }
 
 void deinit() {
-    if (Singleton<FileSystem>    ::isInited())
-        Singleton<FileSystem>    ::deinit();
+    if (FileSystem::isInited())
+        FileSystem::deinit();
 
-    if (Singleton<LogManager>    ::isInited())
-        Singleton<LogManager>    ::deinit();
+    if (LogManager::isInited())
+        LogManager::deinit();
 }
 
 void initGL(InitFeature::Features featureset) {
@@ -100,14 +94,14 @@ void initGL(InitFeature::Features featureset) {
     LINFOC("tgt.init", "GLEW version:       " << glewGetString(GLEW_VERSION));
 
     if (featureset & InitFeature::GPU_PROPERTIES )
-        Singleton<GpuCapabilities> ::init(new GpuCapabilities());
+        GpuCapabilities::init();
 #ifdef _MSC_VER
-        Singleton<GpuCapabilitiesWindows> ::init(new GpuCapabilitiesWindows());
+        GpuCapabilitiesWindows::init();
 #endif
     if (featureset & InitFeature::TESSELATOR)
-        Singleton<Tesselator>    ::init(new Tesselator());
+        Tesselator::init();
     if (featureset & InitFeature::TEXTURE_MANAGER) {
-        Singleton<TextureManager>::init(new TextureManager());
+        TextureManager::init();
         #ifdef TGT_HAS_DEVIL
             TexMgr.registerReader(new TextureReaderDevil());
         //devil has tga support so we do not need the built-in reader:
@@ -115,32 +109,24 @@ void initGL(InitFeature::Features featureset) {
             TexMgr.registerReader(new TextureReaderTga());
         #endif
     }
-    if (featureset & InitFeature::MODEL_MANAGER) {
-        Singleton<ModelManager>  ::init(new ModelManager());
-        #ifdef TGT_HAS_FCOLLADA
-            ModelMgr.registerReader(new ModelReaderFCollada());
-        #endif
-    }
-    
+
     // starting shadermanager
-    Singleton<ShaderManager> ::init(new ShaderManager());
+    ShaderManager::init();
 }
 
 void deinitGL() {
-    if (Singleton<GpuCapabilities> ::isInited())
-        Singleton<GpuCapabilities> ::deinit();
+    if (GpuCapabilities::isInited())
+        GpuCapabilities::deinit();
 #ifdef _MSC_VER
-    if (Singleton<GpuCapabilitiesWindows> ::isInited())
-        Singleton<GpuCapabilitiesWindows> ::deinit();
+    if (GpuCapabilitiesWindows::isInited())
+        GpuCapabilitiesWindows::deinit();
 #endif
-    if (Singleton<ShaderManager> ::isInited())
-        Singleton<ShaderManager> ::deinit();
-    if (Singleton<ModelManager>  ::isInited())
-        Singleton<ModelManager>  ::deinit();
-    if (Singleton<TextureManager>::isInited())
-        Singleton<TextureManager>::deinit();
-    if (Singleton<Tesselator>    ::isInited())
-        Singleton<Tesselator>    ::deinit();
+    if (ShaderManager::isInited())
+        ShaderManager::deinit();
+    if (TextureManager::isInited())
+        TextureManager::deinit();
+    if (Tesselator::isInited())
+        Tesselator::deinit();
 }
 
 } // namespace

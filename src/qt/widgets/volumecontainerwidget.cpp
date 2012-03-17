@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -56,9 +56,6 @@
 
 #include "voreen/core/datastructures/volume/volumeatomic.h"
 #include "voreen/core/datastructures/volume/volumehandle.h"
-#include "voreen/core/datastructures/volume/bricking/largevolumemanager.h"
-#include "voreen/core/io/datvolumewriter.h"
-#include "voreen/modules/dicom/dicomvolumereader.h"
 #include "voreen/core/io/progressbar.h"
 #include "voreen/core/io/volumeserializerpopulator.h"
 #include "voreen/core/voreenapplication.h"
@@ -78,6 +75,11 @@ namespace {
 #else
     int fontSize = 8;
 #endif
+}
+
+namespace {
+    QString whatsThisInfo = "<h3>Volume Container Widget</h3>This widget shows all the volumes which are currently loaded and provides \
+                            a means to load more volumes into the current workspace.";
 }
 
 namespace voreen {
@@ -127,20 +129,20 @@ const std::string VolumeContainerWidget::loggerCat_("voreen.qt.VolumeContainerWi
 
 VolumeContainerWidget::VolumeContainerWidget(VolumeContainer* volumeContainer, QWidget* parent)
     : QWidget(parent, Qt::Tool)
+    , volumeIOHelper_(volumeContainer, parent)
     , volumeContainer_(volumeContainer)
 {
-
     if (volumeContainer_)
         volumeContainer_->addObserver(this);
     else
         LWARNING("No volume container assigned");
 
     setFocusPolicy(Qt::StrongFocus);
+    setWhatsThis(whatsThisInfo);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     QHBoxLayout* buttonLayout = new QHBoxLayout();
-    QHBoxLayout* dicomLayout = new QHBoxLayout();
-
+    
     volumeInfos_ = new QRCTreeWidget();
     QTreeWidgetItem* header = volumeInfos_->headerItem();
     header->setText(0, tr("Volumes"));
@@ -150,11 +152,11 @@ VolumeContainerWidget::VolumeContainerWidget(VolumeContainer* volumeContainer, Q
     volumeInfos_->setIconSize(QSize(63,63));
 
     volumeLoadButton_ = new VolumeLoadButton(volumeContainer_, this);
-    volumeLoadButton_->setMinimumWidth(125);
+    volumeLoadButton_->setMinimumWidth(110);
     containerInfo_ = new QLabel(this);
 
     connect(volumeInfos_, SIGNAL(refresh(QTreeWidgetItem*)), this, SLOT(volumeRefresh(QTreeWidgetItem*)));
-    connect(volumeInfos_, SIGNAL(add()), volumeLoadButton_, SLOT(loadVolume()));
+    connect(volumeInfos_, SIGNAL(add()), &volumeIOHelper_, SLOT(showFileOpenDialog()));
     connect(volumeInfos_, SIGNAL(remove()), this, SLOT(removeVolume()));
     connect(volumeInfos_, SIGNAL(exportDat()), this, SLOT(exportDat()));
 
@@ -165,7 +167,6 @@ VolumeContainerWidget::VolumeContainerWidget(VolumeContainer* volumeContainer, Q
 
     mainLayout->addWidget(volumeInfos_);
     mainLayout->addLayout(buttonLayout);
-    mainLayout->addLayout(dicomLayout);
 
     setMinimumWidth(250);
     setMinimumHeight(125);
@@ -191,6 +192,7 @@ void VolumeContainerWidget::setVolumeContainer(VolumeContainer* volumeContainer)
     // assign new container
     volumeContainer_ = volumeContainer;
     volumeLoadButton_->setVolumeContainer(volumeContainer);
+    volumeIOHelper_.setVolumeContainer(volumeContainer);
 
     // register at new container
     if (volumeContainer_)
@@ -202,17 +204,17 @@ void VolumeContainerWidget::setVolumeContainer(VolumeContainer* volumeContainer)
 
 std::string VolumeContainerWidget::calculateSize() {
 
-    int volumeSize = 0;
+    size_t volumeSize = 0;
 
     if (!volumeContainer_ || volumeContainer_->empty()) {
         return "";
     }
     for(size_t i = 0 ; i < volumeContainer_->size(); ++i) {
-        Volume* volume = volumeContainer_->at(i)->getVolume();
+        const Volume* volume = volumeContainer_->at(i)->getRepresentation<Volume>();
         volumeSize += VolumeViewHelper::getVolumeMemorySizeByte(volume);
     }
-    int volumeCount = volumeContainer_->size();
-    long bytes = volumeSize;
+    int volumeCount = static_cast<int>(volumeContainer_->size());
+    size_t bytes = volumeSize;
     std::stringstream out;
     if(volumeCount == 1) {
         out << volumeCount << " Volume (";
@@ -243,12 +245,12 @@ void VolumeContainerWidget::update() {
     }
 
     for(size_t i = 0 ; i < volumeContainer_->size(); ++i) {
-        VolumeHandle* handle = volumeContainer_->at(i);
-        Volume* volume = volumeContainer_->at(i)->getVolume();
+        VolumeHandleBase* handle = volumeContainer_->at(i);
+        const Volume* volume = volumeContainer_->at(i)->getRepresentation<Volume>();
         QTreeWidgetItem* qtwi = new QTreeWidgetItem(volumeInfos_);
         std::string name = VolumeViewHelper::getStrippedVolumeName(handle);
         std::string path = VolumeViewHelper::getVolumePath(handle);
-        volumeItems_[handle->getVolume()] = qtwi;
+        volumeItems_[handle->getRepresentation<Volume>()] = qtwi;
 
         QFontInfo fontInfo(qtwi->font(0));
 
@@ -258,16 +260,16 @@ void VolumeContainerWidget::update() {
         infos->setWordWrap(true);*/
 
         qtwi->setFont(0, QFont(fontInfo.family(), fontSize));
-        qtwi->setText(0, QString(name.c_str()) + " (" + QString(VolumeViewHelper::getVolumeType(volume).c_str()) + ")" + QString(QChar::LineSeparator)
+        qtwi->setText(0, QString(name.c_str()) + QString::fromStdString(VolumeViewHelper::getVolumeTimestep(handle)) + " (" + QString(VolumeViewHelper::getVolumeType(volume).c_str()) + ")" + QString(QChar::LineSeparator)
                       + QString(path.c_str()) + QString(QChar::LineSeparator)
-                      + "Dimension: " + QString(VolumeViewHelper::getVolumeDimension(volume).c_str()));
+                      + "Dimension: " + QString(VolumeViewHelper::getVolumeDimension(handle).c_str()));
 
-        qtwi->setIcon(0, QIcon(VolumeViewHelper::generateBorderedPreview(volume, 63, 0)));
+        qtwi->setIcon(0, QIcon(VolumeViewHelper::generateBorderedPreview(handle, 63, 0)));
         qtwi->setSizeHint(0,QSize(65,65));
         qtwi->setToolTip(0, QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle)
-            + " ("+VolumeViewHelper::getVolumeType(volume)+")"+"\n"+VolumeViewHelper::getVolumePath(handle)
-            +"\nDimensions: " + VolumeViewHelper::getVolumeDimension(volume) + "\nVoxel Spacing: "
-            + VolumeViewHelper::getVolumeSpacing(volume) +"\nMemory Size: "
+            + " ("+VolumeViewHelper::getVolumeType(volume)+")"+"\n"+VolumeViewHelper::getVolumePath(handle) + VolumeViewHelper::getVolumeTimestep(handle)
+            + "\nDimensions: " + VolumeViewHelper::getVolumeDimension(handle) + "\nVoxel Spacing: "
+            + VolumeViewHelper::getVolumeSpacing(handle) +"\nMemory Size: "
             + VolumeViewHelper::getVolumeMemorySize(volume)));
 
         volumeInfos_->addTopLevelItem(qtwi);
@@ -297,29 +299,28 @@ void VolumeContainerWidget::keyPressEvent(QKeyEvent* keyEvent) {
     }
 }
 
-
-void VolumeContainerWidget::volumeAdded(const VolumeCollection* /*source*/, const VolumeHandle* handleConst) {
-    VolumeHandle* handle = const_cast<VolumeHandle*>(handleConst);
+void VolumeContainerWidget::volumeAdded(const VolumeCollection* /*source*/, const VolumeHandleBase* handleConst) {
+    VolumeHandleBase* handle = const_cast<VolumeHandleBase*>(handleConst);
     QTreeWidgetItem* qtwi = new QTreeWidgetItem(volumeInfos_);
     std::string name = VolumeViewHelper::getStrippedVolumeName(handle);
     std::string path = VolumeViewHelper::getVolumePath(handle);
-    volumeItems_[handle->getVolume()] = qtwi;
+    volumeItems_[handle->getRepresentation<Volume>()] = qtwi;
 
-    Volume* volume = handle->getVolume();
+    const Volume* volume = handle->getRepresentation<Volume>();
 
     QFontInfo fontInfo(qtwi->font(0));
 
     qtwi->setFont(0, QFont(fontInfo.family(), fontSize));
     qtwi->setText(0, QString(name.c_str()) + " (" + QString(VolumeViewHelper::getVolumeType(volume).c_str()) + ")" + QString(QChar::LineSeparator)
                       + QString(path.c_str()) + QString(QChar::LineSeparator)
-                      + "Dimension: " + QString(VolumeViewHelper::getVolumeDimension(volume).c_str()));
+                      + "Dimension: " + QString(VolumeViewHelper::getVolumeDimension(handleConst).c_str()));
 
-    qtwi->setIcon(0, QIcon(VolumeViewHelper::generateBorderedPreview(volume, 63, 0)));
+    qtwi->setIcon(0, QIcon(VolumeViewHelper::generateBorderedPreview(handleConst, 63, 0)));
     qtwi->setSizeHint(0,QSize(65,65));
     qtwi->setToolTip(0, QString::fromStdString(VolumeViewHelper::getStrippedVolumeName(handle)
         + " ("+VolumeViewHelper::getVolumeType(volume)+")"+"\n"+VolumeViewHelper::getVolumePath(handle)
-        +"\nDimensions: " + VolumeViewHelper::getVolumeDimension(volume) + "\nVoxel Spacing: "
-        + VolumeViewHelper::getVolumeSpacing(volume) +"\nMemory Size: "
+        +"\nDimensions: " + VolumeViewHelper::getVolumeDimension(handleConst) + "\nVoxel Spacing: "
+        + VolumeViewHelper::getVolumeSpacing(handleConst) +"\nMemory Size: "
         + VolumeViewHelper::getVolumeMemorySize(volume)));
 
     volumeInfos_->addTopLevelItem(qtwi);
@@ -327,11 +328,11 @@ void VolumeContainerWidget::volumeAdded(const VolumeCollection* /*source*/, cons
     containerInfo_->setText(QString::fromStdString(calculateSize()));
 }
 
-void VolumeContainerWidget::volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {
+void VolumeContainerWidget::volumeRemoved(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {
     update();
 }
 
-void VolumeContainerWidget::volumeChanged(const VolumeCollection* /*source*/, const VolumeHandle* /*handle*/) {
+void VolumeContainerWidget::volumeChanged(const VolumeCollection* /*source*/, const VolumeHandleBase* /*handle*/) {
     update();
 }
 
@@ -343,7 +344,8 @@ void VolumeContainerWidget::volumeRefresh(QTreeWidgetItem* /*item*/) {
     std::vector<VolumeHandle*> volumePointer;
     while(it != allItems.end())
     {
-        volumePointer.push_back(volumeContainer_->at(volumeInfos_->indexOfTopLevelItem(*it)));
+        VolumeHandle* vh = dynamic_cast<VolumeHandle*>(volumeContainer_->at(volumeInfos_->indexOfTopLevelItem(*it)));
+        volumePointer.push_back(vh);
         it++;
     }
     std::vector<VolumeHandle*>::iterator vit = volumePointer.begin();
@@ -355,52 +357,16 @@ void VolumeContainerWidget::volumeRefresh(QTreeWidgetItem* /*item*/) {
     QApplication::restoreOverrideCursor();
 }
 
-void VolumeContainerWidget::loadDicomFiles() {
-    volumeLoadButton_->loadDicomFiles();
-}
-
 void VolumeContainerWidget::loadVolume() {
-    volumeLoadButton_->loadVolume();
-}
-
-void VolumeContainerWidget::loadVolumeRawFilter() {
-    volumeLoadButton_->loadVolumeRawFilter();
+    volumeIOHelper_.showFileOpenDialog();
 }
 
 void VolumeContainerWidget::exportDat() {
     QList<QTreeWidgetItem *> allItems = volumeInfos_->selectedItems();
     QList<QTreeWidgetItem *>::iterator it = allItems.begin();
-    while(it != allItems.end())
-    {
-
-        QFileDialog saveAsDialog(0, "Export Volume ");
-        saveAsDialog.setFileMode(QFileDialog::AnyFile);
-        saveAsDialog.setNameFilter("dat+raw Volume Files (*.dat)");
-        saveAsDialog.setDefaultSuffix("dat");
-        saveAsDialog.setAcceptMode(QFileDialog::AcceptSave);
-        saveAsDialog.setConfirmOverwrite(true);
-        QStringList filename;
-        if(saveAsDialog.exec())
-            filename = saveAsDialog.selectedFiles();
-        if (!filename.empty()) {
-            QApplication::setOverrideCursor(Qt::WaitCursor);
-            qApp->processEvents();
-            DatVolumeWriter* dvw = new DatVolumeWriter();
-            try {
-                dvw->write(filename[0].toStdString(),
-                    volumeContainer_->at(volumeInfos_->indexOfTopLevelItem( (*it))));
-            }
-            catch(tgt::IOException e) {
-                QApplication::restoreOverrideCursor();
-                QMessageBox error;
-                error.setText(QString(e.what()));
-                error.exec();
-            }
-            delete dvw;
-            QApplication::restoreOverrideCursor();
-        }
-
-    it++;
+    while(it != allItems.end()) {
+        volumeIOHelper_.showFileSaveDialog(volumeContainer_->at(volumeInfos_->indexOfTopLevelItem( (*it))));
+        it++;
     }
 
 }

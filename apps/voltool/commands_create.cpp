@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -63,6 +63,8 @@ bool CommandGenerateMask::execute(const std::vector<std::string>& parameters) {
     LINFO("Generating mask dataset with dimensions: " << dimensions);
 
     VolumeUInt8* target = new VolumeUInt8(dimensions);
+    VolumeHandle* targetHandle = new VolumeHandle(target, vec3(1.0f), vec3(0.0f));
+    oldVolumePosition(targetHandle);
 
     for (int voxel_z=0; voxel_z<dimensions.z; voxel_z++) {
         for (int voxel_y=0; voxel_y<dimensions.y; voxel_y++) {
@@ -79,8 +81,8 @@ bool CommandGenerateMask::execute(const std::vector<std::string>& parameters) {
     if (target) {
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target);
-        delete target;
+        serializer->write(parameters.back(), targetHandle);
+        delete targetHandle;
         return true;
     }
     else
@@ -317,8 +319,10 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target2);
-        delete target2;
+        VolumeHandle h(target2, vec3(1.0f), vec3(0.0f));
+        oldVolumePosition(&h);
+        serializer->write(parameters.back(), &h);
+        //delete target2;
     }
     else if (operation == "blobs2") {
         delete target;
@@ -361,8 +365,10 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target2);
-        delete target2;
+        VolumeHandle h(target2, vec3(1.0f), vec3(0.0f));
+        oldVolumePosition(&h);
+        serializer->write(parameters.back(), &h);
+        //delete target2;
     }
     else if (operation == "blobs3") {
         delete target;
@@ -407,8 +413,9 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target2);
-        delete target2;
+        VolumeHandle h(target2, vec3(1.0f), vec3(0.0f));
+        serializer->write(parameters.back(), &h);
+        //delete target2;
     }
     else if (operation == "sphere") {
         delete target;
@@ -442,8 +449,9 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target2);
-        delete target2;
+        VolumeHandle h(target2, vec3(1.0f), vec3(0.0f));
+        serializer->write(parameters.back(), &h);
+        //delete target2;
     }
     else if (operation == "doublesphere") {
         //two spheres, NOT concentric
@@ -489,8 +497,9 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target2);
-        delete target2;
+        VolumeHandle h(target2, vec3(1.0f), vec3(0.0f));
+        serializer->write(parameters.back(), &h);
+        //delete target2;
     }
     else if (operation == "spherecoord") {
         //the same sphere but as 32bit DS with natural param.
@@ -541,8 +550,9 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target2);
-        delete target2;
+        VolumeHandle h(target2, vec3(1.0f), vec3(0.0f));
+        serializer->write(parameters.back(), &h);
+        //delete target2;
     }
      else if (operation == "synth") {
         vec3 center;
@@ -739,8 +749,8 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
             VolumeSerializerPopulator volLoadPop;
             const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
 
-            serializer->save(parameters.back() + "-pet.dat", petTarget);
-            delete petTarget;
+            VolumeHandle h(petTarget, vec3(1.0f), vec3(0.0f));
+            serializer->write(parameters.back() + "-pet.dat", &h);
         }
 
     }
@@ -748,8 +758,8 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
     if (target) {
         VolumeSerializerPopulator volLoadPop;
         const VolumeSerializer* serializer = volLoadPop.getVolumeSerializer();
-        serializer->save(parameters.back(), target);
-        delete target;
+        VolumeHandle h(target, vec3(1.0f), vec3(0.0f));
+        serializer->write(parameters.back(), &h);
     }
     return true;
 }
@@ -757,9 +767,9 @@ bool CommandCreate::execute(const std::vector<std::string>& parameters) {
 
 
 void CommandCreate::fillPlane(VolumeUInt8* vds, vec3 center, vec3 normal, uint8_t value) {
-    for (int voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
-        for (int voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
-            for (int voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
+    for (size_t voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
+        for (size_t voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
+            for (size_t voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
                 vec3 pos = static_cast<vec3>(ivec3(voxel_x, voxel_y, voxel_z));
                 vec3 diff = pos - center;
 
@@ -772,8 +782,8 @@ void CommandCreate::fillPlane(VolumeUInt8* vds, vec3 center, vec3 normal, uint8_
 }
 
 void CommandCreate::fillCircle(VolumeUInt8* vds, vec3 center, float radius, uint8_t value) {
-    for (int voxel_y = 0; voxel_y < vds->getDimensions().y; ++voxel_y) {
-        for (int voxel_x = 0; voxel_x < vds->getDimensions().x; ++voxel_x) {
+    for (size_t voxel_y = 0; voxel_y < vds->getDimensions().y; ++voxel_y) {
+        for (size_t voxel_x = 0; voxel_x < vds->getDimensions().x; ++voxel_x) {
             vec3 diff = center - vec3(static_cast<float>(voxel_x), static_cast<float>(voxel_y), center.z);
 
             if (length(diff) <= radius)
@@ -783,9 +793,9 @@ void CommandCreate::fillCircle(VolumeUInt8* vds, vec3 center, float radius, uint
 }
 
 void CommandCreate::fillOrientedCircle(VolumeUInt8* vds, vec3 center, vec3 normal, float radius, uint8_t value) {
-    for (int voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
-        for (int voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
-            for (int voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
+    for (size_t voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
+        for (size_t voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
+            for (size_t voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
                 vec3 pos = static_cast<vec3>(ivec3(voxel_x, voxel_y, voxel_z));
                 vec3 diff = pos - center;
 
@@ -799,9 +809,9 @@ void CommandCreate::fillOrientedCircle(VolumeUInt8* vds, vec3 center, vec3 norma
 }
 
 void CommandCreate::fillSphere(VolumeUInt8* vds, vec3 center, float radius, uint8_t value) {
-    for (int voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
-        for (int voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
-            for (int voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
+    for (size_t voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
+        for (size_t voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
+            for (size_t voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
                 vec3 diff = center - static_cast<vec3>(ivec3(voxel_x, voxel_y, voxel_z));
 
                 if (length(diff) < radius)
@@ -813,9 +823,9 @@ void CommandCreate::fillSphere(VolumeUInt8* vds, vec3 center, float radius, uint
 
 void CommandCreate::fillEllipsoid(VolumeUInt8* vds, vec3 center, vec3 radius, uint8_t value) {
     // ugly code - don't do this at home
-    for (int voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
-        for (int voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
-            for (int voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
+    for (size_t voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
+        for (size_t voxel_y=0; voxel_y<vds->getDimensions().y; voxel_y++) {
+            for (size_t voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
                 if ((((voxel_x-center.x)*(voxel_x-center.x))/((radius.x*radius.x))) +
                     (((voxel_y-center.y)*(voxel_y-center.y))/((radius.y*radius.y))) +
                     (((voxel_z-center.z)*(voxel_z-center.z))/((radius.z*radius.z))) <= 1)
@@ -844,8 +854,8 @@ void CommandCreate::fillOrientedBox(VolumeUInt8* vds, vec3 center, vec3 dir, flo
     dir = normalize(dir);
     center.y = 0.0f;
     vec3 dir2 = cross(dir, vec3(0.0f, 1.0f, 0.0f));
-    for (int voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
-       for (int voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
+    for (size_t voxel_z=0; voxel_z<vds->getDimensions().z; voxel_z++) {
+       for (size_t voxel_x=0; voxel_x<vds->getDimensions().x; voxel_x++) {
            vec3 diff = static_cast<vec3>(ivec3(voxel_x, 0, voxel_z)) - center;
            float l = dot(dir, diff);
            float l2 = dot(dir2, diff);

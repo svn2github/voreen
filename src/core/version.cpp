@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -72,19 +72,19 @@ const std::string VoreenVersion::getCompilerVersion() {
 }
 
 const std::string VoreenVersion::getVersion() {
-    return "2.6.1";
+    return "3.0";
 }
 
 const std::string VoreenVersion::getRevision() {
 #if defined(VRN_WITH_SVNVERSION)
     return VRN_SVN_REVISION;
 #else
-    return "snapshot-39";
+    return "snapshot-41";
 #endif
 }
 
 const std::string VoreenVersion::getCopyright() {
-    return "Copyright (C) 2005-2010 The Voreen Team.";
+    return "Created between 2005 and 2012 by The Voreen Team.";
 }
 
 void VoreenVersion::logAll(const std::string& loggerCat) {

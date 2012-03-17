@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -96,7 +96,7 @@ const QString TransFuncEditor::getSaveFileName(QStringList filters) {
         }
         else {
             // an ending was given -> test whether it matches the selected filter
-            if (fileList[0].mid(dotPosition) != endingFilter)
+            if (fileList[0].mid(static_cast<int>(dotPosition)) != endingFilter)
                 fileList[0].append(endingFilter);
         }
         return fileList[0];

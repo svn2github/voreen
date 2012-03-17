@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -36,7 +36,8 @@ namespace voreen {
 namespace glslparser {
 
 PreprocessorVisitor::PreprocessorVisitor()
-    : translation_(std::ios_base::out | std::ios_base::in)
+    : translation_(std::ios_base::out | std::ios_base::in),
+    symbols_("global")
 {
     // TODO: replace the value returned by this macro with the correct one when it is
     // expanded or invoked.

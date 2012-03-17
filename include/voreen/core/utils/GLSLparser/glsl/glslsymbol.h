@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -57,7 +57,8 @@ public:
     };
 
 public:
-    GLSLSymbol(const std::string& identifier, const InternalType type, const int elementCount);
+    GLSLSymbol(const std::string& identifier, const InternalType type, const int elementCount,
+        const bool isDeclared = true);
 
     virtual ~GLSLSymbol() = 0;
 
@@ -68,6 +69,8 @@ public:
     InternalType getInternalType() const { return internalType_; }
     int getNumInternalElements() const { return elementCount_; }
     PrecisionQualifier getPrecision() const { return precision_; }
+
+    bool isDeclared() const { return isDeclared_; }
 
     void setAnnotations(const std::vector<GLSLAnnotation*>& annotations) {
         annotations_ = annotations;
@@ -80,6 +83,7 @@ protected:
     PrecisionQualifier precision_;
     int elementCount_;  // indicates number of elements of internal type (3 for vec3, 4 for vec4, etc.)
     std::vector<GLSLAnnotation*> annotations_;
+    bool isDeclared_;
 };
 
 // ============================================================================
@@ -108,7 +112,7 @@ public:
 
 public:
     GLSLVariableSymbol(const std::string& identifier, const InternalType type,
-        const int elementCount);
+        const int elementCount, const bool isDeclared = true);
 
     InterpolationQualifier getInterpolationQualifier() const { return interpolation_; }
     int getNumArrayElements() const { return numArrayElements_; }

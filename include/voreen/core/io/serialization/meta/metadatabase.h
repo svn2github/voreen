@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,19 +29,25 @@
 #ifndef VRN_METADATABASE_H
 #define VRN_METADATABASE_H
 
-#include "voreen/core/io/serialization/serializable.h"
-#include "voreen/core/io/serialization/serializablefactory.h"
+#include "voreen/core/io/serialization/abstractserializable.h"
 
 namespace voreen {
 
 /**
- * The @c MetaDataBase class is used to associate data from outside the core with core data
- * for serialization and deserialization.
+ * Marker interface for meta data classes that are is used to associate data
+ * from outside the core with core data for serialization and deserialization.
  *
- * @see AbstractSerializable
- * @see SerializableFactory
+ * @note When adding a custom meta data type in a module, you also have to provide
+ *       a corresponding SerializableFactory that instantiates the custom type.
+ *
+ * @see VoreenModule::addSerializerFactory, MetaDataFactory
  */
-class MetaDataBase : public AbstractSerializable, public SerializableFactory {
+class VRN_CORE_API MetaDataBase : public AbstractSerializable {
+public:
+    virtual std::string getClassName() const = 0;
+    virtual Serializable* create() const = 0;
+    virtual MetaDataBase* clone() const = 0;
+    virtual std::string toString() const = 0;
 };
 
 } // namespace

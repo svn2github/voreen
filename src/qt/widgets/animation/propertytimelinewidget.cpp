@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,6 @@
 #include "voreen/qt/widgets/animation/animationeditor.h"
 #include "voreen/qt/widgets/animation/animationexportwidget.h"
 #include "voreen/qt/widgets/property/qpropertywidget.h"
-#include "voreen/qt/widgets/property/qpropertywidgetfactory.h"
 #include "voreen/qt/widgets/animation/currentframegraphicsitem.h"
 #include "voreen/qt/widgets/animation/keyframegraphicsitem.h"
 #include "voreen/qt/widgets/animation/propertytimelinewidget.h"

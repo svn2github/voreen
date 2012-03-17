@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -44,7 +44,7 @@ class LinkDialogGraphicsView : public QGraphicsView {
 Q_OBJECT
 public:
     /**
-     * Constructor which sets certain default values:</br>
+     * Constructor which sets certain default values:
      * <ul>
      * <li>Minimum Size: 640, 480</li>
      * <li>Maximum Height: 480</li>

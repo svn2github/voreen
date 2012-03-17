@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -101,6 +101,34 @@ bool TextFileReader::getNextLine(string& type, istringstream& args, bool toLower
     args.clear();
     args.rdbuf()->str(s);
     return r;
+}
+
+bool TextFileReader::getNextLinePlain(std::string& line, bool toLowercase) {
+    if (file_->eof())
+        return false;
+
+    getline(*file_, line);
+    if (toLowercase)
+        transform(line.begin(), line.end(), line.begin(), (int (*)(int))tolower);
+    return true;
+}
+
+bool TextFileReader::getNextLinePlain(std::istringstream& line, bool toLowercase) {
+    string s;
+    bool r = getNextLinePlain(s, toLowercase);
+    line.clear();
+    line.rdbuf()->str(s);
+    return r;
+}
+
+bool TextFileReader::getVec3(std::istringstream& args, tgt::vec3& out) {
+    args.ignore(1024, '('); // 1024 here is somewhat random - hopefully enough
+    args >> out.x;
+    args.ignore(1024, ',');
+    args >> out.y;
+    args.ignore(1024, ',');
+    args >> out.z;
+    return args.good();
 }
 
 bool TextFileReader::operator!() {

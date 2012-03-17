@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,7 @@
 #include "voreen/core/interaction/interactionhandlerfactory.h"
 
 #include "voreen/core/interaction/interactionhandler.h"
+#include "voreen/core/interaction/booltoggleinteractionhandler.h"
 #include "voreen/core/interaction/camerainteractionhandler.h"
 #include "voreen/core/interaction/mwheelnumpropinteractionhandler.h"
 
@@ -49,6 +50,8 @@ InteractionHandlerFactory* InteractionHandlerFactory::getInstance() {
 const std::string InteractionHandlerFactory::getTypeString(const std::type_info& type) const {
     if (type == typeid(CameraInteractionHandler))
         return "CameraInteractionHandler";
+    else if (type == typeid(BoolToggleInteractionHandler))
+        return "BoolToggleInteractionHandler";
     else if (type == typeid(MWheelNumPropInteractionHandler<int>))
         return "MWheelNumPropInteractionHandler.Integer";
     else if (type == typeid(MWheelNumPropInteractionHandler<float>))
@@ -62,11 +65,13 @@ const std::string InteractionHandlerFactory::getTypeString(const std::type_info&
 Serializable* InteractionHandlerFactory::createType(const std::string& typeString) {
     if (typeString == "CameraInteractionHandler")
         return new CameraInteractionHandler();
+    else if (typeString == "BoolToggleInteractionHandler")
+        return new BoolToggleInteractionHandler();
     else if (typeString == "MWheelNumPropInteractionHandler.Integer")
         return new MWheelNumPropInteractionHandler<int>();
     else if (typeString == "MWheelNumPropInteractionHandler.Float")
         return new MWheelNumPropInteractionHandler<float>();
-    else if (typeString == "MWheelNumPropInteractionHandler.Float")
+    else if (typeString == "MWheelNumPropInteractionHandler.Double")
         return new MWheelNumPropInteractionHandler<double>();
     else
         return 0;

@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,11 +25,12 @@
 #ifndef TGT_INIT_H
 #define TGT_INIT_H
 
-#include "tgt/config.h"
+#include "tgt/types.h"
+#include "tgt/logmanager.h"
 
 namespace tgt {
 
-class InitFeature {
+class TGT_API InitFeature {
 public:
     enum Features {
         NONE            =      0,
@@ -38,29 +39,28 @@ public:
         GPU_PROPERTIES  = 1 << 2,
         SCRIPT_MANAGER  = 1 << 3,
         SHADER_MANAGER  = 1 << 4,
-        MODEL_MANAGER   = 1 << 5,
         TEXTURE_MANAGER = 1 << 6,
         TESSELATOR      = 1 << 7,
         LOG_TO_CONSOLE  = 1 << 30,
         ALL             = ( 
                             LOG_MANAGER | FILE_SYSTEM | GPU_PROPERTIES | 
                             SCRIPT_MANAGER | SHADER_MANAGER |
-                            MODEL_MANAGER | TEXTURE_MANAGER | TESSELATOR |
+                            TEXTURE_MANAGER | TESSELATOR |
                             LOG_TO_CONSOLE
                             )        
     };
 };
 
 /// init general purpose singletons of tgt
-void init(InitFeature::Features featureset = InitFeature::ALL);
+TGT_API void init(InitFeature::Features featureset = InitFeature::ALL, LogLevel logLevel = Info);
 /// init GLEW and OpenGL-dependent singletons of tgt.
 /// to be called when OpenGL context already exists.
-void initGL(InitFeature::Features featureset = InitFeature::ALL);
+TGT_API void initGL(InitFeature::Features featureset = InitFeature::ALL);
 
 /// deinit the singletons of tgt
-void deinit();
+TGT_API void deinit();
 /// deinit the singletons of tgt
-void deinitGL();
+TGT_API void deinitGL();
 
 };
 

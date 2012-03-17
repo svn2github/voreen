@@ -2,7 +2,7 @@
  *                                                                    *
  * tgt - Tiny Graphics Toolbox                                        *
  *                                                                    *
- * Copyright (C) 2006-2008 Visualization and Computer Graphics Group, *
+ * Copyright (C) 2006-2011 Visualization and Computer Graphics Group, *
  * Department of Computer Science, University of Muenster, Germany.   *
  * <http://viscg.uni-muenster.de>                                     *
  *                                                                    *
@@ -25,7 +25,6 @@
 #ifndef TGT_TEXTUREREADER_H
 #define TGT_TEXTUREREADER_H
 
-#include "tgt/config.h"
 #include "tgt/texture.h"
 
 #include <vector>
@@ -75,10 +74,6 @@ protected:
      *   Find nearest (larger) power-of-2 value
      */
     GLsizei checkSize(GLsizei s);
-    /**
-     *   If necessary scale texture to power of 2
-     */
-    bool rescaleTexture(Texture* t, Texture::Filter filter);
 };
 
 } // namespace tgt

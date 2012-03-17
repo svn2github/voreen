@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,24 +29,64 @@
 #ifndef VRN_GEOMETRY_H
 #define VRN_GEOMETRY_H
 
+#include "voreen/core/io/serialization/abstractserializable.h"
+
+#include "tgt/vector.h"
+#include "tgt/matrix.h"
+
+#include <string>
+#include <vector>
+#include <limits>
+
 namespace voreen {
 
-class Geometry {
+class VolumeHandle;
 
-    public:
-        Geometry() : changed_(true) {}
-        virtual ~Geometry() {}
+/**
+ * Abstract base class for Geometry objects that
+ * can be passed through GeometryPorts.
+ *
+ * @note In order to enable serialization (necessary for caching),
+ *  a factory has to be provided for each concrete subtype.
+ *
+ * @see GeometryFactory
+ * @see VoreenModule::addSerializerFactory
+ */
+class VRN_CORE_API Geometry : public AbstractSerializable {
+public:
+    Geometry();
+    virtual ~Geometry() {}
 
-        virtual void render() = 0;
+    virtual void render() const = 0;
 
-        bool hasChanged() const { return changed_; }
-        void setHasChanged(bool changed) { changed_ = changed; }
+    bool hasChanged() const;
+    void setHasChanged(bool changed);
 
-    protected:
-        /**
-         * Indicates whether the geometry has changed
-         */
-        bool changed_;
+    /**
+     * Dummy implementation of the AbstractSerializable interface.
+     * Supposed to be overridden by each concrete subclass.
+     */
+    virtual void serialize(XmlSerializer& s) const;
+
+    /**
+     * Dummy implementation of the AbstractSerializable interface.
+     * Supposed to be overridden by each concrete subclass.
+     */
+    virtual void deserialize(XmlDeserializer& s);
+
+    /**
+     * Returns a hash of the geometry object,
+     * which is used for the caching mechanism.
+     *
+     * The default implementation computes an MD5 hash
+     * of the serialized XML string. Subclasses may
+     * override this method, but are not required to do so.
+     */
+    virtual std::string getHash() const;
+
+protected:
+    /// indicates whether the geometry has changed.
+    bool changed_;
 };
 
 } // namespace

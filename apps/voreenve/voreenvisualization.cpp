@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,7 +29,6 @@
 #include "voreenvisualization.h"
 
 #include "tgt/gpucapabilities.h"
-#include "tgt/ziparchive.h"
 
 #include "voreen/core/network/workspace.h"
 #include "voreen/core/network/networkevaluator.h"
@@ -39,11 +38,17 @@
 #include "voreen/qt/voreenapplicationqt.h"
 
 #include "voreen/qt/widgets/volumecontainerwidget.h"
-#include "voreen/qt/widgets/processor/qprocessorwidgetfactory.h"
+#include "voreen/qt/widgets/performancerecordwidget.h"
+#include "voreen/core/processors/processorfactory.h"
 #include "voreen/qt/widgets/processorlistwidget.h"
 #include "voreen/qt/widgets/propertylistwidget.h"
-#include "networkeditor/networkeditor.h"
+#include "voreen/qt/widgets/rendertargetviewer.h"
 #include "voreen/qt/widgets/inputmappingdialog.h"
+#include "networkeditor/networkeditor.h"
+
+#ifdef VRN_MODULE_ZIP
+#include "modules/zip/io/ziparchive.h"
+#endif
 
 #include <QString>
 
@@ -57,16 +62,15 @@ VoreenVisualization::VoreenVisualization(tgt::GLCanvas* sharedContext)
     , workspace_(new Workspace(sharedContext))
     , sharedContext_(sharedContext)
     , networkEditorWidget_(0)
+    , performanceRecordWidget_(0)
     , propertyListWidget_(0)
     , processorListWidget_(0)
+    , renderTargetViewer_(0)
+    , volumeContainerWidget_(0)
     , inputMappingDialog_(0)
     , readOnlyWorkspace_(false)
     , modified_(false)
 {
-    // create Qt-specific factory for processor widgets (used by Processor::initialize)
-    VoreenApplication::app()->setProcessorWidgetFactory(
-        new QProcessorWidgetFactory(VoreenApplicationQt::qtApp()->getMainWindow(), evaluator_));
-
     // assign network evaluator to application
     VoreenApplication::app()->setNetworkEvaluator(evaluator_);
 }
@@ -87,12 +91,35 @@ void VoreenVisualization::createConnections() {
         if (processorListWidget_)  {
             connect(networkEditorWidget_, SIGNAL(processorsSelected(const QList<Processor*>&)),
                     processorListWidget_, SLOT(processorsSelected(const QList<Processor*>&)));
-            connect(networkEditorWidget_, SIGNAL(processorsSelected(const QList<Processor*>&)),
+        }
+        else {
+            LWARNINGC("VoreenVisualization", "init(): ProcessorListWidget not assigned");
+        }
+
+        if (propertyListWidget_) {
+            connect(networkEditorWidget_, SIGNAL(processorsSelected(const QList<Processor*>&)), 
                     propertyListWidget_, SLOT(processorsSelected(const QList<Processor*>&)));
             connect(propertyListWidget_, SIGNAL(modified()), this, SLOT(setModified()));
         }
-        else
+        else {
             LWARNINGC("VoreenVisualization", "init(): PropertyListWidget not assigned");
+        }
+        
+        if (renderTargetViewer_) {
+            connect(networkEditorWidget_, SIGNAL(processorsSelected(const QList<Processor*>&)),
+                renderTargetViewer_, SLOT(processorsSelected(const QList<Processor*>&)));
+        }
+        else {
+            LWARNINGC("VoreenVisualization", "init(): RenderTargetViewer not assigned");
+        }
+
+        if (performanceRecordWidget_) {
+            connect(networkEditorWidget_, SIGNAL(processorsSelected(const QList<Processor*>&)),
+                performanceRecordWidget_, SLOT(processorsSelected(const QList<Processor*>&)));
+        }
+        else {
+            LWARNINGC("VoreenVisualization", "init(): PerformanceRecordWidget not assigned");
+        }
     }
     else {
         LWARNINGC("VoreenVisualization", "init(): Network editor not assigned");
@@ -101,6 +128,14 @@ void VoreenVisualization::createConnections() {
 
 void VoreenVisualization::setNetworkEditorWidget(NetworkEditor* networkEditorWidget) {
     networkEditorWidget_ = networkEditorWidget;
+}
+
+void VoreenVisualization::setPerformanceRecordWidget(PerformanceRecordWidget* performanceRecordWidget) {
+    performanceRecordWidget_ = performanceRecordWidget;
+}
+
+void VoreenVisualization::setRenderTargetViewer(RenderTargetViewer* renderTargetViewer) {
+    renderTargetViewer_ = renderTargetViewer;
 }
 
 void VoreenVisualization::setPropertyListWidget(PropertyListWidget* propertyListWidget) {
@@ -142,10 +177,14 @@ void VoreenVisualization::exportWorkspaceToZipArchive(const QString& filename, b
     throw (SerializationException)
 {
     LINFO("Exporting workspace " << filename.toStdString() << " to archive " << filename.toStdString());
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    qApp->processEvents();
     workspace_->exportToZipArchive(filename.toStdString(), overwrite);
+    qApp->restoreOverrideCursor();
+    qApp->processEvents();
 }
 
-#ifdef VRN_WITH_ZLIB
+#ifdef VRN_MODULE_ZIP
 QString VoreenVisualization::extractWorkspaceArchive(const QString& archiveName, const QString& path,
                                                      bool overwrite)
     throw (SerializationException)
@@ -154,7 +193,7 @@ QString VoreenVisualization::extractWorkspaceArchive(const QString& archiveName,
     LINFO("Extracting workspace archive " << archiveName.toStdString() << " to " << path.toStdString());
 
     // Open archive and detect contained files
-    tgt::ZipArchive zip(archiveName.toStdString());
+    ZipArchive zip(archiveName.toStdString());
     if (!zip.archiveExists()) {
         LERROR("Archive does not exist: " << archiveName.toStdString());
         throw SerializationException("Archive does not exist:\n" + archiveName.toStdString());
@@ -187,7 +226,7 @@ QString VoreenVisualization::extractWorkspaceArchive(const QString& archiveName,
         progressDialog->setMessage("Extracting '" + *it + "' ...");
         progressDialog->setProgress((float)numFiles / (archiveFiles.size() - 1));
         qApp->processEvents();
-        tgt::File* xFile = zip.extractFile(*it, tgt::ZipArchive::TARGET_DISK, "", true, overwrite);
+        tgt::File* xFile = zip.extractFile(*it, ZipArchive::TARGET_DISK, "", true, overwrite);
         if (xFile) {
             xFile->close();
             delete xFile;
@@ -257,13 +296,13 @@ void VoreenVisualization::newWorkspace() {
     // propagate resources
     propagateVolumeContainer(workspace_->getVolumeContainer());
     propagateNetwork(workspace_->getProcessorNetwork());
+    if (workspace_->hasDescription())
+    propagateWorkspaceDescription(workspace_->getDescription());
 }
 
 void VoreenVisualization::openWorkspace(const QString& filename) throw (SerializationException) {
 
     LINFO("Loading workspace " << tgt::FileSystem::absolutePath(filename.toStdString()));
-    if (!VoreenApplication::app()->getProcessorWidgetFactory())
-        LWARNING("No ProcessorWidgetFactory assigned to VoreenApplication: No ProcessorWidgets are generated!");
 
     blockSignals(true);
 
@@ -288,6 +327,7 @@ void VoreenVisualization::openWorkspace(const QString& filename) throw (Serializ
 
     propagateVolumeContainer(workspace_->getVolumeContainer());
     propagateNetwork(workspace_->getProcessorNetwork());
+    propagateWorkspaceDescription(workspace_->getDescription());
 }
 
 void VoreenVisualization::saveWorkspace(const QString& filename, bool overwrite) throw (SerializationException) {
@@ -391,6 +431,11 @@ void VoreenVisualization::propagateVolumeContainer(VolumeContainer* container) {
         propertyListWidget_->setVolumeContainer(container);
 }
 
+void VoreenVisualization::propagateWorkspaceDescription(const std::string& description) {
+    if (!description.empty())
+        LINFO(description);
+}
+
 std::vector<std::string> VoreenVisualization::getNetworkErrors() {
     if (workspace_->getProcessorNetwork())
         return workspace_->getProcessorNetwork()->getErrors();
@@ -432,6 +477,7 @@ std::vector<std::string> VoreenVisualization::getWorkspaceErrors() {
 
 void VoreenVisualization::setProcessorListWidget(ProcessorListWidget* processorListWidget) {
     processorListWidget_ = processorListWidget;
+    //connect(processorListWidget_, SIGNAL(selectedProcessorForAdding(const QString&)), this, SLOT(addProcessorToNetwork(const QString&)));
 }
 
 NetworkEvaluator* VoreenVisualization::getEvaluator() const {
@@ -456,6 +502,13 @@ void VoreenVisualization::setModified(bool isModified) {
         if (isModified)
             emit modified();
     }
+}
+
+void VoreenVisualization::addProcessorToNetwork(const QString& processorName) {
+    Processor* proc = ProcessorFactory::getInstance()->create(processorName.toStdString());
+    tgtAssert(proc, "processor creation failed");
+
+    workspace_->getProcessorNetwork()->addProcessor(proc);
 }
 
 } // namespace

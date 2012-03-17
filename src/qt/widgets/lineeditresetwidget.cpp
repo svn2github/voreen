@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -28,35 +28,33 @@
 
 #include "voreen/qt/widgets/lineeditresetwidget.h"
 
-#include <QWidget>
-#include <QToolButton>
-#include <QLineEdit>
 #include <QStyle>
+#include <QToolButton>
 
 namespace voreen {
 
 LineEditResetWidget::LineEditResetWidget(QWidget* parent)
     : QLineEdit(parent)
 {
-    clearButton=new QToolButton(this);
+    clearButton_ = new QToolButton(this);
     QPixmap pixmap(":/voreenve/icons/input-reset.png");
-    clearButton->setIcon(QIcon(pixmap));
-    clearButton->setStyleSheet("QToolButton { border: none; padding: 1px; }");
-    clearButton->setCursor(Qt::ArrowCursor);
-    clearButton->hide();
-    clearButton->move(20,0);
-    connect(clearButton, SIGNAL(clicked()), this, SLOT(clear()));
-    connect(this,SIGNAL(textChanged(const QString&)),this,SLOT(updateClearButton(const QString&)));
+    clearButton_->setIcon(QIcon(pixmap));
+    clearButton_->setStyleSheet("QToolButton { border: none; padding: 3px; }");
+    clearButton_->setCursor(Qt::ArrowCursor);
+    clearButton_->hide();
+    clearButton_->move(20,0);
+    connect(clearButton_, SIGNAL(clicked()), this, SLOT(clear()));
+    connect(this, SIGNAL(textChanged(const QString&)), this, SLOT(updateClearButton(const QString&)));
 }
 
 void LineEditResetWidget::resizeEvent(QResizeEvent*){
-    QSize size = clearButton->sizeHint();
+    QSize size = clearButton_->sizeHint();
     int frameWidth = style()->pixelMetric(QStyle::PM_DefaultFrameWidth);
-    clearButton->move(rect().right()- frameWidth - size.width(), (rect().bottom() + 1 - size.height())/2);
+    clearButton_->move(rect().right()- frameWidth - size.width(), (rect().bottom() + 1 - size.height())/2);
 }
 
 void LineEditResetWidget::updateClearButton(const QString &text){
-    clearButton->setVisible(!text.isEmpty());
+    clearButton_->setVisible(!text.isEmpty());
 }
 
 } //namespace voreen

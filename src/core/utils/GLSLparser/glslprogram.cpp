@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -100,8 +100,14 @@ bool GLSLProgram::parse() {
         res = true;
         GLSLVisitor glsl;
         glsl.visitAll(root);
+
         uniformDecls_ = glsl.getUniforms(false);
         outDecls_ = glsl.getOuts(false);
+        referencedGlFragData_ = glsl.getReferencedGlFragData();
+
+        if (glsl.getNumWarnings() > 0)
+            std::cout << glsl.getLog().str() << std::endl;
+
     } else
         LINFO(glslParser.getLog().str());
     delete root;

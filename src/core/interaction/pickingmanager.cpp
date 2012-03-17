@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -113,7 +113,7 @@ bool PickingManager::onMouseEvent(tgt::MouseEvent* mouseEve, tgt::Camera* sceneC
 
     bool changes = false;
 
-    void* pickedOne = idManager_->getObjectAtPos(position);
+    const void* pickedOne = idManager_->getObjectAtPos(position);
 
     switch (mouseEve->action()){
         case tgt::MouseEvent::MOTION:
@@ -155,7 +155,7 @@ bool PickingManager::onMouseEvent(tgt::MouseEvent* mouseEve, tgt::Camera* sceneC
              pickedOne = idManager_->getObjectAtPos(position);
 
              if (pickedOne != 0){
-                 PickableObject* pickedObject = reinterpret_cast<PickableObject*>(pickedOne);
+                 PickableObject* pickedObject = const_cast<PickableObject*>(reinterpret_cast<const PickableObject*>(pickedOne));
 
                  pickedObject->mousePress(mouseEve, sceneCamera);
                  changes = mouseEve->isAccepted();
@@ -192,15 +192,15 @@ void PickableObject::mousePress(tgt::MouseEvent* mouseEve, tgt::Camera*  sceneCa
 
     newScreenPosition_ = tgt::ivec2(mouseEve->x(), mouseEve->viewport().y - mouseEve->y());
 
-    GLint deltaX, deltaY;
+    //GLint deltaX, deltaY;
 
     GLint viewport[4];
     GLdouble modelview[16];
     GLdouble projection[16];
     GLdouble posX, posY, posZ;
 
-    deltaX = newScreenPosition_.x - oldScreenPosition_.x;
-    deltaY = newScreenPosition_.y - oldScreenPosition_.y;
+    //deltaX = newScreenPosition_.x - oldScreenPosition_.x;
+    //deltaY = newScreenPosition_.y - oldScreenPosition_.y;
 
     tgt::mat4 projection_tgt = sceneCamera->getProjectionMatrix();
     tgt::mat4 modelview_tgt = sceneCamera->getViewMatrix();

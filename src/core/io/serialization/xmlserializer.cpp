@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -27,7 +27,8 @@
  **********************************************************************/
 
 #include "voreen/core/io/serialization/xmlserializer.h"
-#include "voreen/core/plotting/plotselection.h"
+#include "voreen/core/voreenapplication.h"
+#include "voreen/core/voreenmodule.h"
 
 namespace voreen {
 
@@ -51,13 +52,22 @@ XmlSerializer::XmlSerializer(std::string documentPath)
         XmlSerializationConstants::VERSION);
     document_.LinkEndChild(root);
 
+    // retrieve serialization factories from modules
+    if (VoreenApplication::app()) {
+        const std::vector<VoreenModule*>& modules = VoreenApplication::app()->getModules();
+        for (size_t i=0; i<modules.size(); i++)
+            registerFactories(modules.at(i)->getSerializerFactories());
+    }
+    else {
+        LWARNING("Unable to retrieve factories from modules: VoreenApplication not instantiated");
+    }
+
     node_ = root;
 }
 
 XmlSerializer::~XmlSerializer() {
     for (UnresolvedReferencesType::iterator it = unresolvedReferences_.begin();
-        it != unresolvedReferences_.end(); ++it)
-    {
+        it != unresolvedReferences_.end(); ++it) {
         delete it->referenceContentSerializer;
     }
 }
@@ -238,37 +248,25 @@ void XmlSerializer::serialize(const std::string& key, const unsigned char& data)
     serializeSimpleTypes(key, data);
 }
 
-void XmlSerializer::serialize(const std::string& key, const signed short& data)
+void XmlSerializer::serialize(const std::string& key, const short& data)
     throw (SerializationException)
 {
     serializeSimpleTypes(key, data);
 }
 
-void XmlSerializer::serialize(const std::string& key, const unsigned short& data)
+void XmlSerializer::serialize(const std::string& key, const int& data)
     throw (SerializationException)
 {
     serializeSimpleTypes(key, data);
 }
 
-void XmlSerializer::serialize(const std::string& key, const signed int& data)
+void XmlSerializer::serialize(const std::string& key, const long& data)
     throw (SerializationException)
 {
     serializeSimpleTypes(key, data);
 }
 
-void XmlSerializer::serialize(const std::string& key, const unsigned int& data)
-    throw (SerializationException)
-{
-    serializeSimpleTypes(key, data);
-}
-
-void XmlSerializer::serialize(const std::string& key, const signed long& data)
-    throw (SerializationException)
-{
-    serializeSimpleTypes(key, data);
-}
-
-void XmlSerializer::serialize(const std::string& key, const unsigned long& data)
+void XmlSerializer::serialize(const std::string& key, const size_t& data)
     throw (SerializationException)
 {
     serializeSimpleTypes(key, data);
@@ -410,40 +408,6 @@ void XmlSerializer::serialize(const std::string& key, const tgt::Matrix4d& data)
     serializeTgtVector(key+".row1", data[1]);
     serializeTgtVector(key+".row2", data[2]);
     serializeTgtVector(key+".row3", data[3]);
-}
-
-void XmlSerializer::serialize(const std::string& key, const PlotCellValue& data)
-    throw (SerializationException)
-{
-    // first create new node for this cell
-    TiXmlNode* newNode = new TiXmlElement(key);
-    node_->LinkEndChild(newNode);
-    TemporaryNodeChanger nodeChanger(*this, newNode);
-
-    // then add subnodes withs cell flags and values
-    serializeSimpleTypes("isValue", data.isValue());
-    serializeSimpleTypes("isTag", data.isTag());
-    serializeSimpleTypes("isHighlighted", data.isHighlighted());
-
-    if (data.isTag())
-        serializeSimpleTypes("tag", data.getTag());
-    if (data.isValue())
-        serializeSimpleTypes("value", data.getValue());
-}
-
-void XmlSerializer::serialize(const std::string& key, const PlotSelectionEntry& data)
-    throw (SerializationException)
-{
-    // first create new node for this cell
-    TiXmlNode* newNode = new TiXmlElement(key);
-    node_->LinkEndChild(newNode);
-    TemporaryNodeChanger nodeChanger(*this, newNode);
-
-    // then add subnodes withs cell flags and values
-    serialize("selection", data.selection_);
-    serializeSimpleTypes("highlight", data.highlight_);
-    serializeSimpleTypes("renderLabel", data.renderLabel_);
-    serializeSimpleTypes("zoomTo", data.zoomTo_);
 }
 
 void XmlSerializer::serialize(const std::string& key, const Serializable& data)

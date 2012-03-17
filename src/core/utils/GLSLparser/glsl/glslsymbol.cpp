@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -32,11 +32,13 @@ namespace voreen {
 
 namespace glslparser {
 
-GLSLSymbol::GLSLSymbol(const std::string& identifier, const InternalType type, const int elementCount)
+GLSLSymbol::GLSLSymbol(const std::string& identifier, const InternalType type, const int elementCount,
+                       const bool isDeclared)
     : Symbol(identifier),
     internalType_(type),
     precision_(PRECQ_NONE),
-    elementCount_(elementCount)
+    elementCount_(elementCount),
+    isDeclared_(isDeclared)
 {
 }
 
@@ -62,8 +64,8 @@ const GLSLAnnotation* GLSLSymbol::getAnnotation(std::string name) const {
 // ============================================================================
 
 GLSLVariableSymbol::GLSLVariableSymbol(const std::string& identifier, const InternalType type,
-        const int elementCount)
-        : GLSLSymbol(identifier, type, elementCount),
+        const int elementCount, const bool isDeclared)
+        : GLSLSymbol(identifier, type, elementCount, isDeclared),
         storage_(SQ_NONE),
         interpolation_(IQ_NONE),
         hasInvariantQualifier_(false),

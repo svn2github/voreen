@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -33,8 +33,6 @@
 #include "voreen/core/io/volumeserializerpopulator.h"
 #include "voreen/core/io/volumeserializer.h"
 
-#include "voreen/core/properties/propertywidgetfactory.h"
-
 namespace voreen {
 
 VolumeHandleProperty::VolumeHandleProperty(const std::string& id, const std::string& guiText,
@@ -43,7 +41,15 @@ VolumeHandleProperty::VolumeHandleProperty(const std::string& id, const std::str
     , handleOwner_(false)
 {}
 
-void VolumeHandleProperty::deinitialize() throw (VoreenException) {
+VolumeHandleProperty::VolumeHandleProperty() 
+    : TemplateProperty<VolumeHandle*>("", "", 0, Processor::INVALID_RESULT)
+{}
+
+Property* VolumeHandleProperty::create() const {
+    return new VolumeHandleProperty();
+}
+
+void VolumeHandleProperty::deinitialize() throw (tgt::Exception) {
     if (handleOwner_) {
         delete value_;
         handleOwner_ = false;
@@ -51,11 +57,23 @@ void VolumeHandleProperty::deinitialize() throw (VoreenException) {
     value_ = 0;
 }
 
+Variant VolumeHandleProperty::getVariant(bool) const {
+    return Variant(get());
+}
+
+void VolumeHandleProperty::setVariant(const Variant& val, bool) {
+    set(val.getVolumeHandle());
+}
+
+int VolumeHandleProperty::getVariantType() const {
+    return Variant::VariantTypeVolumeHandle;
+}
+
 void VolumeHandleProperty::set(VolumeHandle* handle) {
 
     if (get() != handle) {
 
-        VolumeHandle* prevHandle = get();
+        VolumeHandleBase* prevHandle = get();
         std::string errorMsg;
         validate(handle, errorMsg, false);
 
@@ -86,14 +104,14 @@ void VolumeHandleProperty::set(VolumeHandle* handle) {
 void VolumeHandleProperty::loadVolume(const std::string& filename) throw (tgt::FileException, std::bad_alloc){
 
     VolumeSerializerPopulator serializerPopulator;
-    VolumeCollection* volumeCollection = serializerPopulator.getVolumeSerializer()->load(filename);
+    VolumeCollection* volumeCollection = serializerPopulator.getVolumeSerializer()->read(filename);
 
     if (volumeCollection && !volumeCollection->empty()) {
 
-        VolumeHandle* handle = volumeCollection->first();
+        VolumeHandleBase* handle = volumeCollection->first();
         tgtAssert(handle, "No handle");
 
-        set(handle);
+        set(static_cast<VolumeHandle*>(handle));
 
         // property does take ownership of loaded handles
         handleOwner_ = true;
@@ -102,15 +120,14 @@ void VolumeHandleProperty::loadVolume(const std::string& filename) throw (tgt::F
     delete volumeCollection;
 }
 
-PropertyWidget* VolumeHandleProperty::createWidget(PropertyWidgetFactory* f)     {
-    return f->createWidget(this);
-}
-
 void VolumeHandleProperty::serialize(XmlSerializer& s) const {
     Property::serialize(s);
 
-    if (value_)
-        s.serialize("value", value_);
+    if (value_) {
+        VolumeHandle* vh = dynamic_cast<VolumeHandle*>(value_);
+        if(vh)
+            s.serialize("value", vh);
+    }
 }
 
 void VolumeHandleProperty::deserialize(XmlDeserializer& s) {
@@ -121,12 +138,12 @@ void VolumeHandleProperty::deserialize(XmlDeserializer& s) {
         try {
             s.deserialize("value", handle);
         }
-        catch (XmlSerializationNoSuchDataException&) {
-            if (s.getErrors().back().find("'value'") != std::string::npos)
-                s.removeLastError();
+        catch (...) {
+            s.removeLastError();
+            handle = 0;
         }
 
-        if (handle && handle->getVolume())
+        if (handle && (handle->getNumRepresentations() > 0))
             set(handle);
         else {
             delete handle;
@@ -136,10 +153,6 @@ void VolumeHandleProperty::deserialize(XmlDeserializer& s) {
     catch (SerializationException&) {
         set(0);
     }
-}
-
-std::string VolumeHandleProperty::getTypeString() const {
-    return "VolumeHandle";
 }
 
 } // namespace voreen

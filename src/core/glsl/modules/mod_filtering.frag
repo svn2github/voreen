@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -73,24 +73,24 @@ vec4 mean(in SAMPLER2D_TYPE texture, in TEXTURE_PARAMETERS texParams, in vec2 fr
     return result;
 }
 
-vec4 dilation(in SAMPLER2D_TYPE texture, in TEXTURE_PARAMETERS texParams, in vec2 fragCoord) {
-    vec4 result = vec4(0.0);
-    for (int x=-1; x<=1; x++)
-        for (int y=-1; y<=1; y++) {
+vec4 erosion(in SAMPLER2D_TYPE texture, in TEXTURE_PARAMETERS texParams, in vec2 fragCoord, in int kernelRadius) {
+    vec4 result = vec4(1.0);
+    for (int x=-kernelRadius; x<=kernelRadius; x++)
+        for (int y=-kernelRadius; y<=kernelRadius; y++) {
             vec4 curValue = textureLookup2Dscreen(texture, texParams,
                                                   vec2(fragCoord.x+float(x), fragCoord.y+float(y)));
-            result = max(curValue, result);
+            result = min(curValue, result);
         }
     return result;
 }
 
-vec4 erosion(in SAMPLER2D_TYPE texture, in TEXTURE_PARAMETERS texParams, in vec2 fragCoord) {
-    vec4 result = vec4(1.0);
-    for (int x=-1; x<=1; x++)
-        for (int y=-1; y<=1; y++) {
+vec4 dilation(in SAMPLER2D_TYPE texture, in TEXTURE_PARAMETERS texParams, in vec2 fragCoord, in int kernelRadius) {
+    vec4 result = vec4(0.0);
+    for (int x=-kernelRadius; x<=kernelRadius; x++)
+        for (int y=-kernelRadius; y<=kernelRadius; y++) {
             vec4 curValue = textureLookup2Dscreen(texture, texParams,
                                                   vec2(fragCoord.x+float(x), fragCoord.y+float(y)));
-            result = min(curValue, result);
+            result = max(curValue, result);
         }
     return result;
 }

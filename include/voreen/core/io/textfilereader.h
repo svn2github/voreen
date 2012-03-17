@@ -2,7 +2,7 @@
  *                                                                    *
  * Voreen - The Volume Rendering Engine                               *
  *                                                                    *
- * Created between 2005 and 2011 by The Voreen Team                   *
+ * Created between 2005 and 2012 by The Voreen Team                   *
  * as listed in CREDITS.TXT <http://www.voreen.org>                   *
  *                                                                    *
  * This file is part of the Voreen software package. Voreen is free   *
@@ -29,6 +29,10 @@
 #ifndef VRN_TEXTFILEREADER_H
 #define VRN_TEXTFILEREADER_H
 
+#include "voreen/core/voreencoredefine.h"
+
+#include "tgt/vector.h"
+
 #include <fstream>
 #include <string>
 
@@ -40,7 +44,7 @@ namespace voreen {
  * The supported format is:<br>
  * <tt>[whitespace ...] <type> <separator ...> <args> [whitespace ...]</tt>
  */
-class TextFileReader {
+class VRN_CORE_API TextFileReader {
 public:
     /**
      * Opens a text file.
@@ -76,6 +80,36 @@ public:
      */
     bool getNextLine(std::string& type, std::istringstream& arg,
                      bool toLowercase = true);
+
+    /**
+     * Returns the next line as it is regardless of its content.
+     *
+     * @param line          stores the next line
+     * @param toLowercase   convert \a line to lowercase
+     *
+     * @return true if a line was read.
+     **/
+    bool getNextLinePlain(std::string& line, bool toLowercase = true);
+
+    /**
+     * Returns the next line as it is regardless of its content.
+     *
+     * @param line          stores the next line
+     * @param toLowercase   convert \a line to lowercase
+     *
+     * @return true if a line was read.
+     **/
+    bool getNextLinePlain(std::istringstream& line, bool toLowercase = true);
+
+    /**
+     * Parses a vec3 formatted as (x, y, z) from input stream and saves it in \a out.
+     *
+     * \param   args    input stream to parse
+     * \param   out     output vec3
+     *
+     * \return  true if parsing succeeded.
+     **/
+    bool getVec3(std::istringstream& args, tgt::vec3& out);
 
     /**
      * Checks validity of the reader.
