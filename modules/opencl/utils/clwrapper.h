@@ -361,7 +361,10 @@ public:
     //TODO: wrap clEnqueueNativeKernel
 
     Event enqueueRead(const Buffer* buffer, void* data, bool blocking = true);
+    Event enqueueRead(const Buffer* buffer, void* data, size_t offset, size_t size, bool blocking = true);
     Event enqueueWrite(const Buffer* buffer, void* data, bool blocking = true);
+    Event enqueueWrite(const Buffer* buffer, void* data, size_t offset, size_t size, bool blocking = true);
+
     //FIND: k_nguyen add enqueueCopyImage
     Event enqueueCopyBuffer(const Buffer &src, const Buffer &dst, size_t src_offset, size_t dst_offset, size_t size);
     

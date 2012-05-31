@@ -59,6 +59,7 @@
 
 #include "voreen/core/datastructures/transfunc/transfunc.h"
 #include "voreen/core/network/processornetwork.h"
+#include "voreen/core/utils/variant.h"
 
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/network/networkevaluator.h"
@@ -203,174 +204,39 @@ static PyObject* voreen_setPropertyValue(PyObject* /*self*/, PyObject* args) {
     }
 
     // read processor name and property id
-    char* processorName = PyString_AsString(PyTuple_GetItem(args, 0));
-    char* propertyID = PyString_AsString(PyTuple_GetItem(args, 1));
-    if (!processorName || !propertyID) {
-        PyErr_SetString(PyExc_TypeError, "setPropertyValue() arguments 1 and 2 must be strings");
-        return 0;
-    }
+    std::string processorName = std::string(PyString_AsString(PyTuple_GetItem(args, 0)));
+    std::string propertyID = std::string(PyString_AsString(PyTuple_GetItem(args, 1)));
+    PyObject* parameter = PyTuple_GetItem(args, 2);
 
     // fetch property
-    Property* property = getProperty(std::string(processorName), std::string(propertyID), "setPropertyValue");
+    Property* property = getProperty(processorName, propertyID, "setPropertyValue");
     if (!property)
         return 0;
-
-    // determine property type, convert and assign value
-    if (IntProperty* typedProp = dynamic_cast<IntProperty*>(property)) {
-        int value;
-        if (!PyArg_ParseTuple(args, "ssi:setPropertyValue", &processorName, &propertyID, &value))
+    else {
+        try {
+            const std::string className = property->getClassName();
+            if (className == "ButtonProperty") {
+                ButtonProperty* typedProp = dynamic_cast<ButtonProperty*>(property);
+                typedProp->clicked();
+            }
+            else {
+                Variant parameterVariant(parameter, property->getVariantType());
+                property->setVariant(parameterVariant);
+            }
+        }
+        catch (VoreenException& e) {
+            PyErr_SetString(PyExc_ValueError, e.what());
             return 0;
-        if (setPropertyValue<IntProperty, int>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatProperty* typedProp = dynamic_cast<FloatProperty*>(property)) {
-        float value;
-        if (!PyArg_ParseTuple(args, "ssf:setPropertyValue", &processorName, &propertyID, &value))
-            return 0;
-        if (setPropertyValue<FloatProperty, float>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (BoolProperty* typedProp = dynamic_cast<BoolProperty*>(property)) {
-        char value;
-        if (!PyArg_ParseTuple(args, "ssb:setPropertyValue", &processorName, &propertyID, &value))
-            return 0;
-        if (setPropertyValue<BoolProperty, bool>(typedProp, (bool)value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (StringProperty* typedProp = dynamic_cast<StringProperty*>(property)) {
-        char* value;
-        if (!PyArg_ParseTuple(args, "sss:setPropertyValue", &processorName, &propertyID, &value))
-            return 0;
-        if (setPropertyValue<StringProperty, std::string>(typedProp, std::string(value), "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (OptionPropertyBase* typedProp = dynamic_cast<OptionPropertyBase*>(property)) {
-        char* value;
-        if (!PyArg_ParseTuple(args, "sss:setPropertyValue", &processorName, &propertyID, &value))
-            return 0;
-        if (setPropertyValue<OptionPropertyBase, std::string>(typedProp, std::string(value), "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (IntVec2Property* typedProp = dynamic_cast<IntVec2Property*>(property)) {
-        tgt::ivec2 value;
-        if (!PyArg_ParseTuple(args, "ss(ii):setPropertyValue", &processorName, &propertyID,
-                &value.x, &value.y))
-            return 0;
-        if (setPropertyValue<IntVec2Property, tgt::ivec2>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (IntVec3Property* typedProp = dynamic_cast<IntVec3Property*>(property)) {
-        tgt::ivec3 value;
-        if (!PyArg_ParseTuple(args, "ss(iii):setPropertyValue", &processorName, &propertyID,
-                &value.x, &value.y, &value.z))
-            return 0;
-        if (setPropertyValue<IntVec3Property, tgt::ivec3>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (IntVec4Property* typedProp = dynamic_cast<IntVec4Property*>(property)) {
-        tgt::ivec4 value;
-        if (!PyArg_ParseTuple(args, "ss(iiii):setPropertyValue", &processorName, &propertyID,
-                &value.x, &value.y, &value.z, &value.w))
-            return 0;
-        if (setPropertyValue<IntVec4Property, tgt::ivec4>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatVec2Property* typedProp = dynamic_cast<FloatVec2Property*>(property)) {
-        tgt::vec2 value;
-        if (!PyArg_ParseTuple(args, "ss(ff):setPropertyValue", &processorName, &propertyID,
-                &value.x, &value.y))
-            return 0;
-        if (setPropertyValue<FloatVec2Property, tgt::vec2>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatVec3Property* typedProp = dynamic_cast<FloatVec3Property*>(property)) {
-        tgt::vec3 value;
-        if (!PyArg_ParseTuple(args, "ss(fff):setPropertyValue", &processorName, &propertyID,
-                &value.x, &value.y, &value.z))
-            return 0;
-        if (setPropertyValue<FloatVec3Property, tgt::vec3>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatVec4Property* typedProp = dynamic_cast<FloatVec4Property*>(property)) {
-        tgt::vec4 value;
-        if (!PyArg_ParseTuple(args, "ss(ffff):setPropertyValue", &processorName, &propertyID,
-                &value.x, &value.y, &value.z, &value.w))
-            return 0;
-        if (setPropertyValue<FloatVec4Property, tgt::vec4>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatMat2Property* typedProp = dynamic_cast<FloatMat2Property*>(property)) {
-        tgt::vec2 vec0, vec1;
-        char *processorName, *propertyID;
-        if (!PyArg_ParseTuple(args, "ss((ff)(ff)):setPropertyValue",
-                &processorName, &propertyID,
-                &vec0.x, &vec0.y, &vec1.x, &vec1.y))
-            return 0;
-
-        tgt::mat2 value(vec0, vec1);
-        if (setPropertyValue<FloatMat2Property, tgt::mat2>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatMat3Property* typedProp = dynamic_cast<FloatMat3Property*>(property)) {
-        tgt::vec3 vec0, vec1, vec2;
-        char *processorName, *propertyID;
-        if (!PyArg_ParseTuple(args, "ss((fff)(fff)(fff)):setPropertyValue",
-                &processorName, &propertyID,
-                &vec0.x, &vec0.y, &vec0.z, &vec1.x, &vec1.y, &vec1.z,
-                &vec2.x, &vec2.y, &vec2.z))
-            return 0;
-
-        tgt::mat3 value(vec0, vec1, vec2);
-        if (setPropertyValue<FloatMat3Property, tgt::mat3>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (FloatMat4Property* typedProp = dynamic_cast<FloatMat4Property*>(property)) {
-        tgt::vec4 vec0, vec1, vec2, vec3;
-        char *processorName, *propertyID;
-        if (!PyArg_ParseTuple(args, "ss((ffff)(ffff)(ffff)(ffff)):setPropertyValue",
-                &processorName, &propertyID,
-                &vec0.x, &vec0.y, &vec0.z, &vec0.w, &vec1.x, &vec1.y, &vec1.z, &vec1.w,
-                &vec2.x, &vec2.y, &vec2.z, &vec2.w, &vec3.x, &vec3.y, &vec3.z, &vec3.w))
-            return 0;
-
-        tgt::mat4 value(vec0, vec1, vec2, vec3);
-        if (setPropertyValue<FloatMat4Property, tgt::mat4>(typedProp, value, "setPropertyValue"))
-            Py_RETURN_NONE;
-    }
-    else if (CameraProperty* typedProp = dynamic_cast<CameraProperty*>(property)) {
-        tgt::vec3 position, focus, up;
-        if (!PyArg_ParseTuple(args, "ss((fff)(fff)(fff)):setPropertyValue",
-                &processorName, &propertyID,
-                &position.x, &position.y, &position.z,
-                &focus.x, &focus.y, &focus.z,
-                &up.x, &up.y, &up.z))
-            return 0;
-
-        typedProp->setPosition(position);
-        typedProp->setFocus(focus);
-        typedProp->setUpVector(up);
+        }
         Py_RETURN_NONE;
     }
-
-
-    // we only get here, if property value assignment has failed or
-    // the property type is not supported at all
-
-    if (!PyErr_Occurred()) {
-        // no error so far => unknown property type
-        std::ostringstream errStr;
-        errStr << "setPropertyValue() Property '" << property->getFullyQualifiedID() << "'";
-        errStr << " has unsupported type: '" << property->getClassName() << "'";
-        PyErr_SetString(PyExc_ValueError, errStr.str().c_str());
-    }
-
-    return 0; //< indicates failure
 }
 
 static PyObject* voreen_getPropertyValue(PyObject* /*self*/, PyObject* args) {
 
     // Parse passed arguments: processor name, property ID
-    char *processorName, *propertyID;
+    char* processorName;
+    char* propertyID;
     PyArg_ParseTuple(args, "ss:getPropertyValue", &processorName, &propertyID);
     if (PyErr_Occurred())
         return 0;
@@ -380,83 +246,15 @@ static PyObject* voreen_getPropertyValue(PyObject* /*self*/, PyObject* args) {
     if (!property)
         return 0;
 
-    // determine property type and return value, if type compatible
-    PyObject* result = (PyObject*)-1; //< to determine whether Py_BuildValue has been executed
-    if (IntProperty* typedProp = dynamic_cast<IntProperty*>(property))
-        result = Py_BuildValue("i", typedProp->get());
-    else if (FloatProperty* typedProp = dynamic_cast<FloatProperty*>(property))
-        result = Py_BuildValue("f", typedProp->get());
-    else if (BoolProperty* typedProp = dynamic_cast<BoolProperty*>(property))
-        result = Py_BuildValue("b", typedProp->get());
-    else if (StringProperty* typedProp = dynamic_cast<StringProperty*>(property))
-        result = Py_BuildValue("s", typedProp->get().c_str());
-    else if (OptionPropertyBase* typedProp = dynamic_cast<OptionPropertyBase*>(property))
-        result = Py_BuildValue("s", typedProp->get().c_str());
-    else if (IntVec2Property* typedProp = dynamic_cast<IntVec2Property*>(property)) {
-        tgt::ivec2 value = typedProp->get();
-        result = Py_BuildValue("[ii]", value.x, value.y);
+    try {
+        const Variant& value = property->getVariant();
+        PyObject* result = value.getPythonObject();
+        return result;
     }
-    else if (IntVec3Property* typedProp = dynamic_cast<IntVec3Property*>(property)) {
-        tgt::ivec3 value = typedProp->get();
-        result = Py_BuildValue("[iii]", value.x, value.y, value.z);
-    }
-    else if (IntVec4Property* typedProp = dynamic_cast<IntVec4Property*>(property)) {
-        tgt::ivec4 value = typedProp->get();
-        result = Py_BuildValue("[iiii]", value.x, value.y, value.z, value.w);
-    }
-    else if (FloatVec2Property* typedProp = dynamic_cast<FloatVec2Property*>(property)) {
-        tgt::vec2 value = typedProp->get();
-        result = Py_BuildValue("[ff]", value.x, value.y);
-    }
-    else if (FloatVec3Property* typedProp = dynamic_cast<FloatVec3Property*>(property)) {
-        tgt::vec3 value = typedProp->get();
-        result = Py_BuildValue("[fff]", value.x, value.y, value.z);
-    }
-    else if (FloatVec4Property* typedProp = dynamic_cast<FloatVec4Property*>(property)) {
-        tgt::vec4 value = typedProp->get();
-        result = Py_BuildValue("[ffff]", value.x, value.y, value.z, value.w);
-    }
-    else if (FloatMat2Property* typedProp = dynamic_cast<FloatMat2Property*>(property)) {
-        tgt::mat2 value = typedProp->get();
-        result = Py_BuildValue("[[ff][ff]]",
-                    value[0][0], value[0][1],
-                    value[1][0], value[1][1]);
-    }
-    else if (FloatMat3Property* typedProp = dynamic_cast<FloatMat3Property*>(property)) {
-        tgt::mat3 value = typedProp->get();
-        result = Py_BuildValue("[[fff][fff][fff]]",
-                    value[0][0], value[0][1], value[0][2],
-                    value[1][0], value[1][1], value[1][2],
-                    value[2][0], value[2][1], value[2][2]);
-    }
-    else if (FloatMat4Property* typedProp = dynamic_cast<FloatMat4Property*>(property)) {
-        tgt::mat4 value = typedProp->get();
-        result = Py_BuildValue("[[ffff][ffff][ffff][ffff]]",
-                    value[0][0], value[0][1], value[0][2], value[0][3],
-                    value[1][0], value[1][1], value[1][2], value[1][3],
-                    value[2][0], value[2][1], value[2][2], value[2][3],
-                    value[3][0], value[3][1], value[3][2], value[3][3]);
-    }
-    else if (CameraProperty* typedProp = dynamic_cast<CameraProperty*>(property)) {
-        tgt::vec3 position = typedProp->get().getPosition();
-        tgt::vec3 focus = typedProp->get().getFocus();
-        tgt::vec3 upVector = typedProp->get().getUpVector();
-        result = Py_BuildValue("([fff][fff][fff])",
-                    position.x, position.y, position.z,
-                    focus.x, focus.y, focus.z,
-                    upVector.x, upVector.y, upVector.z);
-    }
-
-    // if result is still -1, Py_BuildValue has not been executed
-    if (result == (PyObject*)-1) {
-        std::ostringstream errStr;
-        errStr << "getPropertyValue() Property '" << property->getFullyQualifiedID() << "'";
-        errStr << " has unsupported type: '" << property->getTypeDescription() << "'";
-        PyErr_SetString(PyExc_ValueError, errStr.str().c_str());
+    catch (VoreenException& e) {
+        PyErr_SetString(PyExc_ValueError, e.what());
         return 0;
     }
-
-    return result;
 }
 
 static PyObject* voreen_setPropertyMinValue(PyObject* /*self*/, PyObject* args) {
@@ -798,20 +596,20 @@ static PyObject* voreen_getPropertyMinValue(PyObject* /*self*/, PyObject* args) 
     }
     else if (FloatMat2Property* typedProp = dynamic_cast<FloatMat2Property*>(property)) {
         tgt::mat2 value = typedProp->getMinValue();
-        result = Py_BuildValue("[[ff][ff]]",
+        result = Py_BuildValue("((ff)(ff))",
                     value[0][0], value[0][1],
                     value[1][0], value[1][1]);
     }
     else if (FloatMat3Property* typedProp = dynamic_cast<FloatMat3Property*>(property)) {
         tgt::mat3 value = typedProp->getMinValue();
-        result = Py_BuildValue("[[fff][fff][fff]]",
+        result = Py_BuildValue("((fff)(fff)(fff))",
                     value[0][0], value[0][1], value[0][2],
                     value[1][0], value[1][1], value[1][2],
                     value[2][0], value[2][1], value[2][2]);
     }
     else if (FloatMat4Property* typedProp = dynamic_cast<FloatMat4Property*>(property)) {
         tgt::mat4 value = typedProp->getMinValue();
-        result = Py_BuildValue("[[ffff][ffff][ffff][ffff]]",
+        result = Py_BuildValue("((ffff)(ffff)(ffff)(ffff))",
                     value[0][0], value[0][1], value[0][2], value[0][3],
                     value[1][0], value[1][1], value[1][2], value[1][3],
                     value[2][0], value[2][1], value[2][2], value[2][3],
@@ -875,20 +673,20 @@ static PyObject* voreen_getPropertyMaxValue(PyObject* /*self*/, PyObject* args) 
     }
     else if (FloatMat2Property* typedProp = dynamic_cast<FloatMat2Property*>(property)) {
         tgt::mat2 value = typedProp->getMaxValue();
-        result = Py_BuildValue("[[ff][ff]]",
+        result = Py_BuildValue("((ff)(ff))",
                     value[0][0], value[0][1],
                     value[1][0], value[1][1]);
     }
     else if (FloatMat3Property* typedProp = dynamic_cast<FloatMat3Property*>(property)) {
         tgt::mat3 value = typedProp->getMaxValue();
-        result = Py_BuildValue("[[fff][fff][fff]]",
+        result = Py_BuildValue("((fff)(fff)(fff))",
                     value[0][0], value[0][1], value[0][2],
                     value[1][0], value[1][1], value[1][2],
                     value[2][0], value[2][1], value[2][2]);
     }
     else if (FloatMat4Property* typedProp = dynamic_cast<FloatMat4Property*>(property)) {
         tgt::mat4 value = typedProp->getMaxValue();
-        result = Py_BuildValue("[[ffff][ffff][ffff][ffff]]",
+        result = Py_BuildValue("((ffff)(ffff)(ffff)(ffff))",
                     value[0][0], value[0][1], value[0][2], value[0][3],
                     value[1][0], value[1][1], value[1][2], value[1][3],
                     value[2][0], value[2][1], value[2][2], value[2][3],

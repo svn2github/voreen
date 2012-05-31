@@ -34,5 +34,5 @@ void main() {
     gl_TexCoord[0] = textureMatrix_ * gl_MultiTexCoord0;
 
     // set out vertex
-    gl_Position = ftransform();
+    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
 }

@@ -33,6 +33,7 @@
 #include "voreen/core/io/serialization/serialization.h"
 #include "voreen/core/processors/processor.h"
 #include "voreen/core/utils/variant.h"
+#include "voreen/core/properties/action.h"
 
 #include "tgt/exception.h"
 #include "tgt/vector.h"
@@ -301,6 +302,8 @@ public:
      *      this == dest
      */
     bool isLinkedWith(const Property* dest, bool transitive = false) const;
+
+    virtual void onChange(const Action& action = NoAction());
 
     /**
      * Returns the properties value as a variant (if possible). All subclasses which

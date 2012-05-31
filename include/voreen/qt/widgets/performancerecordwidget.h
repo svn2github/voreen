@@ -124,7 +124,7 @@ public:
         TimeTypeAfterProcess
     };
 
-    PerformanceRecordTreeWidget(PerformanceRecordWidget* performanceRecordWidget, bool averageTime = false, PerformanceRecordTreeWidget::TimeType sortType = PerformanceRecordTreeWidget::TimeTypeTotalProcess, PerformanceRecordTreeWidget::TimeType showType = PerformanceRecordTreeWidget::TimeTypeTotalProcess, bool clearOnUpdate = false, QWidget* parent = 0);
+    PerformanceRecordTreeWidget(QWidget* parent = 0, PerformanceRecordWidget* performanceRecordWidget = 0, bool averageTime = false, PerformanceRecordTreeWidget::TimeType sortType = PerformanceRecordTreeWidget::TimeTypeTotalProcess, PerformanceRecordTreeWidget::TimeType showType = PerformanceRecordTreeWidget::TimeTypeTotalProcess, bool clearOnUpdate = false);
 
 public slots:
     void update();
@@ -170,10 +170,10 @@ private:
     static bool compare_highest_process_time(PerformanceSample first, PerformanceSample second) { return first.getChildTime("process") > second.getChildTime("process"); }
     static bool compare_highest_afterprocess_time(PerformanceSample first, PerformanceSample second) { return first.getChildTime("afterprocess") > second.getChildTime("afterprocess"); }
 
-    bool clearTreeOnUpdate_;
     bool averageTime_;
     TimeType sortType_;
     TimeType showType_;
+    bool clearTreeOnUpdate_;
     std::string filterText_;
 
     std::vector<PerformanceSample> performanceSamples_;

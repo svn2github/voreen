@@ -758,7 +758,16 @@ Event CommandQueue::enqueueRead(const Buffer* buffer, void* data, bool blocking)
     LCL_ERROR(clEnqueueReadBuffer(id_, buffer->getId(), blocking, 0, buffer->getSize(), data, 0, 0, &event));
     Event e(event);
     //if(event)
-        //LCL_ERROR(clReleaseEvent(event));
+    //LCL_ERROR(clReleaseEvent(event));
+    return e;
+}
+
+Event CommandQueue::enqueueRead(const Buffer* buffer, void* data, size_t offset, size_t size, bool blocking) {
+    cl_event event;
+    LCL_ERROR(clEnqueueReadBuffer(id_, buffer->getId(), blocking, offset, size, data, 0, 0, &event));
+    Event e(event);
+    //if(event)
+    //LCL_ERROR(clReleaseEvent(event));
     return e;
 }
 
@@ -767,7 +776,16 @@ Event CommandQueue::enqueueWrite(const Buffer* buffer, void* data, bool blocking
     LCL_ERROR(clEnqueueWriteBuffer(id_, buffer->getId(), blocking, 0, buffer->getSize(), data, 0, 0, &event));
     Event e(event);
     //if(event)
-        //LCL_ERROR(clReleaseEvent(event));
+    //LCL_ERROR(clReleaseEvent(event));
+    return e;
+}
+
+Event CommandQueue::enqueueWrite(const Buffer* buffer, void* data, size_t offset, size_t size, bool blocking) {
+    cl_event event;
+    LCL_ERROR(clEnqueueWriteBuffer(id_, buffer->getId(), blocking, offset, size, data, 0, 0, &event));
+    Event e(event);
+    //if(event)
+    //LCL_ERROR(clReleaseEvent(event));
     return e;
 }
 

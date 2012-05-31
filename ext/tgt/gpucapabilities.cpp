@@ -135,20 +135,27 @@ void GpuCapabilities::setCurrentAvailableTextureMem(int mem) {
 	settingsAvailableMemoryInMB_ = mem;
 }
 
-int GpuCapabilities::getCurrentAvailableTextureMem(bool use_application_override) {
+int GpuCapabilities::getCurrentAvailableTextureMem(bool use_application_override) throw (Exception) {
     int currentAvailableTexMem = settingsAvailableMemoryInMB_*1024;
 
 	if(retrieveAvailableMemory_ || !use_application_override){
-#ifdef GL_ATI_meminfo
-    if(vendor_ == GPU_VENDOR_ATI) {
-        glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, (GLint *) &currentAvailableTexMem);
-    }
-#endif
+        try{
+            GLint nCurAvailMemoryInKB = static_cast<GLint>(currentAvailableTexMem);
+            if(vendor_ == GPU_VENDOR_NVIDIA) {
 #ifdef GL_NVX_gpu_memory_info
-    if(vendor_ == GPU_VENDOR_NVIDIA) {
-        glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, (GLint *) &currentAvailableTexMem);
-    }
+                glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &nCurAvailMemoryInKB);
 #endif
+            }
+            else if(vendor_ == GPU_VENDOR_ATI) {
+#ifdef GL_ATI_meminfo
+                glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, &nCurAvailMemoryInKB);
+#endif
+            }
+            currentAvailableTexMem = static_cast<int>(nCurAvailMemoryInKB);
+        }
+        catch(const Exception& e){
+            LWARNING("Failed to fetch current available texture memory: " << e.what());
+        }
 	}
 
     return currentAvailableTexMem;
@@ -517,6 +524,7 @@ const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_150(
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_330(3,30); ///< GLSL version 3.30
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_400(4, 0); ///< GLSL version 4.00
 const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_410(4,10); ///< GLSL version 4.10
+const GpuCapabilities::GlVersion GpuCapabilities::GlVersion::SHADER_VERSION_420(4,20); ///< GLSL version 4.20
 
 GpuCapabilities::GlVersion::GlVersion(int major, int minor, int release)
   : major_(major), minor_(minor), release_(release)

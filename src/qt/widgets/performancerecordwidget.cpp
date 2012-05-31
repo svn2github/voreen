@@ -233,7 +233,7 @@ void PerformanceRecordWidget::loadSettings()
 
     settings.endGroup();
 
-    tree_ = new PerformanceRecordTreeWidget(this, averageT, sortT, showT, clearTreeWhenRecordsUpdate_->isChecked());
+    tree_ = new PerformanceRecordTreeWidget(0, this, averageT, sortT, showT, clearTreeWhenRecordsUpdate_->isChecked());
     tree_->filterText_ = text;
     edit_->setText(QString::fromStdString(tree_->filterText_));
 
@@ -355,7 +355,7 @@ void PerformanceRecordWidget::resetSettings() {
 
 // ----------------------------------------------------------------------------
 
-PerformanceRecordTreeWidget::PerformanceRecordTreeWidget(PerformanceRecordWidget* performanceRecordWidget, bool averageTime, PerformanceRecordTreeWidget::TimeType sortType, PerformanceRecordTreeWidget::TimeType showType, bool clearOnUpdate, QWidget* parent)
+PerformanceRecordTreeWidget::PerformanceRecordTreeWidget(QWidget* parent, PerformanceRecordWidget* performanceRecordWidget, bool averageTime, PerformanceRecordTreeWidget::TimeType sortType, PerformanceRecordTreeWidget::TimeType showType, bool clearOnUpdate)
     : QTreeWidget(parent)
     , performanceRecordWidget_(performanceRecordWidget)
     , averageTime_(averageTime)

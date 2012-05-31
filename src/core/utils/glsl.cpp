@@ -33,8 +33,12 @@ namespace voreen {
 using tgt::vec3;
 
 void setUniform(tgt::Shader* shader, const std::string& uniform, const VolumeHandleBase* vh, const tgt::TextureUnit* texUnit, const tgt::Camera* camera, const tgt::vec4& lightPosition) {
-    if(texUnit)
-        shader->setUniform(uniform + ".volume_", texUnit->getUnitNumber());
+    if(texUnit){
+        if (GpuCaps.getVendor() == tgt::GpuCapabilities::GPU_VENDOR_ATI)
+            shader->setUniform(uniform + "Volume_", texUnit->getUnitNumber());
+        else
+            shader->setUniform(uniform + ".volume_", texUnit->getUnitNumber());
+    }
 
     // volume size, i.e. dimensions of the proxy geometry in world coordinates
     tgt::vec3 dims = tgt::vec3(vh->getDimensions());
@@ -100,7 +104,7 @@ void setUniform(tgt::Shader* shader, const std::string& uniform, const VolumeHan
     shader->setUniform(uniform + ".rwmOffset_", rwm.getOffset());
 }
 
-bool bindVolumeTexture(const VolumeHandleBase* vh, const tgt::TextureUnit* texUnit, GLint filterMode, GLenum wrapMode, tgt::vec4 borderColor) {
+bool bindVolumeTexture(const VolumeHandleBase* vh, const tgt::TextureUnit* texUnit, GLint filterMode, GLenum wrapMode, tgt::vec4 borderColor, bool showFirstTextureResidentMessage) {
     const VolumeGL* volumeGL = vh->getRepresentation<VolumeGL>();
     if (!volumeGL || !volumeGL->getTexture()) {
         LWARNINGC("voreen.glsl", "No volume texture while binding volumes");
@@ -117,7 +121,7 @@ bool bindVolumeTexture(const VolumeHandleBase* vh, const tgt::TextureUnit* texUn
     GLint resident;
     glGetTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_RESIDENT, &resident);
 
-    if (resident != GL_TRUE)
+    if (resident != GL_TRUE && showFirstTextureResidentMessage)
         LWARNINGC("voreen.glsl", "texture not resident: " /*<< volume->meta().getFileName()*/);
 
     LGL_ERROR;

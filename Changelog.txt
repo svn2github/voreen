@@ -1,6 +1,27 @@
 Voreen Changelog
 ---------------------
 
+2012-05-31: Voreen 3.0.1 (r42, internal r15565)
+------------------------------------------------------
+
+   * Bug fixes:
+     o ATI/AMD Driver Compatibility Improved.
+     o Assertion was thrown for first processor when VoreenVE was started with an empty default workspace.
+     o OpenCL include path bug (nvidia compiler could not handle whitespace in paths).
+     o Fixed loading of CLUT.
+     o PropertyLink Editing could throw assertion.
+     o ATI ftransform() fix.
+     
+   * Features:
+     o Performance optimization for general rendering, up to 10%.
+     o Added RemoteController functionality.
+     o Added ToneMapping processor with one local and one global method.
+     
+   * Framework/API changes:
+     o Deprecated VolumeStruct function removed from mod_sampler3D.
+     o Simplified PyVoreen.
+     o Made TransFuncIntensity linearly serializable to PyObject.
+
 2012-03-17: Voreen 3.0 (r41, internal r15335)
 ------------------------------------------------------
 

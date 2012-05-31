@@ -107,6 +107,7 @@ public:
     virtual void deserialize(XmlDeserializer& s);
 
     virtual Variant getVariant(bool normalized = false) const;
+
     virtual void setVariant(const Variant& val, bool normalized = false);
     virtual int getVariantType() const;
 

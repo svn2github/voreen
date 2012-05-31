@@ -15,6 +15,7 @@ contains(VRN_PROJECTS, voreenve): SUBDIRS += sub_voreenve
 contains(VRN_PROJECTS, voltool):  SUBDIRS += sub_voltool
 contains(VRN_PROJECTS, simple-qt):  SUBDIRS += sub_simple-qt
 contains(VRN_PROJECTS, simple-glut):  SUBDIRS += sub_simple-glut
+contains(VRN_PROJECTS, sgct-client): SUBDIRS += sub_sgct-client
 contains(VRN_PROJECTS, simple-memcheck):  SUBDIRS += sub_simple-memcheck
 contains(VRN_PROJECTS, simple-memcheckinit):  SUBDIRS += sub_simple-memcheckinit
 contains(VRN_PROJECTS, serializertest):  SUBDIRS += sub_serializertest
@@ -43,6 +44,9 @@ sub_simple-qt.depends = sub_tgt sub_core sub_qt
 
 sub_simple-glut.file = apps/simple/simple-glut.pro
 sub_simple-glut.depends = sub_tgt sub_core
+
+sub_sgct-client.file = apps/sgct-client/sgct-client.pro
+sub_sgct-client.depends = sub_tgt sub_core
 
 sub_simple-memcheck.file = apps/tests/simple-memcheck.pro
 sub_simple-memcheck.depends = sub_tgt sub_core

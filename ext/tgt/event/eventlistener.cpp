@@ -46,16 +46,25 @@ void EventListener::onEvent(Event* e) {
     */
     if (typeid(*e) == typeid(MouseEvent)) {
         MouseEvent* me = static_cast<MouseEvent*>(e);
-        if (me->action() == MouseEvent::PRESSED)
+        switch (me->action()) {
+        case MouseEvent::PRESSED:
             mousePressEvent(me);
-        else if (me->action() == MouseEvent::RELEASED)
+            break;
+        case MouseEvent::RELEASED:
             mouseReleaseEvent(me);
-        else if (me->action() == MouseEvent::MOTION)
+            break;
+        case MouseEvent::MOTION:
             mouseMoveEvent(me);
-        else if (me->action() == MouseEvent::DOUBLECLICK)
+            break;
+        case MouseEvent::DOUBLECLICK:
             mouseDoubleClickEvent(me);
-        else if (me->action() == MouseEvent::WHEEL)
+            break;
+        case MouseEvent::MOUSE_WHEEL:
             wheelEvent(me);
+            break;
+        default:
+            break;
+        }
     }
     else if (typeid(*e) == typeid(KeyEvent)) {
         keyEvent(static_cast<KeyEvent*>(e));

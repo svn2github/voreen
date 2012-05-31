@@ -72,7 +72,7 @@ public:
     /**
      * Updates the workspace from the specified file.
      *
-     * Non-fatal errors occuring during workspace load are saved
+     * Non-fatal errors occurring during workspace load are saved
      * and can be requested using @c getErrors().
      *
      * @throw SerializationException on serialization errors

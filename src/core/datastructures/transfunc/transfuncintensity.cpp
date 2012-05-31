@@ -663,51 +663,90 @@ bool TransFuncIntensity::loadOsirixCLUT(const std::string& filename) {
 
     TiXmlDocument doc(filename.c_str());
 
-    //TODO: this loader is much to specific to a certain order of XML tags and will crash if
-    // anything is missing (#276).
-    if (doc.LoadFile()) {
+    bool loadFileSuccess = doc.LoadFile();
+    if (loadFileSuccess) {
         // read and check version of plist file
-        TiXmlNode* currNode = doc.FirstChild("plist");
-        TiXmlElement* currElement = currNode->ToElement();
+        TiXmlElement* topElement = doc.FirstChildElement("plist");
+        if (!topElement) {
+            LERROR("Malformed CLUT: Top element 'plist' did not exist");
+            return false;
+        }
 
-        currNode = currNode->FirstChild("dict");
-        currNode = currNode->FirstChild("key");
-        currElement = currNode->ToElement();
+        TiXmlElement* dictElement = topElement->FirstChildElement("dict");
+        if (!dictElement) {
+            LERROR("Malformed CLUT: Child element 'dict' did not exist");
+            return false;
+        }
 
-        // get reference to red, green and blue channel
-        TiXmlElement* blueElement = 0;
-        TiXmlElement* greenElement = 0;
-        TiXmlElement* redElement = 0;
-        TiXmlNode* blueNode = currElement->NextSibling();
-        TiXmlNode* greenNode = ((blueNode->NextSibling())->NextSibling());
-        TiXmlNode* redNode = ((greenNode->NextSibling())->NextSibling());
-        blueNode = blueNode->FirstChild("integer");
-        greenNode = greenNode->FirstChild("integer");
-        redNode = redNode->FirstChild("integer");
+        TiXmlElement* redKeyElement = 0;
+        TiXmlElement* greenKeyElement = 0;
+        TiXmlElement* blueKeyElement = 0;
+
+        TiXmlElement* colorElement = dictElement->FirstChildElement("key");
+        while (colorElement) {
+            std::string text = std::string(colorElement->GetText());
+            if (text == "Red") {
+                tgtAssert(redKeyElement == 0, "redKeyElement set twice");
+                redKeyElement = colorElement;
+            }
+            else if (text == "Green") {
+                tgtAssert(greenKeyElement == 0, "greenKeyElement set twice");
+                greenKeyElement = colorElement;
+            }
+            else if (text == "Blue") {
+                tgtAssert(blueKeyElement == 0, "blueKeyElement set twice");
+                blueKeyElement = colorElement;
+            }
+            else {
+                LERROR("Malformed CLUT: 'key' element found with a text notin 'Red', 'Green', 'Blue'");
+                return false;
+            }
+            colorElement = colorElement->NextSiblingElement("key");
+        }
+
+        if (!redKeyElement || !greenKeyElement || !blueKeyElement) {
+            LERROR("Malformed CLUT: Not all colors did exist in the file");
+            return false;
+        }
+
+        TiXmlElement* redArrayElement = redKeyElement->NextSiblingElement("array");
+        TiXmlElement* greenArrayElement = greenKeyElement->NextSiblingElement("array");
+        TiXmlElement* blueArrayElement = blueKeyElement->NextSiblingElement("array");
+
+        if (!redArrayElement || !greenArrayElement || !blueArrayElement) {
+            LERROR("Malformed CLUT: Not all color arrays did exist in the file");
+            return false;
+        }
 
         unsigned char* data = new unsigned char[256*4];
+        TiXmlElement* currentRedElement = redArrayElement->FirstChildElement("integer");
+        TiXmlElement* currentGreenElement = greenArrayElement->FirstChildElement("integer");
+        TiXmlElement* currentBlueElement = blueArrayElement->FirstChildElement("integer");
+
+        if (!currentRedElement || !currentGreenElement || !currentBlueElement) {
+            LERROR("Malformed CLUT: Not all colors did exist in the file");
+            delete[] data;
+            return false;
+        }
 
         for (int i = 0; i < 256; ++i) {
-            data[4*i + 0] = 0;
-            data[4*i + 1] = 0;
-            data[4*i + 2] = 0;
-            data[4*i + 3] = 0;
+            if (currentRedElement == 0 || currentGreenElement == 0 || currentBlueElement == 0) {
+                LERROR("Malformed CLUT: Wrong number of elements, " << i << " of 255");
+                delete[] data;
+                return false;
+            }
 
-            blueNode = blueNode->NextSibling("integer");
-            greenNode = greenNode->NextSibling("integer");
-            redNode = redNode->NextSibling("integer");
+            int currentRed = atoi(currentRedElement->GetText());
+            int currentGreen = atoi(currentGreenElement->GetText());
+            int currentBlue = atoi(currentBlueElement->GetText());
+            data[4*i + 0] = currentRed;
+            data[4*i + 1] = currentGreen;
+            data[4*i + 2] = currentBlue;
+            data[4*i + 3] = 255;
 
-            if (blueNode == 0 || greenNode == 0 || redNode == 0)
-                continue;
-
-            blueElement = blueNode->ToElement();
-            greenElement = greenNode->ToElement();
-            redElement = redNode->ToElement();
-
-            data[4*i + 0] = atoi(redElement->GetText());
-            data[4*i + 1] = atoi(greenElement->GetText());
-            data[4*i + 2] = atoi(blueElement->GetText());
-            data[4*i + 3] = (char)(255);
+            currentRedElement = currentRedElement->NextSiblingElement("integer");
+            currentGreenElement = currentGreenElement->NextSiblingElement("integer");
+            currentBlueElement = currentBlueElement->NextSiblingElement("integer");
         }
 
         dimensions_ = tgt::ivec3(256, 1, 1);
@@ -716,8 +755,10 @@ bool TransFuncIntensity::loadOsirixCLUT(const std::string& filename) {
 
         return true;
     }
-    else
+    else {
+        LERROR("Could not open file " << filename);
         return false;
+    }
 }
 
 bool TransFuncIntensity::loadImageJ(const std::string& filename) {

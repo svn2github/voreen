@@ -38,7 +38,7 @@ namespace voreen {
 
 void setUniform(tgt::Shader* shader, const std::string& uniform, const VolumeHandleBase* vh, const tgt::TextureUnit* texUnit, const tgt::Camera* camera = 0, const tgt::vec4& lightPosition = tgt::vec4(0.f));
 
-bool bindVolumeTexture(const VolumeHandleBase* vh, const tgt::TextureUnit* texUnit, GLint filterMode = GL_LINEAR, GLenum wrapMode = GL_CLAMP_TO_EDGE, tgt::vec4 borderColor = tgt::vec4(0.f));
+bool bindVolumeTexture(const VolumeHandleBase* vh, const tgt::TextureUnit* texUnit, GLint filterMode = GL_LINEAR, GLenum wrapMode = GL_CLAMP_TO_EDGE, tgt::vec4 borderColor = tgt::vec4(0.f), bool showFirstTextureResidentMessage = true);
 
 }  // namespace voreen
 

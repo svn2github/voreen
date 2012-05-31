@@ -30,6 +30,7 @@
 #include "tgt/singleton.h"
 #include "tgt/tgt_gl.h"
 #include "tgt/types.h"
+#include "tgt/exception.h"
 
 namespace tgt {
 
@@ -304,7 +305,7 @@ public:
     /**
      * Returns the current available texture memory.
      */
-    int getCurrentAvailableTextureMem(bool use_application_override = true);
+    int getCurrentAvailableTextureMem(bool use_application_override = true) throw (Exception);
 
     /**
      * Returns whether 3D textures are supported.

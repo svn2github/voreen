@@ -72,14 +72,14 @@ const std::string VoreenVersion::getCompilerVersion() {
 }
 
 const std::string VoreenVersion::getVersion() {
-    return "3.0";
+    return "3.0.1";
 }
 
 const std::string VoreenVersion::getRevision() {
 #if defined(VRN_WITH_SVNVERSION)
     return VRN_SVN_REVISION;
 #else
-    return "snapshot-41";
+    return "snapshot-42";
 #endif
 }
 

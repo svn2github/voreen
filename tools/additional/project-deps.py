@@ -3,9 +3,12 @@ import os
 
 dependencies = {}
 ############### config ###############
+dependencies['voltool'] = ['tgt', 'voreen_core']
+dependencies['tgt'] =[]
 dependencies['voreen_core'] = ['tgt']
 dependencies['voreen_qt'] = ['tgt', 'voreen_core']
 dependencies['voreenve'] = ['tgt', 'voreen_core','voreen_qt']
+dependencies['sgct-client'] = ['tgt', 'voreen_core']
 ######################################
 
 #
@@ -47,7 +50,7 @@ dictionary = {}
 for line in allLines:
     # only look in lines beginning with Project(
     if (line[:8] == 'Project('):
-        name = re.findall('"[a-zA-Z0-9_]*"', line)[0]
+        name = re.findall('"[-a-zA-Z0-9_]*"', line)[0]
         name = name[1:len(name)-1] # Remove the surrounding "
         id = re.findall( '{[-A-Z0-9]*}', line)
         id = id[1] # The first entry is the solution(?) id and constant
@@ -57,7 +60,7 @@ for line in allLines:
 for i in range(len(allLines)-1, 1, -1):
     line = allLines[i]
     if (line[:8] == 'Project('):
-        name = re.findall('"[a-zA-Z0-9_]*"', line)[0]
+        name = re.findall('"[-a-zA-Z0-9_]*"', line)[0]
         name = name[1:len(name)-1]
         if (name in dependencies):
             j = 1

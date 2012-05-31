@@ -34,10 +34,10 @@
     uniform SAMPLER2D_TYPE sliceTex_;               // slice texture
     uniform TEXTURE_PARAMETERS sliceTexParameters_; // slice texture parameters
     uniform float sliceBitScale;    //< used for 12bit volumes
-#else defined(SLICE_TEXTURE_MODE_3D)
+#elif defined SLICE_TEXTURE_MODE_3D
     uniform VOLUME_STRUCT volumeStruct_;    // volume data set
 #else
--- should not get here --    
+    -- should not get here --    
 #endif
 
 uniform int numChannels_;                       // number of channels in volume
@@ -68,7 +68,7 @@ void main() {
     // fetch intensity
 #ifdef SLICE_TEXTURE_MODE_2D
     vec4 intensity = textureLookup2Dnormalized(sliceTex_, sliceTexParameters_, gl_TexCoord[0].xy) * sliceBitScale;
-#else if defined(SLICE_TEXTURE_MODE_3D)
+#elif defined SLICE_TEXTURE_MODE_3D
     vec4 intensity = getVoxel(volumeStruct_, gl_TexCoord[0].xyz);
 #else
     -- should not get here --    

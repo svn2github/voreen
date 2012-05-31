@@ -106,13 +106,6 @@ vec4 textureLookup3D(VOLUME_STRUCT volumeStruct, vec3 texCoords) {
 }
 
 /*
- * DEPRECATED
- */
-vec4 textureLookup3D(sampler3D volume, VOLUME_STRUCT volumeStruct, vec3 texCoords) {
-    return textureLookup3D(volumeStruct, texCoords);
-}
-
-/*
  * Function for volume texture lookup. In addition to the texture coordinates
  * the corresponding VOLUME_STRUCT has to be passed .
  * In contrast to textureLookup3D() this function does not normalize the intensity values,
@@ -127,14 +120,6 @@ vec4 textureLookup3DUnnormalized(VOLUME_STRUCT volumeStruct, vec3 texCoords) {
 }
 
 /*
- * DEPRECATED
- */
-vec4 textureLookup3DUnnormalized(sampler3D volume, VOLUME_STRUCT volumeStruct, vec3 texCoords) {
-    return textureLookup3DUnnormalized(volumeStruct, texCoords);
-}
-
-
-/*
  * This function should be called by all raycasters in order to get the intensity from the volume.
  * In cases where volumeStruct indicates, that gradients are stored in the volume, these are
  * also fetched from the volume. Therefore, in addition to the volume and the texture coordinates
@@ -147,16 +132,8 @@ vec4 textureLookup3DUnnormalized(sampler3D volume, VOLUME_STRUCT volumeStruct, v
  *
  */
 vec4 getVoxel(VOLUME_STRUCT volumeStruct, vec3 sampleOrg) {
-    return textureLookup3D(volumeStruct.volume_, volumeStruct, sampleOrg);
+    return textureLookup3D(volumeStruct, sampleOrg);
 }
-
-/*
- * DEPRECATED
- */
-vec4 getVoxel(sampler3D volume, VOLUME_STRUCT volumeStruct, vec3 sampleOrg) {
-    return getVoxel(volumeStruct, sampleOrg);
-}
-
 
 /*
  * This function should be called by all raycasters in order to get the intensity from the volume.
@@ -170,14 +147,7 @@ vec4 getVoxel(sampler3D volume, VOLUME_STRUCT volumeStruct, vec3 sampleOrg) {
  *         in the rgb channels.
  */
 vec4 getVoxelUnnormalized(VOLUME_STRUCT volumeStruct, vec3 sampleOrg) {
-    return textureLookup3DUnnormalized(volumeStruct.volume_, volumeStruct, sampleOrg);
-}
-
-/*
- * DEPRECATED
- */
-vec4 getVoxelUnnormalized(sampler3D volume, VOLUME_STRUCT volumeStruct, vec3 sampleOrg) {
-    return getVoxelUnnormalized(volumeStruct, sampleOrg);
+    return textureLookup3DUnnormalized(volumeStruct, sampleOrg);
 }
 
 vec3 texToPhysical(vec3 samplePos, VOLUME_STRUCT volumeParams) {

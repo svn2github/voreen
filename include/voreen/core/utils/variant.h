@@ -29,6 +29,10 @@
 #ifndef VRN_VARIANT_H
 #define VRN_VARIANT_H
 
+#ifdef VRN_MODULE_PYTHON
+#include <Python.h>
+#endif
+
 #include "voreen/core/io/serialization/serializable.h"
 #include "voreen/core/voreencoredefine.h"
 #include "voreen/core/utils/exception.h"
@@ -136,6 +140,7 @@ public:
         VariantTypeTransFunc = 21,
         VariantTypeVolumeHandle = 22,
         VariantTypeVolumeCollection = 23,
+        VariantTypePythonObject = 24, // only used if the python module is compiled
         VariantTypeLastBaseType = VariantTypeVolumeCollection,
         VariantTypeUserType = 64
     };
@@ -224,6 +229,24 @@ public:
      */
     explicit Variant(const VolumeCollection* value) throw ();
 
+#ifdef VRN_MODULE_PYTHON
+    /**
+     * Constructs a Variant from a PyObject which stores the given type.
+     *
+     * \throw ConversionFailedException This exception is thrown if the PyObject did not contain a valid object
+     * of type
+     */
+    explicit Variant(PyObject* obj, VariantType type) throw (VoreenException);
+
+    /**
+     * Constructs a Variant from a PyObject which stores the given type.
+     *
+     * \throw ConversionFailedException This exception is thrown if the PyObject did not contain a valid object
+     * of type
+     */
+    explicit Variant(PyObject* obj, int type) throw (VoreenException);
+#endif
+
     /**
      * Performs and returns a deep copy of the Variant. Will be the same as the copy constructor
      * in most cases, but will be different for ShaderSource, Transfunc, tgt::Camera, VolumeHandle, VolumeCollection.
@@ -244,6 +267,11 @@ public:
      * Returns the data type of the value that is currently stored in the Variant.
      */
     VariantType getType() const throw ();
+
+    /**
+     * Returns true if the Variant contains a valid value.
+     */
+    bool isValid() const throw ();
 
     /**
      * Returns the string representation for the given VariantType. All user-defined VariantTypes will return
@@ -490,7 +518,9 @@ public:
     TransFunc* getTransFunc() const throw (VoreenException);
 
     /**
-     * Returns the value stored within this Variant as a tgt::Camera and performs a conversion first (if necessary)
+     * Returns the value stored within this Variant as a tgt::Camera and performs a conversion first (if necessary).
+     * If a conversion is necessary, a new object is created and returned so that the caller has the responsibility
+     * to dispose of the object afterwards.
      *
      * \throw OperationNotDefinedForInvalidVariantException This exception is thrown if the method was called
      * on an invalid Variant, which is not defined behavior
@@ -517,9 +547,30 @@ public:
      * \throw NoSuchTransformationException This exception is thrown if there is no possible transformation
      * between the stored type and the requested type.
      */
-
     VolumeCollection* getVolumeCollection() const throw (VoreenException);
-    
+
+#ifdef VRN_MODULE_PYTHON
+    /**
+     * Creates and returns a PyObject from the stored value.
+     *
+     * \throw OperationNotDefinedForInvalidVariantException This exception is thrown if the method was called
+     * on an invalid Variant, which is not defined behavior
+     * \throw NoSuchTransformationException This exception is thrown if there is no possible transformation
+     * between the stored type and the requested type.
+     */
+    PyObject* getPythonObject() const throw (VoreenException);
+
+    /**
+     * Returns the stored value as a std::string which is parseable by PyArg_ParseTuple
+     *
+     * \throw OperationNotDefinedForInvalidVariantException This exception is thrown if the method was called
+     * on an invalid Variant, which is not defined behavior
+     * \throw NoSuchTransformationException This exception is thrown if there is no possible transformation
+     * between the stored type and the requested type.
+     */
+    std::string getPythonString() const throw (VoreenException);
+#endif
+
     /// Stores the given bool in this variant and overwrites the old value
     void setBool(const bool& value) throw ();
 
@@ -739,6 +790,10 @@ private:
     void set(const tgt::Camera& value, VariantType type);
     void set(const VolumeHandle& value, VariantType type);
     void set(const VolumeCollection& value, VariantType type);
+
+#ifdef VRN_MODULE_PYTHON
+    void setPython(PyObject* obj, VariantType type) throw (VoreenException);
+#endif
 
     template<class T>
     const std::string toString(const T& value) const;

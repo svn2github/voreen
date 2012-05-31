@@ -29,6 +29,10 @@
 #include "voreen/core/properties/property.h"
 #include "voreen/core/properties/propertywidget.h"
 
+#ifdef VRN_REMOTE_CONTROL
+#include "voreen/core/remote/remotecontroller.h"
+#endif
+
 namespace voreen {
 
 Property::Property(const std::string& id, const std::string& guiText, Processor::InvalidationLevel invalidationLevel)
@@ -91,6 +95,12 @@ bool Property::getWidgetsEnabled() const {
 }
 
 void Property::initialize() throw (tgt::Exception) {
+#ifdef VRN_REMOTE_CONTROL
+    RemoteController* controller = VoreenApplication::app()->getRemoteController();
+    if (controller)
+        onChange(Call1ParMemberAction<RemoteController, Property*>(controller, &RemoteController::transmitPropertyChange, this));
+    
+#endif
     // currently nothing to do
 }
 
@@ -364,5 +374,7 @@ int Property::getVariantType() const {
 }
 
 void Property::setVariant(const Variant&, bool) {}
+
+void Property::onChange(const Action&) {}
 
 } // namespace voreen

@@ -145,7 +145,7 @@ void FloatVec4Property::setVariant(const Variant& val, bool normalized) {
 }
 
 int FloatVec4Property::getVariantType() const {
-    return Variant::VariantTypeIVec4;
+    return Variant::VariantTypeVec4;
 }
 
 //---------------------------------------------------------------------------

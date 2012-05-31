@@ -128,8 +128,6 @@ ConsolePlugin::ConsolePlugin(QWidget* parent, tgt::LogLevel logLevel, bool autoS
 
     clearText_ = new QAction("Erase All", consoleText_);
     connect(clearText_, SIGNAL(triggered()), consoleText_, SLOT(clear()));
-    clearText_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_E));
-    ctrlButtonDown_ = false;
 
     disableAction_ = new QAction("Disable", this);
     disableAction_->setCheckable(true);
@@ -150,7 +148,6 @@ ConsolePlugin::ConsolePlugin(QWidget* parent, tgt::LogLevel logLevel, bool autoS
 }
 
 ConsolePlugin::~ConsolePlugin() {
-    
     QSettings settings;
     settings.beginGroup("ConsolePlugin");
     settings.setValue("disabled", disableAction_->isChecked());
@@ -162,28 +159,13 @@ ConsolePlugin::~ConsolePlugin() {
     }
 }
 
-void ConsolePlugin::keyPressEvent(QKeyEvent *e)
-{
-    switch(e->key()){
-        case Qt::Key_Control:
-            ctrlButtonDown_ = true;
-            break;
-        case Qt::Key_E:
-            if(ctrlButtonDown_)
-                consoleText_->clear();
-            break;
-    }
+void ConsolePlugin::keyPressEvent(QKeyEvent* e) {
+    if (e->key() == Qt::Key_E && e->modifiers() == Qt::ControlModifier)
+        consoleText_->clear();
 }
 
-void ConsolePlugin::keyReleaseEvent(QKeyEvent *e)
-{
-    if(e->key() == Qt::Key_Control)
-        ctrlButtonDown_ = false;
-}
-
-void ConsolePlugin::showContextMenu(const QPoint &pt)
-{
-    QMenu *menu = consoleText_->createStandardContextMenu();
+void ConsolePlugin::showContextMenu(const QPoint& pt) {
+    QMenu* menu = consoleText_->createStandardContextMenu();
     menu->addSeparator();
     menu->addAction(clearText_);
     menu->addSeparator();
@@ -198,7 +180,6 @@ void ConsolePlugin::disableToggled(){
 }
 
 void ConsolePlugin::log(const std::string& msg) {
-
     if (disableAction_->isChecked())
         return;
 

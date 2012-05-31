@@ -31,6 +31,8 @@
 
 #include "voreen/core/properties/condition.h"
 
+#include <set>
+
 namespace voreen {
 
 template<typename T> class TemplateProperty;

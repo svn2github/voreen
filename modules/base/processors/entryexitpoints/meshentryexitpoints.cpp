@@ -245,8 +245,10 @@ void MeshEntryExitPoints::process() {
     glDisable(GL_CULL_FACE);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
+    glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+    glLoadIdentity();
     LGL_ERROR;
 
     if (entryPort_.isReady()) {

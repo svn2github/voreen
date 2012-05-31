@@ -141,7 +141,8 @@ void SettingsDialog::updateGPUMemoryDisplay() {
     features.precision(6);
     features.clear();
     features.str("");
-    features << static_cast<float>(GpuCaps.getCurrentAvailableTextureMem(false))/1024.f << " MB";
+    int currentMem = GpuCaps.getCurrentAvailableTextureMem(false);
+    features << static_cast<float>(currentMem)/1024.f << " MB";
     curGPUMemoryLabel_->setText(QString::fromStdString(features.str()));
 }
 

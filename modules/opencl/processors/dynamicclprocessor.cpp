@@ -79,7 +79,7 @@ DynamicCLProcessor::DynamicCLProcessor()
     clDefines << " -cl-fast-relaxed-math -cl-mad-enable";
 
     // set include path for modules
-    clDefines << " -I" << VoreenApplication::app()->getBasePath() + "/modules/opencl/cl/";
+    clDefines << " -I " << tgt::FileSystem::shortPath(VoreenApplication::app()->getBasePath()) + "/modules/opencl/cl/";
 
     openclProp_.setDefines(clDefines.str());
     openclProp_.onChange(CallMemberAction<DynamicCLProcessor>(this, &DynamicCLProcessor::buildAndInit));

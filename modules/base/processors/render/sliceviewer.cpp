@@ -340,6 +340,8 @@ void SliceViewer::process() {
         setupSliceShader(&texUnit, &transferUnit, bitScale);
     }
     else if (texMode_.isSelected("3d-texture")) {   // 3D texture
+        setupVolumeShader(inport_.getData(), &texUnit, &transferUnit,0, lightPosition_.get()); // also binds the volume
+
         const VolumeGL* volumeGL = inport_.getData()->getRepresentation<VolumeGL>();
         const VolumeTexture* tex = volumeGL->getTexture();
         if (!tex) {
@@ -348,8 +350,6 @@ void SliceViewer::process() {
             LGL_ERROR;
             return;
         }
-
-        setupVolumeShader(inport_.getData(), &texUnit, &transferUnit,0, lightPosition_.get()); // also binds the volume
     }
     else {
         LERROR("unknown texture mode: " << texMode_.get());

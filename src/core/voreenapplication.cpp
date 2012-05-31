@@ -67,6 +67,10 @@
     #include "CoreFoundation/CFBundle.h"
 #endif
 
+#ifdef VRN_REMOTE_CONTROL
+#include "voreen/core/remote/remotecontroller.h"
+#endif
+
 using std::string;
 
 namespace voreen {
@@ -182,6 +186,9 @@ VoreenApplication::VoreenApplication(const std::string& name, const std::string&
     , name_(name)
     , displayName_(displayName)
     , cmdParser_(displayName)
+#ifdef VRN_REMOTE_CONTROL
+    , remoteController_(0)
+#endif
     , logLevel_(tgt::Info)
     , initialized_(false)
     , initializedGL_(false)
@@ -217,7 +224,6 @@ void VoreenApplication::prepareCommandParser() {
 }
 
 void VoreenApplication::initialize() {
-
     if (initialized_) {
         if (tgt::LogManager::isInited())
             LWARNING("init() Application already initialized. Skip.");
@@ -485,6 +491,12 @@ void VoreenApplication::deinitializeGL() throw (VoreenException) {
 VoreenApplication* VoreenApplication::app() {
     return app_;
 }
+
+#ifdef VRN_REMOTE_CONTROL
+RemoteController* VoreenApplication::getRemoteController() const {
+    return remoteController_;
+}
+#endif
 
 void VoreenApplication::addModule(VoreenModule* module) {
     tgtAssert(module, "null pointer passed");

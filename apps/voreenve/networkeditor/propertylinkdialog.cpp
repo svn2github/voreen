@@ -214,7 +214,7 @@ PropertyLinkDialog::PropertyLinkDialog(QWidget* parent, RootGraphicsItem* source
 }
 
 PropertyLinkDialog::PropertyLinkDialog(QWidget* parent, PropertyGraphicsItem* sourceGraphicsItem, PropertyGraphicsItem* destGraphicsItem,
-                                       const PropertyLink* link, PropertyLinkDirection selectedButton)
+                                       const PropertyLink* link, const PropertyLink* secondLink)
     : QDialog(parent)
 {
     tgtAssert(sourceGraphicsItem, "null pointer");
@@ -230,32 +230,16 @@ PropertyLinkDialog::PropertyLinkDialog(QWidget* parent, PropertyGraphicsItem* so
     init();
     initPropertyItems(sourceGraphicsItem, destGraphicsItem);
 
-    LinkDialogArrowGraphicsItem* arrow = 0;
-    if ((selectedButton == PropertyLinkDirectionToRight) || (selectedButton == PropertyLinkDirectionBidirectional)) {
-        arrow = new LinkDialogArrowGraphicsItem(sourcePropertyItem_);
-        arrow->setDestinationItem(destinationPropertyItem_);
-        view_->scene()->addItem(arrow);
-        createdArrow(arrow, false);
-        connectionMap_[arrow].evaluator = link->getLinkEvaluator();
+    propertyLinkModeButton_->click();
 
-        if (evaluatorIsDependencyLinkEvaluator(link->getLinkEvaluator()))
-            arrow->setNormalColor(arrowColorDependency);
-    }
-    if ((selectedButton == PropertyLinkDirectionToLeft) || (selectedButton == PropertyLinkDirectionBidirectional)) {
-        arrow = new LinkDialogArrowGraphicsItem(destinationPropertyItem_);
-        arrow->setDestinationItem(sourcePropertyItem_);
-        view_->scene()->addItem(arrow);
-        createdArrow(arrow, false);
-        if (connectionMap_.contains(arrow))
-            connectionMap_[arrow].evaluator = link->getLinkEvaluator();
-
-        if (evaluatorIsDependencyLinkEvaluator(link->getLinkEvaluator()))
-            arrow->setNormalColor(arrowColorDependency);
+    LinkDialogArrowGraphicsItem* arrow = createArrowFromPropertyLink(const_cast<PropertyLink*>(link));
+    connectionMap_[arrow].bidirectional = false;
+    if (secondLink) {
+        createArrowFromPropertyLink(const_cast<PropertyLink*>(secondLink));
+        connectionMap_[arrow].bidirectional = true;
     }
 
     sceneSelectionChanged();
-    previouslyExistingLinks_.append(const_cast<PropertyLink*>(link));
-    existingLinksMap_.insert(arrow, const_cast<PropertyLink*>(link));
 }
 
 void PropertyLinkDialog::init() {
@@ -918,7 +902,7 @@ void PropertyLinkDialog::createPropertyLink() {
     emit accept();
 }
 
-void PropertyLinkDialog::createArrowFromPropertyLink(PropertyLink* link) {
+LinkDialogArrowGraphicsItem* PropertyLinkDialog::createArrowFromPropertyLink(PropertyLink* link) {
     LinkDialogPropertyGraphicsItem* srcItem = 0;
     foreach (QGraphicsItem* item, view_->scene()->items()) {
         LinkDialogPropertyGraphicsItem* propItem = qgraphicsitem_cast<LinkDialogPropertyGraphicsItem*>(item);
@@ -962,6 +946,7 @@ void PropertyLinkDialog::createArrowFromPropertyLink(PropertyLink* link) {
     else
         arrow->setNormalColor(Qt::black);
 
+    return arrow;
 }
 
 // ------------------------------------------------------------------------------------------------

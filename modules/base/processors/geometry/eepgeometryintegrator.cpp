@@ -113,7 +113,7 @@ void EEPGeometryIntegrator::process() {
     if (volumeInport_.isReady())
         program_->setUniform("volumeSize_", volumeInport_.getData()->getCubeSize()); //TODO: test (stefan)
     else {
-        LWARNING("Volume inport not connected: assuming cubic volume");
+        //LWARNING("Volume inport not connected: assuming cubic volume");
         program_->setUniform("volumeSize_", tgt::vec3(2.f));
     }
 

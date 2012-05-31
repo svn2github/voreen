@@ -53,6 +53,7 @@ class PropertyWidget;
 class VoreenModule;
 class NetworkEvaluator;
 class ProgressBar;
+class RemoteController;
 
 /**
  * Represents basic properties of a Voreen application. There should only be one instance of
@@ -122,6 +123,10 @@ public:
      * Returns the network evaluator.
      */
     NetworkEvaluator* getNetworkEvaluator() const;
+
+#ifdef VRN_REMOTE_CONTROL
+    RemoteController* getRemoteController() const;
+#endif
 
     /**
      * Performs basic initializations as controlled by appType_, which do not require OpenGL access:
@@ -359,6 +364,10 @@ protected:
     std::string name_;
     std::string displayName_;
     CommandlineParser cmdParser_;
+
+#ifdef VRN_REMOTE_CONTROL
+    RemoteController* remoteController_;
+#endif
 
     std::string basePath_;
     std::string cachePath_;

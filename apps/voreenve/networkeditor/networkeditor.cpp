@@ -1640,7 +1640,7 @@ void NetworkEditor::editPropertyLinkSlot() {
     else
         linkType = PropertyLinkDialog::PropertyLinkDirectionToRight;
 
-    PropertyLinkDialog* dialog = new PropertyLinkDialog(this, selectedLinkArrow_->getSourceItem(), selectedLinkArrow_->getDestinationItem(), linkMap_[selectedLinkArrow_].first, linkType);
+    PropertyLinkDialog* dialog = new PropertyLinkDialog(this, selectedLinkArrow_->getSourceItem(), selectedLinkArrow_->getDestinationItem(), linkMap_[selectedLinkArrow_].first, linkMap_[selectedLinkArrow_].second);
     connect(dialog, SIGNAL(createLink(const Property*, const Property*, LinkEvaluatorBase*)), this, SLOT(editPropertyLink(const Property*, const Property*, LinkEvaluatorBase*)));
     connect(dialog, SIGNAL(removeLink(PropertyLink*)), this, SLOT(removePropertyLink(PropertyLink*)));
     dialog->exec();

@@ -70,7 +70,13 @@ ShaderPreprocessor::ShaderPreprocessor(ShaderObject* obj, Mode /*mode*/)
 }
 
 void ShaderPreprocessor::parsePart(const std::string& input, const std::string& name) {
-    std::istringstream source(input);
+    std::string in = input;
+    if (GpuCaps.getVendor() == GpuCapabilities::GPU_VENDOR_ATI) {   
+        replaceLineCharacterContinuation(in);
+        fixAmdBugSamplerInStruct(in, name);
+    }
+    
+    std::istringstream source(in);
     int locallinenumber = 0;
 
     lineTracker_.push_back(ShaderObject::LineInfo(activeLine_, name, 1));
@@ -232,6 +238,124 @@ GLint ShaderPreprocessor::getGeomShaderInputType() const {
 
 GLint ShaderPreprocessor::getGeomShaderVerticesOut() const {
     return verticesOut_;
+}
+
+//Line character continuation fix
+void ShaderPreprocessor::replaceLineCharacterContinuation(std::string& in) {
+    std::string::size_type pos = 0;
+    std::string eraseLine = std::string("\\");
+#ifdef WIN32
+    eraseLine.append("\r\n");
+#elif __APPLE__
+    eraseLine.append("\r");
+#else
+    eraseLine.append("\n");
+#endif
+    std::string::size_type eraseLineSize = eraseLine.size();
+    while((pos = in.find(eraseLine,pos)) != string::npos) {
+        in.erase(pos,eraseLineSize);
+    }
+}
+
+//Fix for AMD "sampler in struct" not working properly.
+//Driver issue, see http://devgurus.amd.com/thread/152033
+void ShaderPreprocessor::fixAmdBugSamplerInStruct(std::string& in, const std::string& name) {
+    std::string::size_type pos = 0;
+    pos = 0;
+    std::string::size_type insertPos = 0;
+    if(name == "HEADER"){
+        std::string VolStructStr = std::string("volumeStruct");
+        while((pos = in.find(VolStructStr,pos)) != string::npos) {
+            pos += VolStructStr.length();
+            in.insert(pos, ", volumeStructVolume");
+            pos += 20;
+        }
+    }
+    else{
+        std::string::size_type lastPos = 0;
+        std::string VolStructStr = std::string("VOLUME_STRUCT ");
+        std::string structStr = std::string("struct ");
+        std::string uniformStr = std::string("niform ");
+        std::string beforeVolStructStr = "";
+        std::string VolStructNameStr = "";
+        while((pos = in.find(VolStructStr,pos)) != string::npos) {
+            beforeVolStructStr = in.substr(pos-structStr.length(), structStr.length());
+            pos += VolStructStr.length();
+
+            if(beforeVolStructStr != structStr){
+                if(beforeVolStructStr != uniformStr){
+                    //Change sampler call for previous found VolStructNameStr
+                    if(!VolStructNameStr.empty()){
+                        std::string::size_type insidePos = lastPos;
+                        while((insidePos = in.find(VolStructNameStr,insidePos)) < pos) {
+                            std::string firstChar = in.substr(insidePos+VolStructNameStr.length(), 1);
+                            if(firstChar == "," || firstChar == ")"){
+                                insidePos += VolStructNameStr.length();
+                                in.insert(insidePos, ","+VolStructNameStr+"Volume");
+                                pos += VolStructNameStr.length()+7;
+                            }
+                            else if(in.substr(insidePos+VolStructNameStr.length(), 8) == ".volume_"){
+                                in.replace(insidePos+VolStructNameStr.length(), 8, "Volume");
+                                insidePos += VolStructNameStr.length()+6;
+                                pos -= 2;
+                            }
+                            else
+                                insidePos += VolStructNameStr.length();
+                        }
+                    }
+
+                    insertPos = in.find_first_of(",)",pos);
+                    VolStructNameStr = in.substr(pos, insertPos-pos);
+                    lastPos = insertPos;
+
+                    in.insert(insertPos, std::string(",sampler3D ") + VolStructNameStr + std::string("Volume"));
+                }
+                else{
+                    insertPos = in.find(";",pos);
+                    VolStructNameStr = in.substr(pos, insertPos-pos);
+
+                    //Should only be found one time per shader, so search whole string
+                    std::string::size_type insidePos = pos;
+                    while((insidePos = in.find(VolStructNameStr,insidePos)) != string::npos) {
+                        insidePos += VolStructNameStr.length();
+                        std::string endStr = in.substr(insidePos,1);
+                        if(endStr != "." && endStr != ";"){
+                            in.insert(insidePos, ","+VolStructNameStr+"Volume_");
+                            insidePos += VolStructNameStr.length() + 8;
+                        }
+                    }
+                    insidePos = 0;
+                    while((insidePos = in.find(VolStructNameStr+".volume_",insidePos)) != string::npos) {
+                        in.replace(insidePos, VolStructNameStr.length()+8, VolStructNameStr+"Volume_");
+                    }
+
+                    in.insert(insertPos+1, std::string("uniform sampler3D ") + VolStructNameStr + std::string("Volume_;"));
+                    VolStructNameStr = "";
+                }
+            }
+            else
+                VolStructNameStr = "";
+        }
+        //Change sampler call for previous found VolStructNameStr
+        if(!VolStructNameStr.empty()){
+            std::string::size_type insidePos = lastPos;
+            while((insidePos = in.find(VolStructNameStr,insidePos)) != string::npos) {
+                std::string firstChar = in.substr(insidePos+VolStructNameStr.length(), 1);
+                if(firstChar == "," || firstChar == ")"){
+                    insidePos += VolStructNameStr.length();
+                    in.insert(insidePos, ","+VolStructNameStr+"Volume");
+                    pos += VolStructNameStr.length()+7;
+                }
+                else if(in.substr(insidePos+VolStructNameStr.length(), 8) == ".volume_"){
+                    in.replace(insidePos+VolStructNameStr.length(), 8, "Volume");
+                    insidePos += VolStructNameStr.length()+6;
+                    pos -= 2;
+                }
+                else
+                    insidePos += VolStructNameStr.length();
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -361,8 +361,8 @@ std::string RenderProcessor::generateHeader(const tgt::GpuCapabilities::GlVersio
     //if no version is supplied, use up tp 1.30 as default.
     if (version && GpuCaps.getShaderVersion() >= *version)
         useVersion = *version;
-    else if(GpuCaps.getShaderVersion() > GpuCapabilities::GlVersion::SHADER_VERSION_410)
-        useVersion = GpuCapabilities::GlVersion::SHADER_VERSION_410;
+    else if(GpuCaps.getShaderVersion() > GpuCapabilities::GlVersion::SHADER_VERSION_420)
+        useVersion = GpuCapabilities::GlVersion::SHADER_VERSION_420;
     else
         useVersion = GpuCaps.getShaderVersion();
 
@@ -382,6 +382,8 @@ std::string RenderProcessor::generateHeader(const tgt::GpuCapabilities::GlVersio
 
     header += "\n";
 
+    if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_420)
+        header += "#define GLSL_VERSION_420\n";
     if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_410)
         header += "#define GLSL_VERSION_410\n";
     if (useVersion >= GpuCapabilities::GlVersion::SHADER_VERSION_400)

@@ -131,7 +131,8 @@ void RaycasterCL::beforeProcess() {
 
         // set include path for modules
         // TODO: Include path in OpenCL with / does not work on windows. It should be replaced by two backslashes
-        clDefines << " -I" << VoreenApplication::app()->getBasePath() + "/modules/opencl/cl/";
+        // Use shortPath in order to get a path without spaces (nvidia compiler cannot handle paths with spaces)  
+        clDefines << " -I " << tgt::FileSystem::shortPath(VoreenApplication::app()->getBasePath()) + "/modules/opencl/cl/";
 
         // Support for 12 bit data.
         RealWorldMapping rwm = volumePort_.getData()->getRealWorldMapping();

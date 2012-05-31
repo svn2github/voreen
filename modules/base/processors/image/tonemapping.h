@@ -26,46 +26,56 @@
  *                                                                    *
  **********************************************************************/
 
-#ifndef VRN_CONSOLEPLUGIN_H
-#define VRN_CONSOLEPLUGIN_H
+#ifndef VRN_TONEMAPPING_H
+#define VRN_TONEMAPPING_H
 
-#include <QWidget>
-#include <QKeyEvent>
+#include "voreen/core/processors/imageprocessor.h"
 
-#include "voreen/qt/voreenqtdefine.h"
-#include "tgt/logmanager.h"
-
-class QTextEdit;
+#include "voreen/core/properties/optionproperty.h"
+#include "voreen/core/properties/floatproperty.h"
 
 namespace voreen {
 
-class ConsoleLogQt;
-
-class VRN_QT_API ConsolePlugin : public QWidget {
-Q_OBJECT
+/**
+ * Performs different tone mapping upon input texture.
+ */
+class ToneMapping : public ImageProcessor {
 public:
-    ConsolePlugin(QWidget* parent = 0, tgt::LogLevel logLevel = tgt::Info, bool autoScroll = true);
-    ~ConsolePlugin();
+    ToneMapping();
+    virtual Processor* create() const { return new ToneMapping(); }
 
-    void log(const std::string& msg);
+    virtual std::string getCategory() const { return "Image Processing"; }
+    virtual std::string getClassName() const { return "ToneMapping"; }
+    virtual CodeState getCodeState() const { return CODE_STATE_EXPERIMENTAL; }
 
-public slots:
-    void showContextMenu(const QPoint &pt);
+protected:
+    void process();
+    virtual std::string generateHeader(const tgt::GpuCapabilities::GlVersion* version = 0);
+    virtual void compile();
+
+    void toneMappingMethodChanged();
+    void rahmanUpdate();
+
+    virtual void initialize() throw (tgt::Exception);
+
+    StringOptionProperty toneMappingMethod_;
+
+    FloatProperty scurveSigma_;
+    FloatProperty scurvePower_;
+    FloatProperty rahmanFrequency_;
+    FloatProperty rahmanSubtractionFactor_;
+    FloatProperty rahmanIterations_;
+    FloatProperty rahmanMaxLevel_;
+
+    RenderPort inport_;
+    RenderPort outport_;
 
 private:
-    void keyPressEvent(QKeyEvent* e);
-
-    ConsoleLogQt* log_;
-    QTextEdit* consoleText_;
-    QAction* clearText_;
-    QAction* disableAction_;
-    bool autoScroll_;
-
-private slots:
-    void disableToggled();
-
+    bool rahmanTotalUpdate_;
+    float wTotal_;
 };
+
 
 } // namespace voreen
 
-#endif // VRN_CONSOLEPLUGIN_H
+#endif //VRN_TONEMAPPING_H

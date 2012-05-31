@@ -68,7 +68,7 @@ public:
     PropertyLinkDialog(QWidget* parent, RootGraphicsItem* sourceGraphicsItem, RootGraphicsItem* destGraphicsItem,
                        const QList<PropertyLink*>& existingLinks = QList<PropertyLink*>());
     PropertyLinkDialog(QWidget* parent, PropertyGraphicsItem* sourceGraphicsItem, PropertyGraphicsItem* destGraphicsItem,
-                       const PropertyLink* link, PropertyLinkDirection selectedButton = PropertyLinkDirectionBidirectional);
+                       const PropertyLink* link, const PropertyLink* secondLink = 0);
 
     bool getNewArrowIsBirectional() const;
     bool allowConnectionBetweenProperties(const Property* p1, const Property* p2) const;
@@ -118,7 +118,7 @@ private:
 
     void addProbationalConnection(ConnectionInfo info);
 
-    void createArrowFromPropertyLink(PropertyLink* link);
+    LinkDialogArrowGraphicsItem* createArrowFromPropertyLink(PropertyLink* link);
 
     RootGraphicsItem* sourceGraphicsItem_;
     RootGraphicsItem* destinationGraphicsItem_;

@@ -54,6 +54,7 @@ class PerformanceRecordWidget;
 class ProcessorListWidget;
 class PropertyListWidget;
 class PropertyStateWidget;
+class RemoteControllerWidget;
 class RenderTargetViewer;
 class SettingsDialog;
 class SnapshotWidget;
@@ -309,6 +310,9 @@ private:
     RenderTargetViewer* renderTargetViewer_;
     PropertyStateWidget* propertyStateWidget_;
     PerformanceRecordWidget* performanceRecordWidget_;
+#ifdef VRN_REMOTE_CONTROL
+    RemoteControllerWidget* remoteControllerWidget_;
+#endif
     SnapshotWidget* snapshotWidget_;
     
     // additional widgets

@@ -63,6 +63,7 @@ SOURCES += \
     $${VRN_MODULE_DIR}/base/processors/image/regionofinterest2d.cpp \
     $${VRN_MODULE_DIR}/base/processors/image/targettotexture.cpp \
     $${VRN_MODULE_DIR}/base/processors/image/texturetotarget.cpp \
+    $${VRN_MODULE_DIR}/base/processors/image/tonemapping.cpp \
     $${VRN_MODULE_DIR}/base/processors/image/unaryimageprocessor.cpp \
     $${VRN_MODULE_DIR}/base/processors/image/unsharpmasking.cpp \
     $${VRN_MODULE_DIR}/base/processors/proxygeometry/cubemeshproxygeometry.cpp \
@@ -213,6 +214,7 @@ HEADERS += \
     $${VRN_MODULE_DIR}/base/processors/image/regionofinterest2d.h \
     $${VRN_MODULE_DIR}/base/processors/image/targettotexture.h \
     $${VRN_MODULE_DIR}/base/processors/image/texturetotarget.h \
+    $${VRN_MODULE_DIR}/base/processors/image/tonemapping.h \
     $${VRN_MODULE_DIR}/base/processors/image/unaryimageprocessor.h \
     $${VRN_MODULE_DIR}/base/processors/image/unsharpmasking.h \
     $${VRN_MODULE_DIR}/base/processors/proxygeometry/cubemeshproxygeometry.h \
@@ -341,6 +343,7 @@ SHADER_SOURCES += \
     $${VRN_MODULE_DIR}/base/glsl/image/orientationoverlay.frag \
     $${VRN_MODULE_DIR}/base/glsl/image/scale.frag \
     $${VRN_MODULE_DIR}/base/glsl/image/texturetotarget.frag \
+    $${VRN_MODULE_DIR}/base/glsl/image/tonemapping.frag \
     $${VRN_MODULE_DIR}/base/glsl/image/unary.frag \
     $${VRN_MODULE_DIR}/base/glsl/image/unsharpmaskingblur.frag \
     $${VRN_MODULE_DIR}/base/glsl/image/unsharpmaskingmask.frag \

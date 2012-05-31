@@ -37,6 +37,10 @@
 #include "tgt/filesystem.h"
 #include "tgt/shadermanager.h"
 
+#ifdef VRN_REMOTE_CONTROL
+#include "voreen/qt/remotecontrollerqt.h"
+#endif
+
 #ifndef VRN_NO_REGISTRATION_HEADER_GENERATION
     #include "modules/gen_moduleregistration_qt.h"
 #else
@@ -84,6 +88,11 @@ void VoreenApplicationQt::initialize() {
 
     // Set the path for temporary files
     temporaryPath_ = QDir::tempPath().toStdString();
+
+#ifdef VRN_REMOTE_CONTROL
+    remoteController_ = new RemoteControllerQt;
+    remoteController_->initialize();
+#endif
 
     //
     // Path detection

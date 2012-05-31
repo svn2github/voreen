@@ -32,6 +32,10 @@
 #include "voreen/core/voreencoredefine.h"
 #include "voreen/core/properties/allactions.h"
 
+#include <exception>
+#include <string>
+#include <vector>
+
 namespace voreen {
 
 class OptionPropertyBase;

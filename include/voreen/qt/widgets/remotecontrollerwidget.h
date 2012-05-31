@@ -26,46 +26,47 @@
  *                                                                    *
  **********************************************************************/
 
-#ifndef VRN_CONSOLEPLUGIN_H
-#define VRN_CONSOLEPLUGIN_H
+#ifndef VRN_REMOTECONTROLLERWIDGET_H
+#define VRN_REMOTECONTROLLERWIDGET_H
 
 #include <QWidget>
-#include <QKeyEvent>
 
+#include "voreen/core/remote/remotecontroller.h"
 #include "voreen/qt/voreenqtdefine.h"
-#include "tgt/logmanager.h"
 
-class QTextEdit;
+class QLabel;
+class QLineEdit;
+class QListWidget;
+class QPushButton;
 
 namespace voreen {
 
-class ConsoleLogQt;
-
-class VRN_QT_API ConsolePlugin : public QWidget {
+class VRN_QT_API RemoteControllerWidget : public QWidget, public RemoteControllerObserver {
 Q_OBJECT
 public:
-    ConsolePlugin(QWidget* parent = 0, tgt::LogLevel logLevel = tgt::Info, bool autoScroll = true);
-    ~ConsolePlugin();
+    RemoteControllerWidget(QWidget* parent = 0);
+    ~RemoteControllerWidget();
 
-    void log(const std::string& msg);
-
-public slots:
-    void showContextMenu(const QPoint &pt);
-
-private:
-    void keyPressEvent(QKeyEvent* e);
-
-    ConsoleLogQt* log_;
-    QTextEdit* consoleText_;
-    QAction* clearText_;
-    QAction* disableAction_;
-    bool autoScroll_;
+    void connectionStatusChanged(ConnectionStatus newStatus);
+    void errorOccurred(ConnectionError error);
+    void receivedWorkspaceList(const std::string& list);
 
 private slots:
-    void disableToggled();
+    void connectButtonPressed();
+    void loadRemoteWorkspaceButtonPressed();
+    void sendActiveNetworkButtonPressed();
 
+private:
+    QLineEdit* ipAddressEdit_;
+    QLineEdit* portEdit_;
+    QLabel* connectionStatusLabel_;
+    QPushButton* connectButton_;
+    QListWidget* workspacesListWidget_;
+
+    QString ipAddress_;
 };
 
-} // namespace voreen
 
-#endif // VRN_CONSOLEPLUGIN_H
+} // namespace
+
+#endif // VRN_REMOTECONTROLLERWIDGET_H

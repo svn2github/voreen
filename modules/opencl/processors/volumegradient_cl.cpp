@@ -110,8 +110,8 @@ void VolumeGradientCL::beforeProcess() {
 
         // set include path for modules
         // TODO:  replace slashes with double-backslashes
-        std::string inc = VoreenApplication::app()->getBasePath() + "/modules/opencl/cl/";
-        clDefines << " -I" << inc << " ";
+        std::string inc = tgt::FileSystem::shortPath(VoreenApplication::app()->getBasePath()) + "/modules/opencl/cl/";
+        clDefines << " -I " << inc << " ";
 
         if(technique_.get() == "central-differences")
             clDefines << " -DGRADIENT_CENTRAL ";

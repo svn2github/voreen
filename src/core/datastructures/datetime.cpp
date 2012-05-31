@@ -180,7 +180,7 @@ void DateTime::serialize(XmlSerializer& s) const {
 }
 
 void DateTime::deserialize(XmlDeserializer& s) {
-    int typeInt;
+    int typeInt = 0;
     s.optionalDeserialize<int>("type", typeInt, DATETIME);
     type_ = Type(typeInt);
 

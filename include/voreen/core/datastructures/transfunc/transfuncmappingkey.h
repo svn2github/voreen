@@ -93,7 +93,7 @@ public:
      *
      * @return color of the left part of the key
      */
-    tgt::col4& getColorL();
+    const tgt::col4& getColorL() const;
 
     /**
      * Sets the color of the right part of the key to the given value.
@@ -114,7 +114,7 @@ public:
      *
      * @return color of the right part of the key
      */
-    tgt::col4& getColorR();
+    const tgt::col4& getColorR() const;
 
     /**
      * Sets the alpha value of the right part of the key to the given value.
@@ -137,21 +137,21 @@ public:
      *
      * @return alpha value of the right part of the key
      */
-    float getAlphaR();
+    float getAlphaR() const;
 
     /**
      * Returns the alpha value of the left part of the key as float (0.f-1.f).
      *
      * @return alpha value of the left part of the key
      */
-    float getAlphaL();
+    float getAlphaL() const;
 
     /**
      * Returns whether the key is split or not.
      *
      * @return true if the key is split, false otherwise.
      */
-    bool isSplit();
+    bool isSplit() const;
 
     /**
      * Splits or unsplits this key.
@@ -166,7 +166,7 @@ public:
      *
      * @return intensity at which the key is located
      */
-    float getIntensity();
+    float getIntensity() const;
 
     /**
      * Sets the intensity of the key to the given value. The keys of the transfer function

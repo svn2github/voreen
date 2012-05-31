@@ -264,6 +264,12 @@ SOURCES += \
     widgets/transfunc/transfuncmappingcanvasramp.cpp \
     widgets/transfunc/transfuncplugin.cpp \
     widgets/transfunc/transfunctexturepainter.cpp
+    
+contains(DEFINES, VRN_REMOTE_CONTROL) {
+SOURCES += \
+    remotecontrollerqt.cpp \
+    widgets/remotecontrollerwidget.cpp \
+}
 
 SOURCES += \
     ../../ext/tgt/qt/qtcanvas.cpp \
@@ -388,6 +394,11 @@ HEADERS += \
     ../../include/voreen/qt/widgets/transfunc/transfuncplugin.h \
     ../../include/voreen/qt/widgets/transfunc/transfunctexturepainter.h
 
+contains(DEFINES, VRN_REMOTE_CONTROL) {
+HEADERS += \
+    ../../include/voreen/qt/remotecontrollerqt.h \
+    ../../include/voreen/qt/widgets/remotecontrollerwidget.h \
+}
 
 HEADERS += \
     ../../ext/tgt/qt/qtcanvas.h \

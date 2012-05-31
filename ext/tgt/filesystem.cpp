@@ -808,6 +808,33 @@ std::string FileSystem::relativePath(const std::string& path, const std::string&
     return cleanupPath(relative);
 }
 
+std::string FileSystem::shortPath(const string& path) {
+    string result(path);
+#ifdef WIN32
+    long length = 0;
+    char* buffer = NULL;
+    // First obtain the size needed by passing NULL and 0.
+    length = GetShortPathName(path.c_str(), NULL, 0);
+
+    if (length == 0) {
+        return path;
+    }
+    // Dynamically allocate the correct size 
+    buffer = static_cast<char*>(malloc(length));
+    buffer[0] = 0;
+    // Retrieve short path.
+    if (GetShortPathName(path.c_str(), buffer, length) == 0) {
+        free(buffer);
+        buffer = 0;
+    } 
+    if (buffer) {
+        result = std::string(buffer);
+        free(buffer);
+    }
+#endif
+    return result;
+}
+
 string FileSystem::fileName(const string& filepath) {
     string::size_type separator = filepath.find_last_of("/\\");
     if (separator != string::npos)

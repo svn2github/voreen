@@ -26,46 +26,45 @@
  *                                                                    *
  **********************************************************************/
 
-#ifndef VRN_CONSOLEPLUGIN_H
-#define VRN_CONSOLEPLUGIN_H
+#ifndef VRN_REMOTECONTROLLERQT_H
+#define VRN_REMOTECONTROLLERQT_H
 
-#include <QWidget>
-#include <QKeyEvent>
-
+#include "voreen/core/remote/remotecontroller.h"
 #include "voreen/qt/voreenqtdefine.h"
-#include "tgt/logmanager.h"
 
-class QTextEdit;
+#include <QAbstractSocket>
+#include <QObject>
+
+class QTcpSocket;
+class QNetworkSession;
 
 namespace voreen {
 
-class ConsoleLogQt;
+class Property;
 
-class VRN_QT_API ConsolePlugin : public QWidget {
+class VRN_QT_API RemoteControllerQt : public QObject, public RemoteController {
 Q_OBJECT
 public:
-    ConsolePlugin(QWidget* parent = 0, tgt::LogLevel logLevel = tgt::Info, bool autoScroll = true);
-    ~ConsolePlugin();
+    RemoteControllerQt();
+    ~RemoteControllerQt();
 
-    void log(const std::string& msg);
+    void initialize();
+    void deinitialize();
 
-public slots:
-    void showContextMenu(const QPoint &pt);
+    bool isConnected() const;
 
-private:
-    void keyPressEvent(QKeyEvent* e);
-
-    ConsoleLogQt* log_;
-    QTextEdit* consoleText_;
-    QAction* clearText_;
-    QAction* disableAction_;
-    bool autoScroll_;
+    void connectToAddress(const std::string& ipAddress, int port);
+    void disconnect();
 
 private slots:
-    void disableToggled();
+    void dataAvailableForRead();
+    void errorOccurred(QAbstractSocket::SocketError);
 
+private:
+    void sendMessage(const std::string& msg);
+    QTcpSocket* tcpSocket_;
 };
 
-} // namespace voreen
+} // namespace
 
-#endif // VRN_CONSOLEPLUGIN_H
+#endif // VRN_REMOTECONTROLLERQT_H

@@ -190,15 +190,19 @@ void TransFuncMappingCanvasRamp::calcKeysFromRampParameter() {
     TransFuncMappingKey* key0 = tf_->getKey(0);
     TransFuncMappingKey* key1 = tf_->getKey(1);
     key0->setIntensity(rampCenter_ - rampWidth_/2.f);
-    key0->getColorL().a = 0;
+    key0->setAlphaL(0.f);
+    //key0->getColorL().a = 0;
     key1->setIntensity(rampCenter_ + rampWidth_/2.f);
-    key1->getColorL().a = 255;
+    key1->setAlphaL(1.f);
+    //key1->getColorL().a = 255;
     if (key0->getIntensity() < 0.f) {
-        key0->getColorL().a = static_cast<unsigned char>(255.f * (-key0->getIntensity()*1.f/(key1->getIntensity()-key0->getIntensity())));
+        key0->setAlphaL(-key0->getIntensity()*1.f/(key1->getIntensity()-key0->getIntensity()));
+        //key0->getColorL().a = static_cast<unsigned char>(255.f * (-key0->getIntensity()*1.f/(key1->getIntensity()-key0->getIntensity())));
         key0->setIntensity(0.f);
     }
     if (key1->getIntensity() > 1.f) {
-        key1->getColorL().a = static_cast<unsigned char>(255.f * ((1.f-key0->getIntensity())*1.f/(key1->getIntensity()-key0->getIntensity())));
+        key1->setAlphaL((1.f-key0->getIntensity())*1.f/(key1->getIntensity()-key0->getIntensity()));
+        //key1->getColorL().a = static_cast<unsigned char>(255.f * ((1.f-key0->getIntensity())*1.f/(key1->getIntensity()-key0->getIntensity())));
         key1->setIntensity(1.f);
     }
     tf_->updateKey(key0);

@@ -95,6 +95,7 @@
 #include "modules/base/processors/image/quadview.h"
 #include "modules/base/processors/image/targettotexture.h"
 #include "modules/base/processors/image/texturetotarget.h"
+#include "modules/base/processors/image/tonemapping.h"
 #include "modules/base/processors/image/unsharpmasking.h"
 
 // proxy geometry
@@ -260,6 +261,7 @@ BaseModule::BaseModule() : VoreenModule() {
     addProcessor(new RegionOfInterest2D());
     addProcessor(new TargetToTexture);
     addProcessor(new TextureToTarget());
+    addProcessor(new ToneMapping());
     addProcessor(new UnaryImageProcessor());
     addProcessor(new UnsharpMasking());
 

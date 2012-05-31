@@ -28,7 +28,7 @@
 
 // Adapted from "Real-Time Volume Graphics"
 
-#include "modules/vrn_shaderincludes.frag"
+#include "modules/mod_sampler3d.frag"
 
 // uniforms needed for clipping code
 uniform int frontIdx_;

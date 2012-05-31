@@ -529,7 +529,11 @@ protected:
     GLint outputType_;
     GLint verticesOut_;
     
-    static const std::string loggerCat_;   
+    static const std::string loggerCat_; 
+
+private:
+    void replaceLineCharacterContinuation(std::string& in);
+    void fixAmdBugSamplerInStruct(std::string& in, const std::string& name);
 };
 
 } // namespace tgt

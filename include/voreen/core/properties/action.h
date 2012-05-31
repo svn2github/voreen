@@ -29,7 +29,7 @@
 #ifndef VRN_ACTION_H
 #define VRN_ACTION_H
 
-#include "voreen/core/properties/property.h"
+//#include "voreen/core/properties/property.h"
 
 namespace voreen {
 

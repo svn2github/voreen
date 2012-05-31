@@ -108,8 +108,10 @@ void QtCanvas::swap() {
 }
 
 void QtCanvas::getGLFocus() {
-    QGLWidget::doneCurrent();
-    QGLWidget::makeCurrent();
+    if(context() != context()->currentContext()){
+        QGLWidget::doneCurrent();
+        QGLWidget::makeCurrent();
+    }
 }
 
 void QtCanvas::toggleFullScreen() {

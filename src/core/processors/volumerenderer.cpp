@@ -86,6 +86,14 @@ void VolumeRenderer::bindVolumes(tgt::Shader* shader, const std::vector<VolumeSt
 
     for (size_t i=0; i < volumes.size(); ++i) {
         const VolumeStruct& volumeStruct = volumes[i];
+
+        bool showFirstTextureResidentMessage = true;
+        if (GpuCaps.getVendor() == tgt::GpuCapabilities::GPU_VENDOR_ATI){
+            if(!volumeStruct.volume_->hasRepresentation<VolumeGL>()){
+                showFirstTextureResidentMessage = false;
+            }
+        }
+
         const VolumeGL* volumeGL = volumeStruct.volume_->getRepresentation<VolumeGL>();
         if (!volumeGL || !volumeGL->getTexture()) {
             LWARNING("No volume texture while binding volumes");
@@ -98,7 +106,7 @@ void VolumeRenderer::bindVolumes(tgt::Shader* shader, const std::vector<VolumeSt
             continue;
         }
 
-        bindVolumeTexture(volumeStruct.volume_, texUnit, volumeStruct.filterMode_, volumeStruct.wrapMode_, volumeStruct.borderColor_);
+        bindVolumeTexture(volumeStruct.volume_, texUnit, volumeStruct.filterMode_, volumeStruct.wrapMode_, volumeStruct.borderColor_, showFirstTextureResidentMessage);
 
         // set volume meta-data
         setUniform(shader, volumeStruct.volumeStructIdentifier_, volumeStruct.volume_, texUnit, camera, lightPosition); 

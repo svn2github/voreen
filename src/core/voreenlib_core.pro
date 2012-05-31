@@ -374,6 +374,11 @@ SOURCES += \
     utils/GLSLparser/preprocessor/ppterminals.cpp \
     utils/GLSLparser/preprocessor/ppvisitor.cpp \
     utils/voreenblas/voreenblascpu.cpp
+    
+contains(DEFINES, VRN_REMOTE_CONTROL) {
+SOURCES += \
+    remote/remotecontroller.cpp
+}
 
 SOURCES += \
     ../../ext/tinyxml/tinyxml.cpp \
@@ -714,6 +719,10 @@ HEADERS += \
     ../../include/voreen/core/utils/voreenblas/voreenblascpu.h \
     ../../include/voreen/core/utils/voreenblas/ellpackmatrix.h
 
+contains(DEFINES, VRN_REMOTE_CONTROL) {
+HEADERS += \
+    ../../include/voreen/core/remote/remotecontroller.h
+}
 HEADERS += \
     ../../ext/tinyxml/tinyxml.h \
     ../../ext/tinyxml/tinystr.h

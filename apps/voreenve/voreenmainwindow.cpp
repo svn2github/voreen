@@ -78,6 +78,10 @@
 #include <QLabel>
 #include <QPropertyAnimation>
 
+#ifdef VRN_REMOTE_CONTROL
+#include "voreen/qt/widgets/remotecontrollerwidget.h"
+#endif
+
 namespace voreen {
 
 namespace {
@@ -249,6 +253,9 @@ VoreenMainWindow::VoreenMainWindow(const std::string& workspace, bool resetSetti
     , renderTargetViewer_(0)
     , propertyStateWidget_(0)
     , performanceRecordWidget_(0)
+#ifdef VRN_REMOTE_CONTROL
+    , remoteControllerWidget_(0)
+#endif
     , snapshotWidget_(0)
     , guiMode_(MODE_NONE)
     , canvasPos_(0, 0)
@@ -435,6 +442,7 @@ void VoreenMainWindow::initialize(VoreenSplashScreen* splash, bool showStartup) 
         openWorkspace(lastWorkspace_);
     }
     else {
+        newWorkspace();
         // load an initial workspace
         //openWorkspace(VoreenApplication::app()->getWorkspacePath("templates/standard.vws").c_str());
     }
@@ -851,6 +859,15 @@ void VoreenMainWindow::createToolWindows() {
         tr("Performance Record"), Qt::NoDockWidgetArea, Qt::AllDockWidgetAreas, false);
     performanceRecordWindow->resize(350, 400);
     vis_->setPerformanceRecordWidget(performanceRecordWidget_);
+
+#ifdef VRN_REMOTE_CONTROL
+    remoteControllerWidget_ = new RemoteControllerWidget(this);
+    QAction* remoteControllerAction = new QAction(QIcon(":/voreenve/icons/performance.png"), tr("&Remote Controller"), this);
+    remoteControllerAction->setCheckable(true);
+    VoreenToolWindow* remoteControllerWindow = addToolWindow(remoteControllerAction, remoteControllerWidget_,
+        tr("Remote Controller"), Qt::NoDockWidgetArea, Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea, false);
+    remoteControllerWindow->resize(350, 400);
+#endif
 
     // animation editor
     animationEditor_ = new AnimationEditor(vis_->getEvaluator(), vis_->getWorkspace(), this);

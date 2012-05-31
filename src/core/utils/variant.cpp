@@ -30,6 +30,7 @@
 
 #include "voreen/core/datastructures/transfunc/transfunc.h"
 #include "voreen/core/datastructures/transfunc/transfuncintensity.h"
+#include "voreen/core/datastructures/transfunc/transfuncmappingkey.h"
 #include "voreen/core/datastructures/volume/volumecollection.h"
 #include "voreen/core/datastructures/volume/volumehandle.h"
 #include "voreen/core/properties/shaderproperty.h"
@@ -46,6 +47,7 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::stringstream;
+using tgt::col4;
 using tgt::vec2;
 using tgt::vec3;
 using tgt::vec4;
@@ -60,19 +62,21 @@ using tgt::mat3;
 using tgt::mat4;
 using tgt::Camera;
 
-#define IVEC2STRINGFORMAT "{ %i %i }"
-#define IVEC3STRINGFORMAT "{ %i %i %i }"
-#define IVEC4STRINGFORMAT "{ %i %i %i %i }"
-#define VEC2STRINGFORMAT "{ %f %f }"
-#define VEC3STRINGFORMAT "{ %f %f %f }"
-#define VEC4STRINGFORMAT "{ %f %f %f %f }"
-#define DVEC2STRINGFORMAT "{ %f %f }"
-#define DVEC3STRINGFORMAT "{ %f %f %f }"
-#define DVEC4STRINGFORMAT "{ %f %f %f %f }"
-#define MAT2STRINGFORMAT "[ %f %f ; %f %f ]"
-#define MAT3STRINGFORMAT "[ %f %f %f ; %f %f %f ; %f %f %f ]"
-#define MAT4STRINGFORMAT "[ %f %f %f %f ; %f %f %f %f ; %f %f %f %f ; %f %f %f %f ]"
-#define VALUETOSTRINGBUFFERSIZE 256
+#define IVEC2STRINGFORMAT "( %i %i )"
+#define IVEC3STRINGFORMAT "( %i %i %i )"
+#define IVEC4STRINGFORMAT "( %i %i %i %i )"
+#define VEC2STRINGFORMAT "( %f %f )"
+#define VEC3STRINGFORMAT "( %f %f %f )"
+#define VEC4STRINGFORMAT "( %f %f %f %f )"
+#define DVEC2STRINGFORMAT "( %f %f )"
+#define DVEC3STRINGFORMAT "( %f %f %f )"
+#define DVEC4STRINGFORMAT "( %f %f %f %f )"
+#define MAT2STRINGFORMAT "( ( %f %f ) ( %f %f ) )" // row-major
+#define MAT3STRINGFORMAT "( ( %f %f %f ) ( %f %f %f ) ( %f %f %f ) )" // row-major
+#define MAT4STRINGFORMAT "( ( %f %f %f %f ) ( %f %f %f %f ) ( %f %f %f %f ) ( %f %f %f %f ) )" // row-major
+#define CAMERASTRINGFORMAT "( ( %f %f %f ) ( %f %f %f ) ( %f %f %f ) )"  // [position] [focus] [up]
+// pseudo-transfer function format:   [# ( %f %i %i %i %i %i %i %i ) ... ]    number ( intensity [color] isSplit [rightColor] )
+#define VALUETOSTRINGBUFFERSIZE 2048
 
 namespace voreen {
 
@@ -82,82 +86,93 @@ static const int32_t canConvertMatrix[Variant::VariantTypeLastBaseType + 1] =
 //  Left side -> Right side 
 //  is allowed in general
 //  WARNING: This list has to be in the same
-//  oder as the enum VariantType
+//  order as the enum VariantType
 /*Invalid*/             0,
 
 /*Bool*/                1 << Variant::VariantTypeDouble     | 1 << Variant::VariantTypeFloat    | 1 << Variant::VariantTypeInteger  |
-                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString   | 1 << Variant::VariantTypePythonObject,
 
 /*Double*/              1 << Variant::VariantTypeBool       | 1 << Variant::VariantTypeFloat    | 1 << Variant::VariantTypeInteger  |
-                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString   | 1 << Variant::VariantTypePythonObject,
 
 /*Float*/               1 << Variant::VariantTypeBool       | 1 << Variant::VariantTypeDouble   | 1 << Variant::VariantTypeInteger  |
-                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString   | 1 << Variant::VariantTypePythonObject,
 
 /*Integer*/             1 << Variant::VariantTypeBool       | 1 << Variant::VariantTypeDouble   | 1 << Variant::VariantTypeFloat    |
-                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeLong       | 1 << Variant::VariantTypeString   | 1 << Variant::VariantTypePythonObject,
 
 /*Long*/                1 << Variant::VariantTypeBool       | 1 << Variant::VariantTypeDouble   | 1 << Variant::VariantTypeFloat    |
-                        1 << Variant::VariantTypeInteger    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeInteger    | 1 << Variant::VariantTypeString   | 1 << Variant::VariantTypePythonObject,
 
 /*String*/              1 << Variant::VariantTypeBool       | 1 << Variant::VariantTypeDouble   | 1 << Variant::VariantTypeFloat    |
                         1 << Variant::VariantTypeInteger    | 1 << Variant::VariantTypeLong     | 1 << Variant::VariantTypeIVec2    |
                         1 << Variant::VariantTypeIVec3      | 1 << Variant::VariantTypeIVec4    | 1 << Variant::VariantTypeVec2     |
                         1 << Variant::VariantTypeVec3       | 1 << Variant::VariantTypeVec4     | 1 << Variant::VariantTypeDVec2    |
                         1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeMat2     |
-                        1 << Variant::VariantTypeMat3       | 1 << Variant::VariantTypeMat4,
+                        1 << Variant::VariantTypeMat3       | 1 << Variant::VariantTypeMat4     | 1 << Variant::VariantTypeCamera   |
+                        1 << Variant::VariantTypeTransFunc  | 1  << Variant::VariantTypePythonObject,
 
 /*IVec2*/               1 << Variant::VariantTypeIVec3      | 1 << Variant::VariantTypeIVec4    | 1 << Variant::VariantTypeVec2     |
                         1 << Variant::VariantTypeVec3       | 1 << Variant::VariantTypeVec4     | 1 << Variant::VariantTypeDVec2    |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString, 
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*IVec3*/               1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec4    | 1 << Variant::VariantTypeVec2     |
                         1 << Variant::VariantTypeVec3       | 1 << Variant::VariantTypeVec4     | 1 << Variant::VariantTypeDVec2    |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*IVec4*/               1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeVec2     |
                         1 << Variant::VariantTypeVec3       | 1 << Variant::VariantTypeVec4     | 1 << Variant::VariantTypeDVec2    |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*Vec2*/                1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeIVec4    |
                         1 << Variant::VariantTypeVec3       | 1 << Variant::VariantTypeVec4     | 1 << Variant::VariantTypeDVec2    |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*Vec3*/                1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeIVec4    |
                         1 << Variant::VariantTypeVec2       | 1 << Variant::VariantTypeVec4     | 1 << Variant::VariantTypeDVec2    |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*Vec4*/                1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeIVec4    |
                         1 << Variant::VariantTypeVec2       | 1 << Variant::VariantTypeVec3     | 1 << Variant::VariantTypeDVec2    |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
 
 /*DVec2*/               1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeIVec4    |
                         1 << Variant::VariantTypeVec2       | 1 << Variant::VariantTypeVec3     | 1 << Variant::VariantTypeVec4     |
-                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec3      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*DVec3*/               1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeIVec4    |
                         1 << Variant::VariantTypeVec2       | 1 << Variant::VariantTypeVec3     | 1 << Variant::VariantTypeVec4     |
-                        1 << Variant::VariantTypeDVec2      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec2      | 1 << Variant::VariantTypeDVec4    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
 /*DVec4*/               1 << Variant::VariantTypeIVec2      | 1 << Variant::VariantTypeIVec3    | 1 << Variant::VariantTypeIVec4    |
                         1 << Variant::VariantTypeVec2       | 1 << Variant::VariantTypeVec3     | 1 << Variant::VariantTypeVec4     |
-                        1 << Variant::VariantTypeDVec2      | 1 << Variant::VariantTypeDVec3    | 1 << Variant::VariantTypeString,
+                        1 << Variant::VariantTypeDVec2      | 1 << Variant::VariantTypeDVec3    | 1 << Variant::VariantTypeString   |
+                        1 << Variant::VariantTypePythonObject,
 
-/*Mat2*/                1 << Variant::VariantTypeString,
+/*Mat2*/                1 << Variant::VariantTypeString     | 1 << Variant::VariantTypePythonObject,
 
-/*Mat3*/                1 << Variant::VariantTypeString,
+/*Mat3*/                1 << Variant::VariantTypeString     | 1 << Variant::VariantTypePythonObject,
 
-/*Mat4*/                1 << Variant::VariantTypeString,
+/*Mat4*/                1 << Variant::VariantTypeString     | 1 << Variant::VariantTypePythonObject,
 
-/*Camera*/              0,
+/*Camera*/              1 << Variant::VariantTypeString     | 1 << Variant::VariantTypePythonObject,
 
 /*Shader*/              0,
 
-/*TransFunc*/           0,
+/*TransFunc*/           1 << Variant::VariantTypeString     | 1 << Variant::VariantTypePythonObject,
 
 /*VolumeHandle*/        0,
 
-/*VolumeCollection*/    0
+/*VolumeCollection*/    0,
+
+/*PyObject*/            0
 };
 
 void Variant::set(const ShaderSource& value, VariantType type) {
@@ -199,6 +214,248 @@ void Variant::set(const VolumeCollection& value, VariantType type) {
     }
     value_ = (void*)&value;
 }
+
+#ifdef VRN_MODULE_PYTHON
+void Variant::setPython(PyObject* obj, VariantType type) throw (VoreenException) {
+    switch (type) {
+    case VariantTypeBool:
+        {
+            bool s = static_cast<bool>(PyInt_AsLong(obj));
+            if (PyErr_Occurred())
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            else
+                set<bool>(s, type);
+            break;
+        }
+    case VariantTypeDouble:
+        {
+            double s = PyFloat_AsDouble(obj);
+            if (PyErr_Occurred())
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            else
+                set<double>(s, type);
+            break;
+        }
+    case VariantTypeFloat:
+        {
+            float s = static_cast<float>(PyFloat_AsDouble(obj));
+            if (PyErr_Occurred())
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            else
+                set<float>(s, type);
+            break;
+        }
+    case VariantTypeInteger:
+        {
+            int s = static_cast<int>(PyInt_AsLong(obj));
+            if (PyErr_Occurred())
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            else
+                set<int>(s, type);
+            break;
+        }
+    case VariantTypeLong:
+        {
+            long s = PyInt_AsLong(obj);
+            if (PyErr_Occurred())
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            else
+                set<long>(s, type);
+            break;
+        }
+    case VariantTypeString:
+        {
+            char* s = PyString_AsString(obj);
+            if (PyErr_Occurred())
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            else
+                set<string>(string(s), type);
+            break;
+        }
+    case VariantTypeIVec2:
+        {
+            ivec2 v;
+            bool success = PyArg_ParseTuple(obj, "ii" , &v.x, &v.y);
+            if (success)
+                set<ivec2>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeIVec3:
+        {
+            ivec3 v;
+            bool success = PyArg_ParseTuple(obj, "iii", &v.x, &v.y, &v.z);
+            if (success)
+                set<ivec3>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeIVec4:
+        {
+            ivec4 v;
+            bool success = PyArg_ParseTuple(obj, "iiii", &v.x, &v.y, &v.z, &v.w);
+            if (success)
+                set<ivec4>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeVec2:
+        {
+            vec2 v;
+            bool success = PyArg_ParseTuple(obj, "fff", &v.x, &v.y);
+            if (success)
+                set<vec2>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeVec3:
+        {
+            vec3 v;
+            bool success = PyArg_ParseTuple(obj, "fff", &v.x, &v.y, &v.z);
+            if (success)
+                set<vec3>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeVec4:
+        {
+            vec4 v;
+            bool success = PyArg_ParseTuple(obj, "ffff", &v.x, &v.y, &v.z, &v.w);
+            if (success)
+                set<vec4>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeDVec2:
+        {
+            dvec2 v;
+            bool success = PyArg_ParseTuple(obj, "dd", &v.x, &v.y);
+            if (success)
+                set<dvec2>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeDVec3:
+        {
+            dvec3 v;
+            bool success = PyArg_ParseTuple(obj, "ddd", &v.x, &v.y, &v.z);
+            if (success)
+                set<dvec3>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeDVec4:
+        {
+            dvec4 v;
+            bool success = PyArg_ParseTuple(obj, "dddd", &v.x, &v.y, &v.z, &v.w);
+            if (success)
+                set<dvec4>(v, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeMat2:
+        {
+            mat2 m;
+            bool success = PyArg_ParseTuple(obj, "(ff)(ff)", &m[0][0], &m[0][1],
+                                                               &m[1][0], &m[1][1]);
+            if (success)
+                set<mat2>(m, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeMat3:
+        {
+            mat3 m;
+            bool success = PyArg_ParseTuple(obj, "(fff)(fff)", &m[0][0], &m[0][1], &m[0][2],
+                                                                      &m[1][0], &m[1][1], &m[1][2],
+                                                                      &m[2][0], &m[2][1], &m[2][2]);
+            if (success)
+                set<mat3>(m, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeMat4:
+        {
+            mat4 m;
+            bool success = PyArg_ParseTuple(obj, "(ffff)(ffff)", &m[0][0], &m[0][1], &m[0][2], &m[0][3],
+                                                                               &m[1][0], &m[1][1], &m[1][2], &m[1][3],
+                                                                               &m[2][0], &m[2][1], &m[2][2], &m[2][3],
+                                                                               &m[3][0], &m[3][1], &m[3][2], &m[3][3]);
+            if (success)
+                set<mat4>(m, type);
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeCamera:
+        {
+            vec3 position, focus, upVector;
+            bool success = PyArg_ParseTuple(obj, "(fff)(fff)(fff)", &position.x, &position.y, &position.z,
+                                                                      &focus.x, &focus.y, &focus.z,
+                                                                      &upVector.x, &upVector.y, &upVector.z);
+            if (success) {
+                Camera* camera = new Camera(position, focus, upVector);
+                set<Camera>(*camera, type);
+            }
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeTransFunc:
+        {
+            int numKeys = PyTuple_Size(obj) - 1;
+            if (PyTuple_Size(obj) > 0) {
+                PyObject* widthObj = PyTuple_GetItem(obj, 0);
+                int width = static_cast<int>(PyInt_AsLong(widthObj));
+                TransFuncIntensity* transFunc = new TransFuncIntensity(width);
+                for (int i = 1; i <= numKeys; ++i) {
+                    PyObject* currentObj = PyTuple_GetItem(obj, i);
+                    float intensity;
+                    int colorLR, colorLG, colorLB, colorLA, colorRR, colorRG, colorRB, colorRA;
+                    int isSplit;
+                    bool success = PyArg_ParseTuple(currentObj, "fiiiiiiiii", 
+                        &intensity,
+                        &colorLR, &colorLG, &colorLB, &colorLA,
+                        &isSplit,
+                        &colorRR, &colorRG, &colorRB, &colorRA);
+                    if (success) {
+                        col4 colorL(static_cast<uint8_t>(colorLR), static_cast<uint8_t>(colorLG), static_cast<uint8_t>(colorLB), static_cast<uint8_t>(colorLA));
+                        TransFuncMappingKey* mappingKey = new TransFuncMappingKey(intensity, colorL);
+                        if (static_cast<bool>(isSplit)) {
+                            col4 colorR(static_cast<uint8_t>(colorRR), static_cast<uint8_t>(colorRG), static_cast<uint8_t>(colorRB), static_cast<uint8_t>(colorRA));
+                            mappingKey->setSplit(true);
+                            mappingKey->setColorR(colorR);
+                        }
+                        transFunc->addKey(mappingKey);
+
+                    }
+                    else
+                        throw ConversionFailedException("Error occurred while parsing PyObject for TransFuncMappingKey");
+                }
+                set(*transFunc, VariantTypeTransFunc);
+            }
+            else
+                throw ConversionFailedException("PyObject did not contain a Variant of type " + type);
+            break;
+        }
+    case VariantTypeInvalid:
+        throw OperationNotDefinedForInvalidVariantException();
+    default:
+        throw NoSuchTransformationException("Variant: Conversion from PyObject to " + typeToName(currentType_) + " not implemented");
+    }
+}
+#endif
 
 template<class T>
 const string Variant::toString(const T& value) const {
@@ -397,6 +654,22 @@ Variant::Variant(const VolumeCollection* value) throw () : value_(0), currentTyp
     set(*value, VariantTypeVolumeCollection);
 }
 
+#ifdef VRN_MODULE_PYTHON
+Variant::Variant(PyObject* obj, VariantType type) throw (VoreenException)
+    : value_(0)
+    , currentType_(type)
+{
+    setPython(obj, type);
+}
+
+Variant::Variant(PyObject* obj, int type) throw (VoreenException)
+    : value_(0)
+    , currentType_(VariantType(type))
+{
+    setPython(obj, VariantType(type));
+}
+#endif
+
 Variant Variant::deepCopy() const throw (VoreenException) {
     switch (currentType_) {
     case VariantTypeTransFunc:
@@ -511,6 +784,10 @@ void Variant::deleteValue() {
 
 Variant::VariantType Variant::getType() const throw () {
     return currentType_;
+}
+
+bool Variant::isValid() const throw () {
+    return getType() != VariantTypeInvalid;
 }
 
 std::string Variant::typeToName(VariantType type) throw () {
@@ -817,7 +1094,6 @@ long Variant::getLong() const throw (VoreenException) {
         if ( (s >> result).fail() )
             throw ConversionFailedException("String->Int conversion failed");
         return result;
-        break;
     }
     case VariantTypeInvalid:
         throw OperationNotDefinedForInvalidVariantException();
@@ -929,6 +1205,48 @@ string Variant::getString() const throw (VoreenException) {
                                               m.t20, m.t21, m.t22, m.t23,
                                               m.t30, m.t31, m.t32, m.t33);
             return string(result);
+        }
+    case VariantTypeCamera:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            Camera* camera = getCamera();
+            const vec3& position = camera->getPosition();
+            const vec3& focus = camera->getFocus();
+            const vec3& upVector = camera->getUpVector();
+            sprintf(result, CAMERASTRINGFORMAT, position.x, position.y, position.z,
+                                                focus.x, focus.y, focus.z,
+                                                upVector.x, upVector.y, upVector.z);
+            return string(result);
+        }
+    case VariantTypeTransFunc:
+        {
+            TransFuncIntensity* transFunc = dynamic_cast<TransFuncIntensity*>(getTransFunc());
+            if (transFunc) {
+                char result[VALUETOSTRINGBUFFERSIZE];
+                int numKeys = transFunc->getNumKeys();
+
+                const std::vector<TransFuncMappingKey*>& keys = transFunc->getKeys();
+                sprintf(result, "( %i ", transFunc->getDimensions().x);
+                for (int i = 0 ; i < numKeys ; ++i) {
+                    const TransFuncMappingKey* currentKey = keys[i];
+                    float intensity = currentKey->getIntensity();
+                    col4 leftColor = currentKey->getColorL();
+                    bool isSplit = currentKey->isSplit();
+                    col4 rightColor = currentKey->getColorR();
+
+                    sprintf(result, "%s ( %f %i %i %i %i %i %i %i %i %i ) ", result, intensity,
+                        leftColor.r, leftColor.g, leftColor.b, leftColor.a,
+                        isSplit,
+                        rightColor.r, rightColor.g, rightColor.b, rightColor.a);
+                }
+
+                sprintf(result, "%s )", result);
+                return string(result);
+            }
+            else {
+                throw NoSuchTransformationException("Variant: Conversion from TransFunc to String is only avaliable for TransFuncIntensity");
+            }
+
         }
     case VariantTypeInvalid:
         throw OperationNotDefinedForInvalidVariantException();
@@ -1311,6 +1629,15 @@ TransFunc* Variant::getTransFunc() const throw (VoreenException) {
 
 Camera* Variant::getCamera() const throw (VoreenException) {
     switch (currentType_) {
+    case VariantTypeString:
+        {
+            vec3 position, focus, upVector;
+            sscanf(VP(string).c_str(), CAMERASTRINGFORMAT, &position.x, &position.y, &position.z,
+                                                           &focus.x, &focus.y, &focus.z,
+                                                           &upVector.x, &upVector.y, &upVector.z);
+            Camera* c = new Camera(position, focus, upVector);
+            return c;
+        }
     case VariantTypeCamera:
         return &VP(Camera);
         break;
@@ -1356,6 +1683,264 @@ ShaderSource* Variant::getShader() const throw (VoreenException) {
         throw NoSuchTransformationException("Variant: Conversion from " + typeToName(currentType_) + " to shader not implemented");
     }
 }
+
+#ifdef VRN_MODULE_PYTHON
+PyObject* Variant::getPythonObject() const throw (VoreenException) {
+    switch (currentType_) {
+    case VariantTypeBool:
+        return Py_BuildValue("b", getBool());
+    case VariantTypeDouble:
+        return Py_BuildValue("d", getDouble());
+    case VariantTypeFloat:
+        return Py_BuildValue("f", getFloat());
+    case VariantTypeInteger:
+        return Py_BuildValue("i", getInt());
+    case VariantTypeLong:
+        return Py_BuildValue("l", getLong());
+    case VariantTypeString:
+        return Py_BuildValue("s", getString().c_str());
+    case VariantTypeIVec2:
+        {
+            const ivec2& v = getIVec2();
+            return Py_BuildValue("(ii)", v.x, v.y);
+        }
+    case VariantTypeIVec3:
+        {
+            const ivec3& v = getIVec3();
+            return Py_BuildValue("(iii)", v.x, v.y, v.z);
+        }
+    case VariantTypeIVec4:
+        {
+            const ivec4& v = getIVec4();
+            return Py_BuildValue("(iiii)", v.x, v.y, v.z, v.w);
+        }
+    case VariantTypeVec2:
+        {
+            const vec2& v = getVec2();
+            return Py_BuildValue("(ff)", v.x, v.y);
+        }
+    case VariantTypeVec3:
+        {
+            const vec3& v = getVec3();
+            return Py_BuildValue("(fff)", v.x, v.y, v.z);
+        }
+    case VariantTypeVec4:
+        {
+            const vec4& v = getVec4();
+            return Py_BuildValue("(ffff)", v.x, v.y, v.z, v.w);
+        }
+    case VariantTypeDVec2:
+        {
+            const dvec2& v = getDVec2();
+            return Py_BuildValue("(dd)", v.x, v.y);
+        }
+    case VariantTypeDVec3:
+        {
+            const dvec3& v = getDVec3();
+            return Py_BuildValue("(ddd)", v.x, v.y, v.z);
+        }
+    case VariantTypeDVec4:
+        {
+            const dvec4& v = getDVec4();
+            return Py_BuildValue("(dddd)", v.x, v.y, v.z, v.w);
+        }
+    case VariantTypeMat2:
+        {
+            const mat2& m = getMat2();
+            return Py_BuildValue("((ff)(ff))", m[0][0], m[0][1],
+                                               m[1][0], m[1][1]);
+        }
+    case VariantTypeMat3:
+        {
+            const mat3& m = getMat3();
+            return Py_BuildValue("((fff)(fff)(fff))", m[0][0], m[0][1], m[0][2],
+                                                      m[1][0], m[1][1], m[1][2],
+                                                      m[2][0], m[2][1], m[2][2]);
+        }
+    case VariantTypeMat4:
+        {
+            const mat4& m = getMat4();
+            return Py_BuildValue("((ffff)(ffff)(ffff)(ffff))", m[0][0], m[0][1], m[0][2], m[0][3],
+                                                               m[1][0], m[1][1], m[1][2], m[1][3],
+                                                               m[2][0], m[2][1], m[2][2], m[2][3],
+                                                               m[3][0], m[3][1], m[3][2], m[3][3]);
+        }
+    case VariantTypeCamera:
+        {
+            const Camera* c = getCamera();
+            const vec3& position = c->getPosition();
+            const vec3& focus = c->getFocus();
+            const vec3& upVector = c->getUpVector();
+            return Py_BuildValue("((fff)(fff)(fff))", position.x, position.y, position.z,
+                                                      focus.x,    focus.y,    focus.z,
+                                                      upVector.x, upVector.y, upVector.z);
+        }
+    case VariantTypeTransFunc:
+        {
+        
+        }
+    case VariantTypeInvalid:
+        throw OperationNotDefinedForInvalidVariantException();
+    default:
+        throw NoSuchTransformationException("Variant: Conversion from " + typeToName(currentType_) + " to PyObject not implemented");
+    }
+}
+
+string Variant::getPythonString() const throw (VoreenException) {
+    switch (currentType_) {
+    case VariantTypeBool:
+        return VP(bool) ? "1" : "0";
+    case VariantTypeDouble:
+        return toString<double>(VP(double));
+    case VariantTypeFloat:
+        return toString<float>(VP(float));
+    case VariantTypeInteger:
+        return toString<int>(VP(int));
+    case VariantTypeLong:
+        return toString<long>(VP(long));
+    case VariantTypeString:
+        return "\"" + VP(string) + "\"";
+    case VariantTypeIVec2:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            ivec2 v = VP(ivec2);
+            sprintf(result, "(%i,%i)", v.x, v.y);
+            return string(result);
+        }
+    case VariantTypeIVec3:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            ivec3 v = VP(ivec3);
+            sprintf(result, "(%i,%i,%i)", v.x, v.y, v.z);
+            return string(result);
+        }
+    case VariantTypeIVec4:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            ivec4 v = VP(ivec4);
+            sprintf(result, "(%i,%i,%i,%i)", v.x, v.y, v.z, v.w);
+            return string(result);
+        }
+    case VariantTypeVec2:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            vec2 v = VP(vec2);
+            sprintf(result, "(%f,%f)", v.x, v.y);
+            return string(result);
+        }
+    case VariantTypeVec3:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            vec3 v = VP(vec3);
+            sprintf(result, "(%f,%f,%f)", v.x, v.y, v.z);
+            return string(result);
+        }
+    case VariantTypeVec4:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            vec4 v = VP(vec4);
+            sprintf(result, "(%f,%f,%f,%f)", v.x, v.y, v.z, v.w);
+            return string(result);
+        }
+    case VariantTypeDVec2:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            dvec2 v = VP(dvec2);
+            sprintf(result, "(%f,%f)", v.x, v.y);
+            return string(result);
+        }
+    case VariantTypeDVec3:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            dvec3 v = VP(dvec3);
+            sprintf(result, "(%f,%f,%f)", v.x, v.y, v.z);
+            return string(result);
+        }
+    case VariantTypeDVec4:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            dvec4 v = VP(dvec4);
+            sprintf(result, "(%f,%f,%f,%f)", v.x, v.y, v.z, v.w);
+            return string(result);
+        }
+    case VariantTypeMat2:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            mat2 m = VP(mat2);
+            sprintf(result, "((%f,%f),(%f,%f))", m.t00, m.t01, 
+                m.t10, m.t11);
+            return string(result);
+        }
+    case VariantTypeMat3:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            mat3 m = VP(mat3);
+            sprintf(result, "((%f,%f,%f)(%f,%f,%f)(%f,%f,%f))", m.t00, m.t01, m.t02,
+                m.t10, m.t11, m.t12,
+                m.t20, m.t21, m.t22);
+            return string(result);
+        }
+    case VariantTypeMat4:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            mat4 m = VP(mat4);
+            sprintf(result, "((%f,%f,%f,%f)(%f,%f,%f,%f)(%f,%f,%f,%f)(%f,%f,%f,%f))", m.t00, m.t01, m.t02, m.t03,
+                m.t10, m.t11, m.t12, m.t13,
+                m.t20, m.t21, m.t22, m.t23,
+                m.t30, m.t31, m.t32, m.t33);
+            return string(result);
+        }
+    case VariantTypeCamera:
+        {
+            char result[VALUETOSTRINGBUFFERSIZE];
+            Camera* camera = getCamera();
+            const vec3& position = camera->getPosition();
+            const vec3& focus = camera->getFocus();
+            const vec3& upVector = camera->getUpVector();
+            sprintf(result, "((%f,%f,%f),(%f,%f,%f),(%f,%f,%f))", position.x, position.y, position.z,
+                focus.x, focus.y, focus.z,
+                upVector.x, upVector.y, upVector.z);
+            return string(result);
+        }
+    case VariantTypeTransFunc:
+        {
+            TransFuncIntensity* transFunc = dynamic_cast<TransFuncIntensity*>(getTransFunc());
+            if (transFunc) {
+                char result[VALUETOSTRINGBUFFERSIZE];
+                int numKeys = transFunc->getNumKeys();
+                const std::vector<TransFuncMappingKey*>& keys = transFunc->getKeys();
+                sprintf(result, "(%i,", transFunc->getDimensions().x);
+                for (int i = 0 ; i < numKeys ; ++i) {
+                    const TransFuncMappingKey* currentKey = keys[i];
+                    float intensity = currentKey->getIntensity();
+                    col4 leftColor = currentKey->getColorL();
+                    bool isSplit = currentKey->isSplit();
+                    col4 rightColor = currentKey->getColorR();
+
+                    sprintf(result, "%s(%f,%i,%i,%i,%i,%i,%i,%i,%i,%i)", result, intensity,
+                        leftColor.r, leftColor.g, leftColor.b, leftColor.a,
+                        isSplit,
+                        rightColor.r, rightColor.g, rightColor.b, rightColor.a);
+                    if (i != numKeys - 1)
+                        sprintf(result, "%s,", result);
+                }
+
+                sprintf(result, "%s)", result);
+                return string(result);
+            }
+            else {
+                throw NoSuchTransformationException("Variant: Conversion from TransFunc to String is only available for TransFuncIntensity");
+            }
+
+        }
+
+    case VariantTypeInvalid:
+        throw OperationNotDefinedForInvalidVariantException();
+    default:
+        throw NoSuchTransformationException("Variant: Conversion from " + typeToName(currentType_) + " to PythonString not implemented");
+    }
+}
+#endif
 
 void Variant::setBool(const bool& value) throw () {
     set<bool>(value, VariantTypeBool);
@@ -1547,9 +2132,9 @@ void Variant::deserialize(XmlDeserializer& d) throw (VoreenException) {
     case VariantTypeCamera:
     {
         // TODO make camera deserializable
-        Camera* value = new Camera;
+        //Camera* value = new Camera;
         //d.deserialize("value", value);
-        setCamera(value);
+        //setCamera(value);
         break;
     }
     case VariantTypeDouble:
@@ -1618,7 +2203,7 @@ void Variant::deserialize(XmlDeserializer& d) throw (VoreenException) {
     case VariantTypeTransFunc:
     {
         TransFunc* value = 0;
-        d.deserialize("TransferFunction", value);
+        d.deserialize("value", value);
         setTransFunc(value);
         break;
     }
@@ -1782,6 +2367,8 @@ Variant& Variant::operator= (const Variant& rhs) {
             break;
         case VariantTypeVolumeCollection:
             set(*rhs.getVolumeCollection(), VariantTypeVolumeCollection);
+            break;
+        default:
             break;
         }
         if (rhs.getType() >= VariantTypeUserType) {

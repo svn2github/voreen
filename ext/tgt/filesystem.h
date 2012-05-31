@@ -291,6 +291,11 @@ public:
     static std::string relativePath(const std::string& path, const std::string& dir);
     
     /**
+     * Returns the short path of the specified path (Windows only).
+     */
+    static std::string shortPath(const std::string& path);
+
+    /**
      * Return the file name without the path component.
      */
     static std::string fileName(const std::string& filepath);
