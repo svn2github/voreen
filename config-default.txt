@@ -72,7 +72,7 @@ VRN_PROJECTS = tgt core qt voreenve
 #DEFINES += VRN_REMOTE_CONTROL
 
 # From Voreen Snapshot
-#DEFINES += VRN_SNAPSHOT
+DEFINES += VRN_SNAPSHOT
 
 # Link Voreen libraries dynamically
 DEFINES += VRN_DYNAMIC_LIBS
