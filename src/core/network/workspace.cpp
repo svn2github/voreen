@@ -50,6 +50,7 @@
 
 #include <cstdio>
 #include <sstream>
+#include <unistd.h>
 
 namespace voreen {
 
