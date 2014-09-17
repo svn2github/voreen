@@ -134,9 +134,9 @@ NumericProperty<T>::NumericProperty(const std::string& id, const std::string& gu
                                     tracking_(true),
                                     numDecimals_(2)
 {
-    addValidation(NumericPropertyValidation<T>(this));
+    this->addValidation(NumericPropertyValidation<T>(this));
     std::string errorMsg;
-    validate(value, errorMsg);
+    this->validate(value, errorMsg);
     if (!errorMsg.empty())
         LWARNINGC("voreen.TemplateProperty", errorMsg);
 }
@@ -199,12 +199,12 @@ void NumericProperty<T>::setTracking(bool tracking) {
 
 template<typename T>
 void NumericProperty<T>::increase() {
-    set(value_ + stepping_);
+    this->set(value_ + stepping_);
 }
 
 template<typename T>
 void NumericProperty<T>::decrease() {
-    set(value_ - stepping_);
+    this->set(value_ - stepping_);
 }
 
 template<typename T>
@@ -226,7 +226,7 @@ void NumericProperty<T>::deserialize(XmlDeserializer& s) {
     T value;
     s.deserialize("value", value);
     try {
-        set(value);
+        this->set(value);
     }
     catch (Condition::ValidationFailed& e) {
         s.addError(e);
